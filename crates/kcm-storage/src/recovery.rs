@@ -23,7 +23,10 @@ impl RecoveryManager {
                     }
                     Ok(schema)
                 }
-                Err(_) => Self::recover_from_backup(db_path, wal_path),
+                Err(e) => {
+                    eprintln!("DB load failed: {}, attempting backup recovery", e);
+                    Self::recover_from_backup(db_path, wal_path)
+                }
             }
         } else if wal_path.exists() {
             let mut schema = Schema::new(1_000_000)?;

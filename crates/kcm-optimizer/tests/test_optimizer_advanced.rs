@@ -128,7 +128,7 @@ fn test_constant_folding() {
     assert!(ConstantFoldingOptimizer::can_fold(&pred));
     let pred2 = PlannerFilterPredicate::EqualSubject(1);
     assert!(!ConstantFoldingOptimizer::can_fold(&pred2));
-    assert!(ConstantFoldingOptimizer::fold_predicate(&pred).is_none());
+    assert_eq!(ConstantFoldingOptimizer::fold_predicate(&pred), Some(false));
 }
 
 #[test]

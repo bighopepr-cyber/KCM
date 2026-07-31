@@ -29,8 +29,8 @@ impl DistributedTransaction {
 
     pub fn record_vote(&self, vote: bool) -> bool {
         let mut votes = self.votes.lock();
-        let idx = votes.len();
-        votes.insert(idx, vote);
+        let next_idx = votes.len();
+        votes.insert(next_idx, vote);
         votes.values().all(|&v| v)
     }
 

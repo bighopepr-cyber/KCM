@@ -152,6 +152,14 @@ impl Codec<f64> for GorillaCodec {
             i += 8;
         }
 
+        if result.len() < count {
+            return Err(KcmError::Corrupted(format!(
+                "Gorilla decode: expected {} elements, got {}",
+                count,
+                result.len()
+            )));
+        }
+
         Ok(result)
     }
 }

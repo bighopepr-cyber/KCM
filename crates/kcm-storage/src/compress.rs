@@ -43,6 +43,12 @@ impl Compressor for Lz4Compressor {
     }
 
     fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError> {
+        if expected_size > i32::MAX as usize {
+            return Err(KcmError::Corrupted(format!(
+                "LZ4 decompress size {} exceeds i32::MAX",
+                expected_size
+            )));
+        }
         lz4::block::decompress(data, Some(expected_size as i32))
             .map_err(|e| KcmError::Io(e.to_string()))
     }

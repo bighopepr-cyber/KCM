@@ -103,6 +103,9 @@ impl Bitmap {
     }
 
     pub fn as_bytes(&self) -> &[u8] {
+        // SAFETY: words is a Vec<u64>, valid for reinterpreting as &[u8].
+        // Alignment of u64 (8 bytes) is >= alignment of u8 (1 byte).
+        // Length is calculated correctly as words.len() * sizeof(u64).
         unsafe {
             std::slice::from_raw_parts(self.words.as_ptr() as *const u8, self.words.len() * 8)
         }
@@ -112,6 +115,9 @@ impl Bitmap {
         let num_words = len.div_ceil(64);
         let mut words = vec![0u64; num_words];
         let copy_len = bytes.len().min(num_words * 8);
+        // SAFETY: words is allocated with num_words * 8 bytes capacity (guaranteed by vec![0u64; num_words]).
+        // copy_len <= num_words * 8 (ensured by .min()).
+        // Source bytes is valid for copy_len bytes. Destination has copy_len bytes available.
         unsafe {
             std::ptr::copy_nonoverlapping(bytes.as_ptr(), words.as_mut_ptr() as *mut u8, copy_len);
         }

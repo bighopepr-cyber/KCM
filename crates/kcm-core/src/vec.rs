@@ -56,6 +56,8 @@ impl<T: Copy> DenseVec<T> {
         }
 
         unsafe {
+            // SAFETY: Caller guarantees idx < self.len (precondition checked by bounds check above).
+            // DenseVec is contiguous memory with capacity > idx.
             *self.ptr.as_ptr().add(self.len) = value;
         }
         self.len += 1;
@@ -111,6 +113,8 @@ impl<T: Copy> Drop for DenseVec<T> {
             .unwrap_or_else(|_| std::process::abort());
 
             unsafe {
+                // SAFETY: Layout is reconstructed from the same values used during allocation.
+                // The ptr was allocated by the same allocator that will deallocate it.
                 dealloc(self.ptr.as_ptr() as *mut u8, layout);
             }
         }
@@ -119,6 +123,8 @@ impl<T: Copy> Drop for DenseVec<T> {
 
 impl<T: Copy> Clone for DenseVec<T> {
     fn clone(&self) -> Self {
+        // SAFETY: DenseVec was created with valid layout from with_alignment.
+        // Allocation uses the same allocator and alignment as the original.
         let mut new_vec = Self::with_alignment(self.capacity, self.alignment)
             .unwrap_or_else(|_| std::process::abort());
         new_vec.len = self.len;

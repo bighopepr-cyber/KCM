@@ -46,14 +46,14 @@ fn test_encryption_key_from_password() {
 
 #[test]
 fn test_encryption_key_random() {
-    let key1 = EncryptionKey::random();
-    let key2 = EncryptionKey::random();
+    let key1 = EncryptionKey::random().unwrap();
+    let key2 = EncryptionKey::random().unwrap();
     assert_ne!(key1.as_bytes(), key2.as_bytes());
 }
 
 #[test]
 fn test_encrypt_decrypt_roundtrip() {
-    let key = EncryptionKey::random();
+    let key = EncryptionKey::random().unwrap();
     let plaintext = b"Hello, KCM Security!";
     let encrypted = EncryptedStorage::encrypt(plaintext, &key).unwrap();
     assert_ne!(&encrypted[..], plaintext);
@@ -64,8 +64,8 @@ fn test_encrypt_decrypt_roundtrip() {
 
 #[test]
 fn test_encrypt_decrypt_wrong_key() {
-    let key1 = EncryptionKey::random();
-    let key2 = EncryptionKey::random();
+    let key1 = EncryptionKey::random().unwrap();
+    let key2 = EncryptionKey::random().unwrap();
     let plaintext = b"secret data";
     let encrypted = EncryptedStorage::encrypt(plaintext, &key1).unwrap();
     let result = EncryptedStorage::decrypt(&encrypted, &key2);
@@ -74,7 +74,7 @@ fn test_encrypt_decrypt_wrong_key() {
 
 #[test]
 fn test_encrypt_decrypt_empty() {
-    let key = EncryptionKey::random();
+    let key = EncryptionKey::random().unwrap();
     let encrypted = EncryptedStorage::encrypt(b"", &key).unwrap();
     let decrypted = EncryptedStorage::decrypt(&encrypted, &key).unwrap();
     assert!(decrypted.is_empty());
@@ -82,7 +82,7 @@ fn test_encrypt_decrypt_empty() {
 
 #[test]
 fn test_encrypt_decrypt_large_data() {
-    let key = EncryptionKey::random();
+    let key = EncryptionKey::random().unwrap();
     let plaintext: Vec<u8> = (0..10000).map(|i| (i % 256) as u8).collect();
     let encrypted = EncryptedStorage::encrypt(&plaintext, &key).unwrap();
     let decrypted = EncryptedStorage::decrypt(&encrypted, &key).unwrap();
@@ -121,7 +121,7 @@ fn test_encrypt_file_roundtrip() {
     let data = vec![42u8; 10000];
     std::fs::write(&src_path, &data).unwrap();
 
-    let key = EncryptionKey::random();
+    let key = EncryptionKey::random().unwrap();
     EncryptedStorage::encrypt_file(&src_path, &enc_path, &key).unwrap();
     assert!(enc_path.exists());
 
@@ -139,8 +139,8 @@ fn test_encrypt_file_wrong_key() {
 
     std::fs::write(&src_path, b"secret data").unwrap();
 
-    let key1 = EncryptionKey::random();
-    let key2 = EncryptionKey::random();
+    let key1 = EncryptionKey::random().unwrap();
+    let key2 = EncryptionKey::random().unwrap();
 
     EncryptedStorage::encrypt_file(&src_path, &enc_path, &key1).unwrap();
     let result = EncryptedStorage::decrypt_file(&enc_path, &dec_path, &key2);
@@ -149,9 +149,9 @@ fn test_encrypt_file_wrong_key() {
 
 #[test]
 fn test_random_keys_unique() {
-    let key1 = EncryptionKey::random();
-    let key2 = EncryptionKey::random();
-    let key3 = EncryptionKey::random();
+    let key1 = EncryptionKey::random().unwrap();
+    let key2 = EncryptionKey::random().unwrap();
+    let key3 = EncryptionKey::random().unwrap();
     assert_ne!(key1.as_bytes(), key2.as_bytes());
     assert_ne!(key2.as_bytes(), key3.as_bytes());
     assert_ne!(key1.as_bytes(), key3.as_bytes());
@@ -187,7 +187,7 @@ fn test_rbac_multi_role() {
 
 #[test]
 fn test_encrypt_large_data() {
-    let key = EncryptionKey::random();
+    let key = EncryptionKey::random().unwrap();
     let data: Vec<u8> = (0..100_000).map(|i| (i % 256) as u8).collect();
     let encrypted = EncryptedStorage::encrypt(&data, &key).unwrap();
     let decrypted = EncryptedStorage::decrypt(&encrypted, &key).unwrap();

@@ -115,6 +115,10 @@ impl DatabaseFile {
             ),
         ];
 
+        // Column data is written as raw bytes. The codec_id field records which
+        // compression algorithm SHOULD be applied. Currently, compression is
+        // applied at the Column level via compress_all_columns(), not at the
+        // file format level. This keeps the save/load path simple.
         for (data, elem_count, codec) in &columns {
             writer
                 .write_all(&(*elem_count as u64).to_le_bytes())
@@ -249,8 +253,12 @@ impl DatabaseFile {
         reader
             .read_exact(&mut codec_byte)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
-        let _codec = ColumnCodecId::from_u8(codec_byte[0])
+        let codec = ColumnCodecId::from_u8(codec_byte[0])
             .ok_or_else(|| KcmError::Corrupted(format!("Unknown codec ID: {}", codec_byte[0])))?;
+        // Codec ID is stored for metadata. Raw column data is written uncompressed.
+        // Compression is applied at the Schema level via compress_all_columns().
+        // TODO: Future — apply codec-specific decompression when compressed data is stored.
+        let _codec = codec;
 
         let mut compressed_size = [0u8; 8];
         reader
@@ -271,8 +279,23 @@ impl DatabaseFile {
             )));
         }
 
-        let values: Vec<T> =
-            unsafe { std::slice::from_raw_parts(data.as_ptr() as *const T, len).to_vec() };
+        let type_size = std::mem::size_of::<T>();
+        let mut values = Vec::with_capacity(len);
+        for i in 0..len {
+            let offset = i * type_size;
+            if offset + type_size > data.len() {
+                return Err(KcmError::Corrupted(format!(
+                    "Data too short at element {}: need {} bytes, have {}",
+                    i,
+                    offset + type_size,
+                    data.len()
+                )));
+            }
+            let mut buf = [0u8; 8];
+            let copy_len = type_size.min(8);
+            buf[..copy_len].copy_from_slice(&data[offset..offset + copy_len]);
+            values.push(unsafe { std::ptr::read(buf.as_ptr() as *const T) });
+        }
 
         for value in values {
             column.append(value)?;

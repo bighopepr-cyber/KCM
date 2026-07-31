@@ -13,6 +13,8 @@ pub enum Token {
     OrderBy,
     Asc,
     Desc,
+    Join,
+    On,
     Identifier(String),
     Number(f64),
     StringLit(String),
@@ -132,6 +134,8 @@ impl<'a> Lexer<'a> {
             "order" | "by" => Token::OrderBy,
             "asc" => Token::Asc,
             "desc" => Token::Desc,
+            "join" => Token::Join,
+            "on" => Token::On,
             _ => Token::Identifier(ident),
         })
     }
@@ -278,7 +282,9 @@ impl Parser {
         while self.check(&Token::And) || self.check(&Token::Or) {
             let op_token = self.advance();
             let right = self.parse_condition()?;
-            let last = conditions.pop().unwrap();
+            let last = conditions
+                .pop()
+                .expect("parse_where called with empty conditions");
             let combined = match op_token {
                 Token::And => Condition::And(Box::new(last), Box::new(right)),
                 Token::Or => Condition::Or(Box::new(last), Box::new(right)),

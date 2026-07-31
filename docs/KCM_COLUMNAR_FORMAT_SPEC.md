@@ -18,7 +18,7 @@ Defines the physical binary storage format for KCM database files.
 ┌─────────────────────────────────────────────┐
 │                 File Header                  │
 │  Magic Bytes (5):     "KCMDB"               │
-│  Version (1):         0x01                   │
+│  Version (1):         0x02                   │
 │  Row Count (8):       u64 little-endian     │
 │  Column Count (1):    u8 = 11               │
 │  Created Timestamp (8): i64 LE              │
@@ -41,7 +41,7 @@ Defines the physical binary storage format for KCM database files.
 | Offset | Size | Type | Description |
 |--------|------|------|-------------|
 | 0 | 5 | [u8; 5] | Magic bytes: `b"KCMDB"` |
-| 5 | 1 | u8 | Format version: `1` |
+| 5 | 1 | u8 | Format version: `2` |
 | 6 | 8 | u64 LE | Total row count |
 | 14 | 1 | u8 | Column count: `11` (fixed) |
 | 15 | 8 | i64 LE | Created timestamp (nanoseconds since epoch) |
@@ -157,7 +157,7 @@ Load → Read from disk → Decompress → Populate DenseVec
 | Check | When | Method |
 |-------|------|--------|
 | Magic bytes match | File open | Direct comparison |
-| Version supported | File open | Version == 1 |
+| Version supported | File open | Version == 2 |
 | Column length matches row count | File load | Per-column length check |
 | Checksum valid | File verify | Blake3 recomputation |
 | WAL entry format valid | Replay | Op type + boundary check |

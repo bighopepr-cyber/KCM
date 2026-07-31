@@ -14,10 +14,11 @@ impl EncryptionKey {
         EncryptionKey { key: derived }
     }
 
-    pub fn random() -> Self {
+    pub fn random() -> Result<Self, kcm_core::types::KcmError> {
         let mut key = [0u8; 32];
-        getrandom::getrandom(&mut key).expect("Failed to generate random key");
-        EncryptionKey { key }
+        getrandom::getrandom(&mut key)
+            .map_err(|e| kcm_core::types::KcmError::Io(format!("CSPRNG failure: {}", e)))?;
+        Ok(EncryptionKey { key })
     }
 
     pub fn as_bytes(&self) -> &[u8; 32] {

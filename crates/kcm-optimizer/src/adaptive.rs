@@ -59,7 +59,7 @@ impl AdaptiveExecutor {
         predicted_cost: f64,
         actual_cost: f64,
     ) {
-        let mut history = self.history.lock().unwrap();
+        let mut history = self.history.lock().unwrap_or_else(|e| e.into_inner());
         history.push_back(ExecutionRecord {
             query_hash,
             predicted_rows,
@@ -77,7 +77,7 @@ impl AdaptiveExecutor {
     }
 
     pub fn cardinality_correction_factor(&self, query_hash: u64) -> f64 {
-        let history = self.history.lock().unwrap();
+        let history = self.history.lock().unwrap_or_else(|e| e.into_inner());
         let relevant: Vec<&ExecutionRecord> = history
             .iter()
             .filter(|r| r.query_hash == query_hash)
@@ -102,11 +102,11 @@ impl AdaptiveExecutor {
     }
 
     pub fn history_size(&self) -> usize {
-        self.history.lock().unwrap().len()
+        self.history.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     pub fn average_cost_error(&self) -> f64 {
-        let history = self.history.lock().unwrap();
+        let history = self.history.lock().unwrap_or_else(|e| e.into_inner());
         if history.is_empty() {
             return 0.0;
         }

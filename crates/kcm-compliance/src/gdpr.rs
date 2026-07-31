@@ -1,3 +1,4 @@
+use kcm_core::types::KcmError;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -27,34 +28,36 @@ impl GDPRManager {
         }
     }
 
-    pub fn register_subject(&self, subject: DataSubject) -> Result<(), String> {
+    pub fn register_subject(&self, subject: DataSubject) -> Result<(), KcmError> {
         let mut subjects = self.subjects.write();
         if subjects.contains_key(&subject.subject_id) {
-            return Err("Subject already registered".to_string());
+            return Err(KcmError::InvalidArgument(
+                "Subject already exists".to_string(),
+            ));
         }
         subjects.insert(subject.subject_id.clone(), subject);
         Ok(())
     }
 
-    pub fn grant_consent(&self, subject_id: &str) -> Result<(), String> {
+    pub fn grant_consent(&self, subject_id: &str) -> Result<(), KcmError> {
         let mut subjects = self.subjects.write();
         match subjects.get_mut(subject_id) {
             Some(s) => {
                 s.consent = ConsentStatus::Granted;
                 Ok(())
             }
-            None => Err("Subject not found".to_string()),
+            None => Err(KcmError::NotFound("Subject not found".to_string())),
         }
     }
 
-    pub fn withdraw_consent(&self, subject_id: &str) -> Result<(), String> {
+    pub fn withdraw_consent(&self, subject_id: &str) -> Result<(), KcmError> {
         let mut subjects = self.subjects.write();
         match subjects.get_mut(subject_id) {
             Some(s) => {
                 s.consent = ConsentStatus::Withdrawn;
                 Ok(())
             }
-            None => Err("Subject not found".to_string()),
+            None => Err(KcmError::NotFound("Subject not found".to_string())),
         }
     }
 
@@ -66,16 +69,21 @@ impl GDPRManager {
             .unwrap_or(false)
     }
 
-    pub fn export_data(&self, subject_id: &str) -> Result<String, String> {
+    pub fn export_data(&self, subject_id: &str) -> Result<String, KcmError> {
         self.subjects
             .read()
             .get(subject_id)
             .map(|s| format!("{:?}", s))
-            .ok_or_else(|| "Subject not found".to_string())
+            .ok_or_else(|| KcmError::NotFound("Subject not found".to_string()))
     }
 
-    pub fn delete_data(&self, subject_id: &str) -> Result<(), String> {
-        self.subjects.write().remove(subject_id);
+    pub fn delete_data(&self, subject_id: &str) -> Result<(), KcmError> {
+        if self.subjects.write().remove(subject_id).is_none() {
+            return Err(KcmError::NotFound(format!(
+                "Subject {} not found",
+                subject_id
+            )));
+        }
         Ok(())
     }
 }

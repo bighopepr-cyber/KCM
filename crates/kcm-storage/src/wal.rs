@@ -6,8 +6,23 @@ use std::sync::Mutex;
 
 pub const WAL_MAGIC: &[u8; 5] = b"WALDB";
 pub const WAL_VERSION: u8 = 2;
-pub const WAL_INSERT_SIZE: usize = 34;
-pub const WAL_DELETE_SIZE: usize = 9;
+pub const WAL_INSERT_SIZE: usize = 38;
+pub const WAL_DELETE_SIZE: usize = 13;
+
+fn crc32(data: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFF_FFFF;
+    for &byte in data {
+        crc ^= byte as u32;
+        for _ in 0..8 {
+            if crc & 1 != 0 {
+                crc = (crc >> 1) ^ 0xEDB8_8320;
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+    crc ^ 0xFFFF_FFFF
+}
 
 #[derive(Debug, Clone)]
 pub enum WALEntry {
@@ -83,6 +98,7 @@ impl WriteAheadLog {
     pub fn append_fact(&self, fact: &Fact) -> Result<(), KcmError> {
         let mut buffer = self.buffer.lock().unwrap_or_else(|e| e.into_inner());
         buffer.extend_from_slice(&1u8.to_le_bytes());
+        let data_start = buffer.len();
         buffer.extend_from_slice(&fact.subject.0.to_le_bytes());
         buffer.extend_from_slice(&fact.predicate.0.to_le_bytes());
         buffer.extend_from_slice(&fact.object.0.to_le_bytes());
@@ -92,6 +108,8 @@ impl WriteAheadLog {
         buffer.extend_from_slice(&fact.version.to_le_bytes());
         buffer.extend_from_slice(&fact.priority.to_le_bytes());
         buffer.extend_from_slice(&fact.owner.to_le_bytes());
+        let checksum = crc32(&buffer[data_start..]);
+        buffer.extend_from_slice(&checksum.to_le_bytes());
         if buffer.len() >= self.buffer_threshold {
             drop(buffer);
             self.flush_buffer()?;
@@ -102,7 +120,10 @@ impl WriteAheadLog {
     pub fn append_delete(&self, row_id: u64) -> Result<(), KcmError> {
         let mut buffer = self.buffer.lock().unwrap_or_else(|e| e.into_inner());
         buffer.extend_from_slice(&2u8.to_le_bytes());
+        let data_start = buffer.len();
         buffer.extend_from_slice(&row_id.to_le_bytes());
+        let checksum = crc32(&buffer[data_start..]);
+        buffer.extend_from_slice(&checksum.to_le_bytes());
         if buffer.len() >= self.buffer_threshold {
             drop(buffer);
             self.flush_buffer()?;
@@ -141,9 +162,15 @@ impl WriteAheadLog {
             offset += 1;
             match op_type {
                 1 => {
-                    if offset + 33 > all_data.len() {
-                        break;
+                    if offset + 37 > all_data.len() {
+                        return Err(KcmError::Corrupted(format!(
+                            "Truncated WAL insert entry at offset {}: need {} bytes, have {}",
+                            offset - 1,
+                            38,
+                            all_data.len() - (offset - 1)
+                        )));
                     }
+                    let data_start = offset;
                     let subject = read_u32(&all_data, offset);
                     offset += 4;
                     let predicate = all_data[offset];
@@ -163,6 +190,18 @@ impl WriteAheadLog {
                     let owner = read_u16(&all_data, offset);
                     offset += 2;
 
+                    let expected_checksum = read_u32(&all_data, offset);
+                    offset += 4;
+                    let actual_checksum = crc32(&all_data[data_start..offset - 4]);
+                    if expected_checksum != actual_checksum {
+                        return Err(KcmError::Corrupted(format!(
+                            "WAL insert checksum mismatch at offset {}: expected {:#010x}, got {:#010x}",
+                            data_start - 1,
+                            expected_checksum,
+                            actual_checksum
+                        )));
+                    }
+
                     callback(WALEntry::Insert {
                         subject: SubjectID(subject),
                         predicate: PredicateID(predicate),
@@ -177,15 +216,40 @@ impl WriteAheadLog {
                     count += 1;
                 }
                 2 => {
-                    if offset + 8 > all_data.len() {
-                        break;
+                    if offset + 12 > all_data.len() {
+                        return Err(KcmError::Corrupted(format!(
+                            "Truncated WAL delete entry at offset {}: need {} bytes, have {}",
+                            offset - 1,
+                            13,
+                            all_data.len() - (offset - 1)
+                        )));
                     }
+                    let data_start = offset;
                     let row_id = read_u64(&all_data, offset);
                     offset += 8;
+
+                    let expected_checksum = read_u32(&all_data, offset);
+                    offset += 4;
+                    let actual_checksum = crc32(&all_data[data_start..offset - 4]);
+                    if expected_checksum != actual_checksum {
+                        return Err(KcmError::Corrupted(format!(
+                            "WAL delete checksum mismatch at offset {}: expected {:#010x}, got {:#010x}",
+                            data_start - 1,
+                            expected_checksum,
+                            actual_checksum
+                        )));
+                    }
+
                     callback(WALEntry::Delete { row_id })?;
                     count += 1;
                 }
-                _ => break,
+                _ => {
+                    return Err(KcmError::Corrupted(format!(
+                        "Unknown WAL op type: {} at offset {}",
+                        op_type,
+                        offset - 1
+                    )));
+                }
             }
         }
         Ok(count)
@@ -278,6 +342,8 @@ mod tests {
         buffer.extend_from_slice(&fact.version.to_le_bytes());
         buffer.extend_from_slice(&fact.priority.to_le_bytes());
         buffer.extend_from_slice(&fact.owner.to_le_bytes());
+        let checksum = crc32(&buffer);
+        buffer.extend_from_slice(&checksum.to_le_bytes());
         assert_eq!(buffer.len(), WAL_INSERT_SIZE);
     }
 }

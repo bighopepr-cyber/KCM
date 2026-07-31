@@ -46,7 +46,9 @@ impl BackupManager {
         let manifest_path = path.with_extension("manifest");
         let content = format!(
             "backup_type: incremental\ncreated: {}\nbase: {}\nactive_rows: {}\n",
-            ts, last_backup.display(), schema.active_count()
+            ts,
+            last_backup.display(),
+            schema.active_count()
         );
         std::fs::write(manifest_path, content)
             .map_err(|e| KcmError::Io(format!("Failed to write manifest: {}", e)))?;
