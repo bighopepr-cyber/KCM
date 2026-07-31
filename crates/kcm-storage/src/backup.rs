@@ -20,7 +20,7 @@ impl BackupManager {
         let ts = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
-            .as_secs();
+            .as_nanos();
         let name = format!("backup_full_{}.kcm", ts);
         let path = self.backup_dir.join(&name);
         DatabaseFile::save(schema, &path)?;

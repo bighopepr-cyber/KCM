@@ -13,3 +13,4 @@ blake3 = "1.5"
 thiserror = "1.0"
 
 [dev-dependencies]
+tempfile = "3"

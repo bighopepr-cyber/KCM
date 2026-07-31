@@ -280,15 +280,16 @@ pub extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
 
 #[no_mangle]
 pub extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
-    let msg = match err {
-        KCM_Error::KCM_OK => "OK",
-        KCM_Error::KCM_ERR_NOT_FOUND => "Not found",
-        KCM_Error::KCM_ERR_OUT_OF_MEMORY => "Out of memory",
-        KCM_Error::KCM_ERR_INVALID_ARGUMENT => "Invalid argument",
-        KCM_Error::KCM_ERR_IO => "I/O error",
-        KCM_Error::KCM_ERR_CORRUPTED => "Data corrupted",
-        KCM_Error::KCM_ERR_CONFLICT => "Conflict",
-        KCM_Error::KCM_ERR_TRANSACTION_ABORTED => "Transaction aborted",
-    };
-    msg.as_ptr() as *const c_char
+    match err {
+        KCM_Error::KCM_OK => b"OK\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_NOT_FOUND => b"Not found\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_OUT_OF_MEMORY => b"Out of memory\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_INVALID_ARGUMENT => b"Invalid argument\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_IO => b"I/O error\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_CORRUPTED => b"Data corrupted\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_CONFLICT => b"Conflict\0".as_ptr() as *const c_char,
+        KCM_Error::KCM_ERR_TRANSACTION_ABORTED => {
+            b"Transaction aborted\0".as_ptr() as *const c_char
+        }
+    }
 }

@@ -9,21 +9,14 @@ pub struct EncryptionKey {
 
 impl EncryptionKey {
     pub fn from_password(password: &str, salt: &[u8; 32]) -> Self {
-        let hash = blake3::keyed_hash(salt, password.as_bytes());
-        let mut key = [0u8; 32];
-        key.copy_from_slice(hash.as_bytes());
-        EncryptionKey { key }
+        let material = [password.as_bytes(), salt.as_slice()].concat();
+        let derived = blake3::derive_key("kcm-encryption", &material);
+        EncryptionKey { key: derived }
     }
 
     pub fn random() -> Self {
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .subsec_nanos();
         let mut key = [0u8; 32];
-        for i in 0..32 {
-            key[i] = ((nanos >> (i % 8)) & 0xFF) as u8 ^ (i as u8).wrapping_mul(0x9E);
-        }
+        getrandom::getrandom(&mut key).expect("Failed to generate random key");
         EncryptionKey { key }
     }
 
@@ -35,20 +28,49 @@ impl EncryptionKey {
 pub struct EncryptedStorage;
 
 impl EncryptedStorage {
-    pub fn encrypt(plaintext: &[u8], key: &EncryptionKey) -> Vec<u8> {
-        plaintext
-            .iter()
-            .enumerate()
-            .map(|(i, &b)| b ^ key.key[i % 32])
-            .collect()
+    pub fn encrypt(plaintext: &[u8], key: &EncryptionKey) -> Result<Vec<u8>, KcmError> {
+        use aes_gcm::aead::rand_core::RngCore;
+        use aes_gcm::{
+            aead::{Aead, KeyInit, OsRng},
+            Aes256Gcm, Nonce,
+        };
+
+        let cipher = Aes256Gcm::new_from_slice(&key.key)
+            .map_err(|e| KcmError::Io(format!("Cipher init failed: {}", e)))?;
+
+        let mut nonce_bytes = [0u8; 12];
+        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+        let ciphertext = cipher
+            .encrypt(nonce, plaintext)
+            .map_err(|e| KcmError::Io(format!("Encryption failed: {}", e)))?;
+
+        let mut result = Vec::with_capacity(12 + ciphertext.len());
+        result.extend_from_slice(&nonce_bytes);
+        result.extend_from_slice(&ciphertext);
+        Ok(result)
     }
 
-    pub fn decrypt(encrypted: &[u8], key: &EncryptionKey) -> Vec<u8> {
-        encrypted
-            .iter()
-            .enumerate()
-            .map(|(i, &b)| b ^ key.key[i % 32])
-            .collect()
+    pub fn decrypt(encrypted: &[u8], key: &EncryptionKey) -> Result<Vec<u8>, KcmError> {
+        use aes_gcm::{
+            aead::{Aead, KeyInit},
+            Aes256Gcm, Nonce,
+        };
+
+        if encrypted.len() < 12 {
+            return Err(KcmError::Corrupted("Encrypted data too short".to_string()));
+        }
+
+        let cipher = Aes256Gcm::new_from_slice(&key.key)
+            .map_err(|e| KcmError::Io(format!("Cipher init failed: {}", e)))?;
+
+        let nonce = Nonce::from_slice(&encrypted[..12]);
+        let ciphertext = &encrypted[12..];
+
+        cipher
+            .decrypt(nonce, ciphertext)
+            .map_err(|e| KcmError::Corrupted(format!("Decryption failed: {}", e)))
     }
 
     pub fn encrypt_file<P: AsRef<Path>>(
@@ -60,7 +82,7 @@ impl EncryptedStorage {
         File::open(src)
             .and_then(|mut f| f.read_to_end(&mut data))
             .map_err(|e| KcmError::Io(e.to_string()))?;
-        let encrypted = Self::encrypt(&data, key);
+        let encrypted = Self::encrypt(&data, key)?;
         File::create(dst)
             .and_then(|mut f| f.write_all(&encrypted))
             .map_err(|e| KcmError::Io(e.to_string()))?;
@@ -76,7 +98,7 @@ impl EncryptedStorage {
         File::open(src)
             .and_then(|mut f| f.read_to_end(&mut data))
             .map_err(|e| KcmError::Io(e.to_string()))?;
-        let decrypted = Self::decrypt(&data, key);
+        let decrypted = Self::decrypt(&data, key)?;
         File::create(dst)
             .and_then(|mut f| f.write_all(&decrypted))
             .map_err(|e| KcmError::Io(e.to_string()))?;

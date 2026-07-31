@@ -1,4 +1,5 @@
 use parking_lot::Mutex;
+use std::collections::VecDeque;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -20,23 +21,23 @@ pub struct AuditEvent {
 }
 
 pub struct AuditLog {
-    events: Arc<Mutex<Vec<AuditEvent>>>,
+    events: Arc<Mutex<VecDeque<AuditEvent>>>,
     max_events: usize,
 }
 
 impl AuditLog {
     pub fn new() -> Self {
         AuditLog {
-            events: Arc::new(Mutex::new(Vec::new())),
+            events: Arc::new(Mutex::new(VecDeque::new())),
             max_events: 100_000,
         }
     }
 
     pub fn log(&self, event: AuditEvent) {
         let mut events = self.events.lock();
-        events.push(event);
+        events.push_back(event);
         if events.len() > self.max_events {
-            events.remove(0);
+            events.pop_front();
         }
     }
 
@@ -81,7 +82,7 @@ impl AuditLog {
     }
 
     pub fn get_events(&self) -> Vec<AuditEvent> {
-        self.events.lock().clone()
+        self.events.lock().clone().into()
     }
 
     pub fn event_count(&self) -> usize {

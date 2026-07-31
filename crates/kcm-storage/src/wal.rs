@@ -115,7 +115,7 @@ impl WriteAheadLog {
 
             match op_type {
                 1 => {
-                    if offset + 28 > all_data.len() {
+                    if offset + 26 > all_data.len() {
                         break;
                     }
                     let subject = u32::from_le_bytes([

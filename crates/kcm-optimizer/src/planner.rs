@@ -29,7 +29,7 @@ pub enum PlanNode {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PlannerFilterPredicate {
     EqualSubject(u32),
     EqualPredicate(u8),

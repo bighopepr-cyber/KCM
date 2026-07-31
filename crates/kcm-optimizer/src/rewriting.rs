@@ -123,8 +123,14 @@ impl IndexSelectionOptimizer {
         matches!(
             (pred, index),
             (PlannerFilterPredicate::EqualPredicate(_), IndexType::Bitmap)
-            | (PlannerFilterPredicate::EqualObject(_), IndexType::BloomFilter)
-            | (PlannerFilterPredicate::EqualSubject(_), IndexType::Composite)
+                | (
+                    PlannerFilterPredicate::EqualObject(_),
+                    IndexType::BloomFilter
+                )
+                | (
+                    PlannerFilterPredicate::EqualSubject(_),
+                    IndexType::Composite
+                )
         )
     }
 }
@@ -172,6 +178,68 @@ impl Default for OptimizerPipeline {
 
 impl PartialEq for PlanNode {
     fn eq(&self, other: &Self) -> bool {
-        std::mem::discriminant(self) == std::mem::discriminant(other)
+        match (self, other) {
+            (
+                PlanNode::Scan {
+                    confidence_filter: a,
+                },
+                PlanNode::Scan {
+                    confidence_filter: b,
+                },
+            ) => a == b,
+            (
+                PlanNode::Filter {
+                    child: a1,
+                    predicate: a2,
+                },
+                PlanNode::Filter {
+                    child: b1,
+                    predicate: b2,
+                },
+            ) => a1 == b1 && a2 == b2,
+            (
+                PlanNode::Project {
+                    child: a1,
+                    columns: a2,
+                },
+                PlanNode::Project {
+                    child: b1,
+                    columns: b2,
+                },
+            ) => a1 == b1 && a2 == b2,
+            (
+                PlanNode::Join {
+                    left: a1,
+                    right: a2,
+                    join_column: a3,
+                },
+                PlanNode::Join {
+                    left: b1,
+                    right: b2,
+                    join_column: b3,
+                },
+            ) => a1 == b1 && a2 == b2 && a3 == b3,
+            (
+                PlanNode::Aggregate {
+                    child: a1,
+                    group_by: a2,
+                },
+                PlanNode::Aggregate {
+                    child: b1,
+                    group_by: b2,
+                },
+            ) => a1 == b1 && a2 == b2,
+            (
+                PlanNode::Infer {
+                    child: a1,
+                    rule_id: a2,
+                },
+                PlanNode::Infer {
+                    child: b1,
+                    rule_id: b2,
+                },
+            ) => a1 == b1 && a2 == b2,
+            _ => std::mem::discriminant(self) == std::mem::discriminant(other),
+        }
     }
 }

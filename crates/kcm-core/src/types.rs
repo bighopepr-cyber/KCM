@@ -173,7 +173,7 @@ impl Fact {
             evidence: EvidenceID::UNKNOWN,
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
+                .unwrap_or_default()
                 .as_nanos() as i64,
             context: ContextID::NULL,
             version: 1,

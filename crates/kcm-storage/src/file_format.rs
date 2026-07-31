@@ -52,12 +52,12 @@ impl DatabaseFile {
         Self::serialize_column_raw(&mut writer, schema.priority_col.as_slice())?;
         Self::serialize_column_raw(&mut writer, schema.owner_col.as_slice())?;
 
+        writer.flush().map_err(|e| KcmError::Io(e.to_string()))?;
+
         let checksum = Self::compute_checksum(path)?;
         writer
             .write_all(&checksum)
             .map_err(|e| KcmError::Io(e.to_string()))?;
-
-        writer.flush().map_err(|e| KcmError::Io(e.to_string()))?;
 
         let file = writer
             .into_inner()
@@ -201,6 +201,37 @@ impl DatabaseFile {
         Ok(result)
     }
 
+    fn compute_checksum_range<P: AsRef<Path>>(
+        path: P,
+        start: u64,
+        end: u64,
+    ) -> Result<[u8; 32], KcmError> {
+        let mut file = File::open(path).map_err(|e| KcmError::Io(e.to_string()))?;
+        use std::io::Seek;
+        file.seek(std::io::SeekFrom::Start(start))
+            .map_err(|e| KcmError::Io(e.to_string()))?;
+        let mut hasher = blake3::Hasher::new();
+
+        let mut buffer = [0u8; 8192];
+        let mut remaining = end - start;
+        while remaining > 0 {
+            let to_read = (remaining as usize).min(buffer.len());
+            match file.read(&mut buffer[..to_read]) {
+                Ok(0) => break,
+                Ok(n) => {
+                    hasher.update(&buffer[..n]);
+                    remaining -= n as u64;
+                }
+                Err(e) => return Err(KcmError::Io(e.to_string())),
+            }
+        }
+
+        let hash = hasher.finalize();
+        let mut result = [0u8; 32];
+        result.copy_from_slice(hash.as_bytes());
+        Ok(result)
+    }
+
     pub fn verify<P: AsRef<Path>>(path: P) -> Result<bool, KcmError> {
         let path = path.as_ref();
         let stored_checksum = {
@@ -222,7 +253,10 @@ impl DatabaseFile {
             checksum_bytes
         };
 
-        let computed = Self::compute_checksum(path)?;
+        let computed = Self::compute_checksum_range(path, 0, {
+            let metadata = std::fs::metadata(path).map_err(|e| KcmError::Io(e.to_string()))?;
+            metadata.len() - 32
+        })?;
         Ok(stored_checksum == computed)
     }
 }

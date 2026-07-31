@@ -7,4 +7,3 @@ description = "Query optimizer for KCM"
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
-kcm-compute = { path = "../kcm-compute" }

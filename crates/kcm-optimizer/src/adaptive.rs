@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -31,7 +32,7 @@ struct ExecutionRecord {
 }
 
 pub struct AdaptiveExecutor {
-    history: Arc<Mutex<Vec<ExecutionRecord>>>,
+    history: Arc<Mutex<VecDeque<ExecutionRecord>>>,
     max_history: usize,
     reoptimize_threshold: f64,
 }
@@ -39,7 +40,7 @@ pub struct AdaptiveExecutor {
 impl AdaptiveExecutor {
     pub fn new() -> Self {
         AdaptiveExecutor {
-            history: Arc::new(Mutex::new(Vec::new())),
+            history: Arc::new(Mutex::new(VecDeque::new())),
             max_history: 10_000,
             reoptimize_threshold: 0.5,
         }
@@ -59,7 +60,7 @@ impl AdaptiveExecutor {
         actual_cost: f64,
     ) {
         let mut history = self.history.lock().unwrap();
-        history.push(ExecutionRecord {
+        history.push_back(ExecutionRecord {
             query_hash,
             predicted_rows,
             actual_rows,
@@ -67,7 +68,7 @@ impl AdaptiveExecutor {
             actual_cost,
         });
         if history.len() > self.max_history {
-            history.remove(0);
+            history.pop_front();
         }
     }
 

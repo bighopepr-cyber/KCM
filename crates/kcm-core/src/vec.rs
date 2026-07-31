@@ -11,8 +11,8 @@ pub struct DenseVec<T: Copy> {
     _phantom: PhantomData<T>,
 }
 
-unsafe impl<T: Copy> Send for DenseVec<T> {}
-unsafe impl<T: Copy> Sync for DenseVec<T> {}
+unsafe impl<T: Copy + Send> Send for DenseVec<T> {}
+unsafe impl<T: Copy + Send + Sync> Sync for DenseVec<T> {}
 
 impl<T: Copy> DenseVec<T> {
     const MIN_ALIGNMENT: usize = 64;
@@ -108,7 +108,7 @@ impl<T: Copy> Drop for DenseVec<T> {
                 self.capacity * std::mem::size_of::<T>(),
                 self.alignment.max(std::mem::align_of::<T>()),
             )
-            .unwrap();
+            .unwrap_or_else(|_| std::process::abort());
 
             unsafe {
                 dealloc(self.ptr.as_ptr() as *mut u8, layout);
@@ -119,8 +119,8 @@ impl<T: Copy> Drop for DenseVec<T> {
 
 impl<T: Copy> Clone for DenseVec<T> {
     fn clone(&self) -> Self {
-        let mut new_vec =
-            Self::with_alignment(self.capacity, self.alignment).expect("Clone allocation failed");
+        let mut new_vec = Self::with_alignment(self.capacity, self.alignment)
+            .unwrap_or_else(|_| std::process::abort());
         new_vec.len = self.len;
         new_vec.as_mut_slice().copy_from_slice(self.as_slice());
         new_vec
