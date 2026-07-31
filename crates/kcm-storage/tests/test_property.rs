@@ -159,10 +159,11 @@ fn test_wal_checksum_validation() {
     wal.flush_buffer().unwrap();
 
     let mut data = std::fs::read(&wal_path).unwrap();
-    if !data.is_empty() {
-        data[40] = data[40].wrapping_add(1);
-        std::fs::write(&wal_path, &data).unwrap();
+    if !data.len() >= 36 {
+        panic!("WAL data too short for corruption test");
     }
+    data[36] = data[36].wrapping_add(1);
+    std::fs::write(&wal_path, &data).unwrap();
 
     let wal2 = WriteAheadLog::new(&wal_path).unwrap();
     let result = wal2.replay(|_| Ok(()));

@@ -1,5 +1,4 @@
 #![allow(non_camel_case_types)]
-#![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 pub mod examples;
 pub mod kql_parser;

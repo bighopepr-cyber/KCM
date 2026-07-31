@@ -18,7 +18,9 @@ impl ConfidenceCalculator {
     }
 
     pub fn weighted(values: &[f64], weights: &[f64]) -> f64 {
-        assert_eq!(values.len(), weights.len());
+        if values.len() != weights.len() || values.is_empty() {
+            return 0.0;
+        }
         let numerator: f64 = values.iter().zip(weights.iter()).map(|(v, w)| v * w).sum();
         let denominator: f64 = weights.iter().sum();
 

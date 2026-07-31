@@ -88,6 +88,9 @@ pub struct ShardMap {
     num_shards: usize,
 }
 
+// SAFETY: ShardMap contains HashMap<usize, ShardInfo>, Box<dyn ShardingStrategy>, and usize.
+// All contained types are Send+Sync. The Box<dyn ShardingStrategy> is safe because
+// ShardingStrategy requires Send+Sync in its definition.
 unsafe impl Send for ShardMap {}
 unsafe impl Sync for ShardMap {}
 

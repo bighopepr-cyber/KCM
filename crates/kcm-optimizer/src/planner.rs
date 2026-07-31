@@ -1,4 +1,5 @@
 use crate::cost_model::{CostModel, OperatorCost};
+use crate::statistics::Statistics;
 use kcm_core::types::*;
 
 #[derive(Debug, Clone)]
@@ -111,12 +112,55 @@ impl QueryPlan {
 
 pub struct Planner {
     cost_model: CostModel,
+    statistics: Option<Statistics>,
 }
 
 impl Planner {
     pub fn new(row_count: usize) -> Self {
         Planner {
             cost_model: CostModel::new(row_count),
+            statistics: None,
+        }
+    }
+
+    pub fn with_statistics(row_count: usize, statistics: Statistics) -> Self {
+        Planner {
+            cost_model: CostModel::new(row_count),
+            statistics: Some(statistics),
+        }
+    }
+
+    /// Estimate selectivity for a range predicate on a column.
+    /// Uses real statistics when available, falls back to heuristic defaults.
+    pub fn estimate_selectivity(&self, column: ColumnID, low: i64, high: i64) -> f64 {
+        if let Some(ref stats) = self.statistics {
+            stats.estimate_selectivity(column, low, high)
+        } else {
+            // Default heuristic: equality on a column with 1000 unique values
+            0.001
+        }
+    }
+
+    /// Estimate selectivity for an equality predicate.
+    fn estimate_equality_selectivity(&self, column: ColumnID) -> f64 {
+        if let Some(ref stats) = self.statistics {
+            if let Some(col_stats) = stats.column_stats.get(&column) {
+                if col_stats.row_count == 0 {
+                    return 0.0;
+                }
+                let cardinality = col_stats.cardinality.max(1) as f64;
+                return (1.0 / cardinality).clamp(0.0001, 1.0);
+            }
+        }
+        0.01
+    }
+
+    /// Estimate join selectivity.
+    fn estimate_join_selectivity(&self, left_cardinality: u64, right_cardinality: u64) -> f64 {
+        if let Some(ref stats) = self.statistics {
+            stats.estimate_join_selectivity(left_cardinality, right_cardinality)
+        } else {
+            0.1
         }
     }
 
@@ -131,7 +175,7 @@ impl Planner {
         let mut cost = self.cost_model.estimate_scan(1.0);
 
         if let Some(subject) = subject_filter {
-            let selectivity = 0.01;
+            let selectivity = self.estimate_equality_selectivity(ColumnID::Subject);
             cost = self
                 .cost_model
                 .estimate_filter(cost.estimated_rows, selectivity);
@@ -142,7 +186,7 @@ impl Planner {
         }
 
         if let Some(pred) = predicate_filter {
-            let selectivity = 0.1;
+            let selectivity = self.estimate_equality_selectivity(ColumnID::Predicate);
             cost = self
                 .cost_model
                 .estimate_filter(cost.estimated_rows, selectivity);
@@ -153,7 +197,7 @@ impl Planner {
         }
 
         if let Some(obj) = object_filter {
-            let selectivity = 0.01;
+            let selectivity = self.estimate_equality_selectivity(ColumnID::Object);
             cost = self
                 .cost_model
                 .estimate_filter(cost.estimated_rows, selectivity);
@@ -181,7 +225,7 @@ impl Planner {
         let mut left_cost = self.cost_model.estimate_scan(1.0);
 
         for pred in left_filters {
-            let selectivity = 0.1;
+            let selectivity = self.estimate_equality_selectivity(ColumnID::Subject);
             left_cost = self
                 .cost_model
                 .estimate_filter(left_cost.estimated_rows, selectivity);
@@ -197,7 +241,7 @@ impl Planner {
         let mut right_cost = self.cost_model.estimate_scan(1.0);
 
         for pred in right_filters {
-            let selectivity = 0.1;
+            let selectivity = self.estimate_equality_selectivity(ColumnID::Object);
             right_cost = self
                 .cost_model
                 .estimate_filter(right_cost.estimated_rows, selectivity);
@@ -207,9 +251,15 @@ impl Planner {
             };
         }
 
-        let join_cost =
-            self.cost_model
-                .estimate_join(left_cost.estimated_rows, right_cost.estimated_rows, 0.1);
+        let join_selectivity = self.estimate_join_selectivity(
+            left_cost.estimated_rows as u64,
+            right_cost.estimated_rows as u64,
+        );
+        let join_cost = self.cost_model.estimate_join(
+            left_cost.estimated_rows,
+            right_cost.estimated_rows,
+            join_selectivity,
+        );
 
         QueryPlan {
             root: PlanNode::Join {
