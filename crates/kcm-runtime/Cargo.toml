@@ -17,6 +17,7 @@ tempfile = "3"
 kcm-distributed = { path = "../kcm-distributed" }
 kcm-reasoning = { path = "../kcm-reasoning" }
 kcm-compute = { path = "../kcm-compute" }
+kcm-testing = { path = "../kcm-testing" }
 
 [[bench]]
 name = "micro"
