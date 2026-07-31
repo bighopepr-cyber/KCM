@@ -4,6 +4,7 @@ use kcm_core::dictionary::Dictionary;
 use kcm_core::types::*;
 use kcm_core::vec::DenseVec;
 use kcm_runtime::database::KnowledgeDatabase;
+use std::time::Duration;
 
 // ============================================================================
 // COLUMN OPERATIONS
@@ -11,6 +12,9 @@ use kcm_runtime::database::KnowledgeDatabase;
 
 fn bench_column_sequential_scan(c: &mut Criterion) {
     let mut group = c.benchmark_group("column_sequential_scan");
+    group.measurement_time(Duration::from_secs(10));
+    group.sample_size(100);
+    group.warm_up_time(Duration::from_secs(3));
     for size in &[1_000, 10_000, 100_000, 1_000_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
             let mut vec: DenseVec<u32> = DenseVec::new(size).unwrap();
@@ -687,7 +691,7 @@ fn bench_sharding(c: &mut Criterion) {
 
 fn bench_memory_metrics(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_metrics");
-    group.bench_function("per_fact_memory", |b| {
+    group.bench_function("per_fact_memory_100k", |b| {
         b.iter(|| {
             let kb = KnowledgeDatabase::new().unwrap();
             for i in 0..100_000 {
@@ -711,6 +715,24 @@ fn bench_memory_metrics(c: &mut Criterion) {
                 bitmap.set(i);
             }
             black_box(bitmap.count_ones())
+        });
+    });
+    group.bench_function("dictionary_memory_100k", |b| {
+        b.iter(|| {
+            let mut dict = Dictionary::new();
+            for i in 0..100_000 {
+                dict.insert(&format!("key_{}", i));
+            }
+            black_box(dict.len())
+        });
+    });
+    group.bench_function("dense_vec_memory_1m", |b| {
+        b.iter(|| {
+            let mut vec: DenseVec<u64> = DenseVec::new(1_000_000).unwrap();
+            for i in 0..1_000_000u64 {
+                vec.push(i).unwrap();
+            }
+            black_box(vec.len())
         });
     });
     group.finish();
