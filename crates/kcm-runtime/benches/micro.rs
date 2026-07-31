@@ -146,7 +146,7 @@ fn bench_database_insert(c: &mut Criterion) {
             b.iter_batched(
                 || KnowledgeDatabase::new().unwrap(),
                 |kb| {
-                    for i in 0..*batch {
+                    for i in 0..batch {
                         let fact = Fact::new(
                             SubjectID((i % 100) as u32),
                             PredicateID((i % 10) as u8),
@@ -172,15 +172,15 @@ fn bench_database_query(c: &mut Criterion) {
             dataset,
             |b, &dataset| {
                 let kb = KnowledgeDatabase::new().unwrap();
-                for i in 0..*dataset {
-                    Fact::new(
+                for i in 0..dataset {
+                    let fact = Fact::new(
                         SubjectID((i % 100) as u32),
                         PredicateID((i % 10) as u8),
                         ObjectID((i % 200) as u32),
                         0.75,
                     )
-                    .and_then(|f| kb.insert(&f))
                     .unwrap();
+                    kb.insert(&fact).unwrap();
                 }
                 b.iter(|| black_box(kb.query().with_predicate(PredicateID(5)).execute().unwrap()));
             },
@@ -196,8 +196,8 @@ fn bench_inference_pattern_matching(c: &mut Criterion) {
             BenchmarkId::from_parameter(dataset),
             dataset,
             |b, &schema_size| {
-                let mut schema = kcm_storage::Schema::new(*schema_size).unwrap();
-                for i in 0..*schema_size {
+                let mut schema = kcm_storage::Schema::new(schema_size).unwrap();
+                for i in 0..schema_size {
                     schema
                         .append_fact(
                             &Fact::new(
