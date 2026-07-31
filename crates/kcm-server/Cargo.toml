@@ -1,0 +1,19 @@
+[package]
+name = "kcm-server"
+version = "0.1.0"
+edition = "2021"
+description = "HTTP server for KCM REST API"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+kcm-runtime = { path = "../kcm-runtime" }
+kcm-interface = { path = "../kcm-interface" }
+actix-web = "4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+env_logger = "0.11"
+log = "0.4"
+
+[[bin]]
+name = "kcm-server"
+path = "src/main.rs"

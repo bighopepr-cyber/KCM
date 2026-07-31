@@ -12,6 +12,7 @@ members = [
     "crates/kcm-security",
     "crates/kcm-compliance",
     "crates/kcm-testing",
+    "crates/kcm-server",
 ]
 
 resolver = "2"
