@@ -112,7 +112,10 @@ impl TransactionCoordinator {
             if !vote {
                 txn.status = TransactionStatus::Aborted;
                 self.transport.abort(*participant, &txn.transaction_id);
-                return Err(KcmError::Conflict(format!("Participant {} voted ABORT", participant)));
+                return Err(KcmError::Conflict(format!(
+                    "Participant {} voted ABORT",
+                    participant
+                )));
             }
         }
 
@@ -131,7 +134,10 @@ impl TransactionCoordinator {
             txn.status = TransactionStatus::Aborted;
             Ok(())
         } else {
-            Err(KcmError::NotFound(format!("Transaction not found: {}", txn_id)))
+            Err(KcmError::NotFound(format!(
+                "Transaction not found: {}",
+                txn_id
+            )))
         }
     }
 

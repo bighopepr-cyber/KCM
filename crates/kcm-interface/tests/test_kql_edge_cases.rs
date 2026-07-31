@@ -106,7 +106,10 @@ fn test_lexer_exclamation_without_equals() {
     let mut lexer = Lexer::new("!");
     let result = lexer.tokenize();
     assert!(result.is_err());
-    assert!(matches!(result.unwrap_err(), KqlError::UnexpectedCharacter('!')));
+    assert!(matches!(
+        result.unwrap_err(),
+        KqlError::UnexpectedCharacter('!')
+    ));
 }
 
 #[test]
@@ -114,7 +117,10 @@ fn test_lexer_unexpected_character() {
     let mut lexer = Lexer::new("@");
     let result = lexer.tokenize();
     assert!(result.is_err());
-    assert!(matches!(result.unwrap_err(), KqlError::UnexpectedCharacter('@')));
+    assert!(matches!(
+        result.unwrap_err(),
+        KqlError::UnexpectedCharacter('@')
+    ));
 }
 
 #[test]

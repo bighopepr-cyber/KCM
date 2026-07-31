@@ -62,9 +62,8 @@ mod tests {
 
     #[test]
     fn test_optimizer_pipeline_reorder() {
-        let pipeline = OptimizerPipeline::new().with_rule(Box::new(
-            rewriting::JoinOrderingOptimizer,
-        ));
+        let pipeline =
+            OptimizerPipeline::new().with_rule(Box::new(rewriting::JoinOrderingOptimizer));
         let plan = PlanNode::Join {
             left: Box::new(PlanNode::Scan {
                 confidence_filter: None,
@@ -81,12 +80,8 @@ mod tests {
     #[test]
     fn test_planner_simple_query() {
         let planner = Planner::new(1000);
-        let plan = planner.plan_simple_query(
-            Some(SubjectID(1)),
-            Some(PredicateID(5)),
-            None,
-            Some(0.8),
-        );
+        let plan =
+            planner.plan_simple_query(Some(SubjectID(1)), Some(PredicateID(5)), None, Some(0.8));
         let output = plan.explain();
         assert!(output.contains("Filter"));
         assert!(output.contains("Scan"));
@@ -121,7 +116,7 @@ mod tests {
     fn test_statistics_selectivity() {
         let stats = Statistics::new();
         let sel = stats.estimate_selectivity(ColumnID::Subject, 0, 100);
-        assert!(sel >= 0.0 && sel <= 1.0);
+        assert!((0.0..=1.0).contains(&sel));
     }
 
     #[test]

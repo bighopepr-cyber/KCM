@@ -45,8 +45,8 @@ pub async fn async_query_all(
 
 pub async fn async_fact_count(
     db: std::sync::Arc<parking_lot::Mutex<crate::database::KnowledgeDatabase>>,
-) -> usize {
+) -> Result<usize, KcmError> {
     task::spawn_blocking(move || db.lock().fact_count())
         .await
-        .unwrap_or(0)
+        .map_err(|e| KcmError::Io(e.to_string()))
 }

@@ -114,3 +114,45 @@ fn test_transaction_auto_id() {
     let id2 = coord.begin_transaction(vec![0]);
     assert_ne!(id1, id2);
 }
+
+fn assert_sharding_strategy<T: ShardingStrategy>(_s: &T) {}
+
+#[test]
+fn test_consistent_hash_implements_sharding_strategy() {
+    let sharding = ConsistentHashSharding::new(4, 150);
+    assert_sharding_strategy(&sharding);
+
+    let boxed: Box<dyn ShardingStrategy> = Box::new(ConsistentHashSharding::new(4, 150));
+    let all = boxed.get_all_shards(4);
+    assert_eq!(all.len(), 4);
+    assert_eq!(boxed.get_shard_id(42, 4), sharding.get_shard_for_key(42));
+}
+
+#[test]
+fn test_consistent_hash_deterministic() {
+    let sharding = ConsistentHashSharding::new(8, 200);
+    for key in 0..5000u32 {
+        let first = sharding.get_shard_for_key(key);
+        let second = sharding.get_shard_for_key(key);
+        let third = sharding.get_shard_for_key(key);
+        assert_eq!(first, second);
+        assert_eq!(second, third);
+        assert!(first < 8);
+    }
+}
+
+#[test]
+fn test_consistent_hash_distribution() {
+    let sharding = ConsistentHashSharding::new(4, 150);
+    let mut counts = vec![0usize; 4];
+    for key in 0..10000u32 {
+        counts[sharding.get_shard_for_key(key)] += 1;
+    }
+    for count in &counts {
+        assert!(
+            *count > 100,
+            "Consistent hash distribution too skewed: {:?}",
+            counts
+        );
+    }
+}

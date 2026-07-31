@@ -86,7 +86,7 @@ impl InferenceEngine {
                     if confidence >= self.confidence_threshold {
                         let mut fact =
                             Fact::new(subject, rule.consequent_predicate, object, confidence)?;
-                        fact.priority = rule.priority as i8;
+                        fact.priority = rule.priority.clamp(i8::MIN as i32, i8::MAX as i32) as i8;
                         new_facts.push(Derivation {
                             derived_fact: fact,
                             rule_id: rule.id,

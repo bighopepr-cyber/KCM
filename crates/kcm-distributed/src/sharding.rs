@@ -78,6 +78,30 @@ impl ConsistentHashSharding {
     }
 }
 
+impl ShardingStrategy for ConsistentHashSharding {
+    fn get_shard_id(&self, key: u32, num_shards: usize) -> usize {
+        if self.ring.is_empty() {
+            return 0;
+        }
+        let mut hasher = DefaultHasher::new();
+        key.hash(&mut hasher);
+        let key_hash = hasher.finish();
+        let shard = match self.ring.binary_search_by_key(&key_hash, |&(h, _)| h) {
+            Ok(i) | Err(i) => {
+                if i >= self.ring.len() {
+                    self.ring[0].1
+                } else {
+                    self.ring[i].1
+                }
+            }
+        };
+        shard % num_shards
+    }
+    fn get_all_shards(&self, num_shards: usize) -> Vec<usize> {
+        (0..num_shards).collect()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ShardInfo {
     pub shard_id: usize,

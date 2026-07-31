@@ -156,3 +156,131 @@ fn test_deterministic_insert_query() {
         assert_eq!(f1.confidence, f2.confidence);
     }
 }
+
+#[test]
+fn test_transaction_rollback_changes() {
+    let kb = KnowledgeDatabase::new().unwrap();
+
+    let fact1 = Fact::new(SubjectID(1), PredicateID(0), ObjectID(10), 0.9).unwrap();
+    let fact2 = Fact::new(SubjectID(2), PredicateID(0), ObjectID(20), 0.8).unwrap();
+    kb.insert(&fact1).unwrap();
+    kb.insert(&fact2).unwrap();
+
+    let mut txn = kb.begin_transaction();
+    let fact3 = Fact::new(SubjectID(3), PredicateID(0), ObjectID(30), 0.7).unwrap();
+    txn.insert(fact3).unwrap();
+
+    let mut schema = kb.get_schema_mut();
+    txn.apply_to_schema(&mut schema).unwrap();
+    txn.rollback_changes(&mut schema).unwrap();
+    drop(schema);
+
+    assert_eq!(kb.active_fact_count(), 2);
+    assert!(kb.get_fact(RowID(2)).unwrap().is_none());
+}
+
+#[test]
+fn test_transaction_state_transitions() {
+    use kcm_runtime::transaction::TransactionState;
+
+    let mut txn = kcm_runtime::transaction::Transaction::new();
+    assert_eq!(txn.state(), TransactionState::Active);
+
+    let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
+    txn.insert(fact).unwrap();
+    assert_eq!(txn.state(), TransactionState::Active);
+
+    txn.commit().unwrap();
+
+    let txn2 = kcm_runtime::transaction::Transaction::new();
+    assert_eq!(txn2.state(), TransactionState::Active);
+    txn2.rollback().unwrap();
+}
+
+#[test]
+fn test_transaction_changes_buffer() {
+    let mut txn = kcm_runtime::transaction::Transaction::new();
+    assert!(txn.changes().is_empty());
+
+    let fact1 = Fact::new(SubjectID(1), PredicateID(0), ObjectID(10), 0.9).unwrap();
+    let fact2 = Fact::new(SubjectID(2), PredicateID(0), ObjectID(20), 0.8).unwrap();
+    txn.insert(fact1).unwrap();
+    txn.insert(fact2).unwrap();
+
+    let changes = txn.changes();
+    assert_eq!(changes.len(), 2);
+}
+
+#[test]
+fn test_transaction_insert_on_non_active() {
+    let kb = KnowledgeDatabase::new().unwrap();
+
+    let mut txn = kb.begin_transaction();
+    let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
+    txn.insert(fact).unwrap();
+
+    let mut schema = kb.get_schema_mut();
+    txn.apply_to_schema(&mut schema).unwrap();
+    drop(schema);
+    txn.commit().unwrap();
+
+    assert_eq!(kb.active_fact_count(), 1);
+    let retrieved = kb.get_fact(RowID(0)).unwrap().unwrap();
+    assert_eq!(retrieved.subject, SubjectID(1));
+
+    let txn2 = kb.begin_transaction();
+    txn2.commit().unwrap();
+}
+
+#[test]
+fn test_transaction_state_active() {
+    let txn = kcm_runtime::transaction::Transaction::new();
+    assert_eq!(
+        txn.state(),
+        kcm_runtime::transaction::TransactionState::Active
+    );
+}
+
+#[test]
+fn test_transaction_state_committed() {
+    let mut txn = kcm_runtime::transaction::Transaction::new();
+    assert_eq!(
+        txn.state(),
+        kcm_runtime::transaction::TransactionState::Active
+    );
+
+    let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
+    txn.insert(fact).unwrap();
+
+    let mut schema = kcm_storage::column::Schema::new(10).unwrap();
+    txn.apply_to_schema(&mut schema).unwrap();
+    txn.commit().unwrap();
+
+    assert_eq!(schema.len(), 1);
+    let retrieved = schema.get_fact(0).unwrap();
+    assert_eq!(retrieved.subject, SubjectID(1));
+}
+
+#[test]
+fn test_transaction_rollback_reverts_schema() {
+    let kb = KnowledgeDatabase::new().unwrap();
+
+    let fact1 = Fact::new(SubjectID(1), PredicateID(0), ObjectID(10), 0.9).unwrap();
+    kb.insert(&fact1).unwrap();
+    assert_eq!(kb.active_fact_count(), 1);
+
+    let mut txn = kb.begin_transaction();
+    let fact2 = Fact::new(SubjectID(2), PredicateID(0), ObjectID(20), 0.8).unwrap();
+    txn.insert(fact2).unwrap();
+
+    let mut schema = kb.get_schema_mut();
+    txn.apply_to_schema(&mut schema).unwrap();
+    assert_eq!(schema.len(), 2);
+    txn.rollback_changes(&mut schema).unwrap();
+    drop(schema);
+
+    assert_eq!(kb.active_fact_count(), 1);
+    let retrieved = kb.get_fact(RowID(0)).unwrap().unwrap();
+    assert_eq!(retrieved.subject, SubjectID(1));
+    assert_eq!(retrieved.object, ObjectID(10));
+}

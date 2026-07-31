@@ -190,17 +190,17 @@ impl DatabaseFile {
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
         let row_count = u64::from_le_bytes(row_count_bytes);
 
-        let mut _col_count = [0u8; 1];
+        let mut buf = [0u8; 1];
         reader
-            .read_exact(&mut _col_count)
+            .read_exact(&mut buf)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
-        let mut _created = [0u8; 8];
+        let mut buf = [0u8; 8];
         reader
-            .read_exact(&mut _created)
+            .read_exact(&mut buf)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
-        let mut _modified = [0u8; 8];
+        let mut buf = [0u8; 8];
         reader
-            .read_exact(&mut _modified)
+            .read_exact(&mut buf)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
 
         let mut schema = Schema::new((row_count as usize * 2).max(1000))?;

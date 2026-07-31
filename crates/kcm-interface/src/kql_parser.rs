@@ -269,10 +269,7 @@ impl Parser {
     pub fn new(input: &str) -> KqlResult<Self> {
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize()?;
-        Ok(Parser {
-            tokens,
-            pos: 0,
-        })
+        Ok(Parser { tokens, pos: 0 })
     }
 
     pub fn parse(&mut self) -> KqlResult<SelectQuery> {

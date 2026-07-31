@@ -4,6 +4,7 @@ use kcm_core::dictionary::Dictionary;
 use kcm_core::types::*;
 use kcm_core::vec::DenseVec;
 use kcm_runtime::database::KnowledgeDatabase;
+use kcm_storage::compress::{Compressor, RleCompressor};
 use std::time::Duration;
 
 // ============================================================================
@@ -491,9 +492,7 @@ fn bench_wal_append(c: &mut Criterion) {
             let wal = WriteAheadLog::new(dir.path().join("bench.wal")).unwrap();
             b.iter(|| {
                 for i in 0..batch {
-                    let fact =
-                        Fact::new(SubjectID(i as u32), PredicateID(0), ObjectID(i as u32), 0.9)
-                            .unwrap();
+                    let fact = Fact::new(SubjectID(i), PredicateID(0), ObjectID(i), 0.9).unwrap();
                     wal.append_fact(&fact).unwrap();
                 }
                 wal.flush_buffer().unwrap();
@@ -513,9 +512,7 @@ fn bench_wal_replay(c: &mut Criterion) {
             {
                 let wal = WriteAheadLog::new(&wal_path).unwrap();
                 for i in 0..count {
-                    let fact =
-                        Fact::new(SubjectID(i as u32), PredicateID(0), ObjectID(i as u32), 0.9)
-                            .unwrap();
+                    let fact = Fact::new(SubjectID(i), PredicateID(0), ObjectID(i), 0.9).unwrap();
                     wal.append_fact(&fact).unwrap();
                 }
                 wal.flush_buffer().unwrap();
@@ -685,6 +682,106 @@ fn bench_memory_metrics(c: &mut Criterion) {
     group.finish();
 }
 
+// ============================================================================
+// TRANSACTION OPERATIONS
+// ============================================================================
+
+fn bench_transaction_insert(c: &mut Criterion) {
+    let mut group = c.benchmark_group("transaction_insert");
+    group.measurement_time(Duration::from_secs(5));
+    group.sample_size(100);
+    for batch_size in &[100, 1_000, 10_000] {
+        group.bench_with_input(
+            BenchmarkId::from_parameter(batch_size),
+            batch_size,
+            |b, &batch_size| {
+                b.iter_batched(
+                    || {
+                        let kb = KnowledgeDatabase::new().unwrap();
+                        let txn = kb.begin_transaction();
+                        (kb, txn)
+                    },
+                    |(kb, mut txn)| {
+                        for i in 0..batch_size {
+                            let fact = Fact::new(
+                                SubjectID((i % 100) as u32),
+                                PredicateID((i % 10) as u8),
+                                ObjectID((i % 200) as u32),
+                                0.7,
+                            )
+                            .unwrap();
+                            txn.insert(fact).unwrap();
+                        }
+                        txn.apply_to_schema(&mut kb.get_schema_mut()).unwrap();
+                        black_box(txn);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_transaction_commit_rollback(c: &mut Criterion) {
+    let mut group = c.benchmark_group("transaction_commit_rollback");
+    group.measurement_time(Duration::from_secs(5));
+    group.sample_size(100);
+    group.bench_function("commit", |b| {
+        b.iter_batched(
+            || {
+                let kb = KnowledgeDatabase::new().unwrap();
+                let mut txn = kb.begin_transaction();
+                for i in 0..100 {
+                    let fact =
+                        Fact::new(SubjectID(i % 100), PredicateID(0), ObjectID(i), 0.8).unwrap();
+                    txn.insert(fact).unwrap();
+                }
+                txn.apply_to_schema(&mut kb.get_schema_mut()).unwrap();
+                txn
+            },
+            |txn| {
+                let _ = txn.commit();
+            },
+            criterion::BatchSize::SmallInput,
+        );
+    });
+    group.finish();
+}
+
+// ============================================================================
+// RLE COMPRESSION
+// ============================================================================
+
+fn bench_rle_encode(c: &mut Criterion) {
+    let mut group = c.benchmark_group("rle_encode");
+    group.measurement_time(Duration::from_secs(5));
+    group.sample_size(100);
+    for size in &[1_000, 10_000, 100_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
+            let rle = RleCompressor;
+            let data: Vec<u8> = (0..size).map(|i| (i % 10) as u8).collect();
+            b.iter(|| black_box(rle.compress(&data).unwrap()));
+        });
+    }
+    group.finish();
+}
+
+fn bench_rle_decode(c: &mut Criterion) {
+    let mut group = c.benchmark_group("rle_decode");
+    group.measurement_time(Duration::from_secs(5));
+    group.sample_size(100);
+    for size in &[1_000, 10_000, 100_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
+            let rle = RleCompressor;
+            let data: Vec<u8> = (0..size).map(|i| (i % 10) as u8).collect();
+            let compressed = rle.compress(&data).unwrap();
+            b.iter(|| black_box(rle.decompress(&compressed, size).unwrap()));
+        });
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_column_sequential_scan,
@@ -714,6 +811,10 @@ criterion_group!(
     bench_compression_decode,
     bench_sharding,
     bench_memory_metrics,
+    bench_transaction_insert,
+    bench_transaction_commit_rollback,
+    bench_rle_encode,
+    bench_rle_decode,
 );
 
 criterion_main!(benches);

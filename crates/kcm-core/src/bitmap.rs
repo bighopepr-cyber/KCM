@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Bitmap {
     words: Vec<u64>,
     len: usize,

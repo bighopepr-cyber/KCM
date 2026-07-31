@@ -237,3 +237,29 @@ fn test_rbac_role_revocation() {
     assert!(!acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(!acl.check_permission("alice", ContextID(1), Permission::Write));
 }
+
+#[test]
+fn test_audit_verify_integrity_empty() {
+    let log = AuditLog::new();
+    assert!(log.verify_integrity());
+}
+
+#[test]
+fn test_audit_verify_integrity_sequential() {
+    let log = AuditLog::new();
+    log.log_query("alice", "SELECT * FROM facts");
+    log.log_insert("bob", 42);
+    log.log_delete("alice", 42);
+    assert_eq!(log.event_count(), 3);
+    assert!(log.verify_integrity());
+}
+
+#[test]
+fn test_audit_verify_integrity_overflow() {
+    let log = AuditLog::new();
+    for i in 0..100_000 {
+        log.log_query(&format!("user_{}", i % 10), &format!("query_{}", i));
+    }
+    assert_eq!(log.event_count(), 100_000);
+    assert!(log.verify_integrity());
+}

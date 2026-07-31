@@ -23,6 +23,9 @@ fn test_kcm_database_insert() {
         evidence: 0,
         timestamp: 1234567890,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
 
     let result = unsafe { KCM_DatabaseInsert(db, &fact) };
@@ -41,6 +44,9 @@ fn test_kcm_database_insert_null_args() {
         evidence: 0,
         timestamp: 1234567890,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
 
     let result = unsafe { KCM_DatabaseInsert(std::ptr::null_mut(), &fact) };
@@ -68,6 +74,9 @@ fn test_kcm_query_next() {
             evidence: 0,
             timestamp: 1234567890,
             context: 0,
+            version: 0,
+            priority: 0,
+            owner: 0,
         };
         unsafe { KCM_DatabaseInsert(db, &fact) };
     }
@@ -85,6 +94,9 @@ fn test_kcm_query_next() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let mut has_next = false;
 
@@ -132,6 +144,9 @@ fn test_kcm_query_next_null() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let mut has_next = false;
 
@@ -149,6 +164,9 @@ fn test_kcm_fact_conversion() {
         evidence: 3,
         timestamp: 9876543210,
         context: 2,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
 
     let fact = Fact::from(&kcm_fact);
@@ -203,6 +221,9 @@ fn test_kcm_insert_query_roundtrip() {
         evidence: 3,
         timestamp: 9876543210,
         context: 2,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let result = unsafe { KCM_DatabaseInsert(db, &fact) };
     assert_eq!(result, KCM_Error::KCM_OK);
@@ -222,6 +243,9 @@ fn test_kcm_insert_query_roundtrip() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let mut has_next = false;
     let result = unsafe { KCM_QueryNext(query, &mut fact_out, &mut has_next) };
@@ -249,6 +273,9 @@ fn test_kcm_query_iterator_exhaustion() {
             evidence: 0,
             timestamp: 0,
             context: 0,
+            version: 0,
+            priority: 0,
+            owner: 0,
         };
         unsafe { KCM_DatabaseInsert(db, &fact) };
     }
@@ -264,6 +291,9 @@ fn test_kcm_query_iterator_exhaustion() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let mut has_next = true;
     let mut count = 0;
@@ -284,6 +314,9 @@ fn test_kcm_query_iterator_exhaustion() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let mut has_next2 = false;
     let result = unsafe { KCM_QueryNext(query, &mut fact_out2, &mut has_next2) };
@@ -308,6 +341,9 @@ fn test_kcm_delete_and_count() {
             evidence: 0,
             timestamp: 0,
             context: 0,
+            version: 0,
+            priority: 0,
+            owner: 0,
         };
         unsafe { KCM_DatabaseInsert(db, &fact) };
     }
@@ -337,6 +373,9 @@ fn test_kcm_update_and_retrieve() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     unsafe { KCM_DatabaseInsert(db, &fact1) };
 
@@ -348,6 +387,9 @@ fn test_kcm_update_and_retrieve() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let result = unsafe { KCM_DatabaseUpdate(db, 0, &fact2) };
     assert_eq!(result, KCM_Error::KCM_OK);
@@ -363,6 +405,9 @@ fn test_kcm_update_and_retrieve() {
         evidence: 0,
         timestamp: 0,
         context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
     };
     let mut has_next = true;
     unsafe { KCM_QueryNext(query, &mut fact_out, &mut has_next) };
@@ -393,4 +438,81 @@ fn test_kcm_error_messages_all_variants() {
         let s = c_str.to_str().unwrap();
         assert!(!s.is_empty());
     }
+}
+
+#[test]
+fn test_ffi_transaction_lifecycle() {
+    let mut db: *mut KCM_Database = std::ptr::null_mut();
+    let result = unsafe { KCM_DatabaseNew(&mut db) };
+    assert_eq!(result, KCM_Error::KCM_OK);
+
+    let fact = KCM_Fact {
+        subject: 1,
+        predicate: 0,
+        object: 2,
+        confidence: 0.9,
+        evidence: 0,
+        timestamp: 1234567890,
+        context: 0,
+        version: 0,
+        priority: 0,
+        owner: 0,
+    };
+    unsafe { KCM_DatabaseInsert(db, &fact) };
+
+    let mut txn: *mut KCM_Transaction = std::ptr::null_mut();
+    let result = unsafe { KCM_DatabaseBeginTransaction(db, &mut txn) };
+    assert_eq!(result, KCM_Error::KCM_OK);
+    assert!(!txn.is_null());
+
+    let result = unsafe { KCM_TransactionCommit(txn, db) };
+    assert_eq!(result, KCM_Error::KCM_OK);
+
+    let count = unsafe { KCM_DatabaseActiveCount(db) };
+    assert_eq!(count, 1);
+
+    unsafe { KCM_DatabaseFree(db) };
+}
+
+#[test]
+fn test_ffi_transaction_rollback() {
+    let mut db: *mut KCM_Database = std::ptr::null_mut();
+    let result = unsafe { KCM_DatabaseNew(&mut db) };
+    assert_eq!(result, KCM_Error::KCM_OK);
+
+    let mut txn: *mut KCM_Transaction = std::ptr::null_mut();
+    let result = unsafe { KCM_DatabaseBeginTransaction(db, &mut txn) };
+    assert_eq!(result, KCM_Error::KCM_OK);
+
+    let result = unsafe { KCM_TransactionRollback(txn) };
+    assert_eq!(result, KCM_Error::KCM_OK);
+
+    let count = unsafe { KCM_DatabaseActiveCount(db) };
+    assert_eq!(count, 0);
+
+    unsafe { KCM_DatabaseFree(db) };
+}
+
+#[test]
+fn test_ffi_begin_null_db() {
+    let mut txn: *mut KCM_Transaction = std::ptr::null_mut();
+    let result = unsafe { KCM_DatabaseBeginTransaction(std::ptr::null_mut(), &mut txn) };
+    assert_eq!(result, KCM_Error::KCM_ERR_INVALID_ARGUMENT);
+}
+
+#[test]
+fn test_ffi_commit_null_txn() {
+    let mut db: *mut KCM_Database = std::ptr::null_mut();
+    unsafe { KCM_DatabaseNew(&mut db) };
+
+    let result = unsafe { KCM_TransactionCommit(std::ptr::null_mut(), db) };
+    assert_eq!(result, KCM_Error::KCM_ERR_INVALID_ARGUMENT);
+
+    unsafe { KCM_DatabaseFree(db) };
+}
+
+#[test]
+fn test_ffi_rollback_null_txn() {
+    let result = unsafe { KCM_TransactionRollback(std::ptr::null_mut()) };
+    assert_eq!(result, KCM_Error::KCM_ERR_INVALID_ARGUMENT);
 }

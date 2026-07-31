@@ -9,9 +9,7 @@ pub enum Histogram {
 }
 
 impl Histogram {
-    pub fn uniform_from_range(min: i64, max: i64, num_buckets: usize) -> Self {
-        let range = if max > min { max - min } else { 1 };
-        let _bucket_size = (range / num_buckets as i64).max(1);
+    pub fn uniform_from_range(_min: i64, _max: i64, num_buckets: usize) -> Self {
         Histogram::Uniform {
             buckets: vec![0; num_buckets],
         }

@@ -33,6 +33,9 @@ impl BitmapIndex {
     }
 
     pub fn range_query(&self, low: u8, high: u8) -> Result<Bitmap, KcmError> {
+        if self.bitmaps.is_empty() {
+            return Ok(Bitmap::new(0));
+        }
         let start_idx = self.values.binary_search(&low).unwrap_or_else(|idx| idx);
         let end_idx = self
             .values

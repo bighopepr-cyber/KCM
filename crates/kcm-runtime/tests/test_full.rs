@@ -388,3 +388,44 @@ fn test_database_active_count_after_multiple_operations() {
     let results = kb.query().with_subject(SubjectID(99)).execute().unwrap();
     assert_eq!(results.len(), 1);
 }
+
+#[test]
+fn test_async_executor_basic() {
+    let executor = kcm_runtime::async_executor::AsyncExecutor::new().unwrap();
+    let result = executor.block_on(async { 42 });
+    assert_eq!(result, 42);
+}
+
+#[test]
+fn test_async_insert_and_query() {
+    let executor = kcm_runtime::async_executor::AsyncExecutor::new().unwrap();
+    let db = Arc::new(Mutex::new(KnowledgeDatabase::new().unwrap()));
+
+    let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(100), 0.9).unwrap();
+    let row_id = executor.block_on(kcm_runtime::async_executor::async_insert(db.clone(), fact));
+    assert_eq!(row_id.unwrap(), RowID(0));
+
+    let results = executor.block_on(kcm_runtime::async_executor::async_query_all(db.clone()));
+    let facts = results.unwrap();
+    assert_eq!(facts.len(), 1);
+    assert_eq!(facts[0].subject, SubjectID(1));
+    assert_eq!(facts[0].object, ObjectID(100));
+}
+
+#[test]
+fn test_async_fact_count() {
+    let executor = kcm_runtime::async_executor::AsyncExecutor::new().unwrap();
+    let db = Arc::new(Mutex::new(KnowledgeDatabase::new().unwrap()));
+
+    for i in 0..5 {
+        let fact = Fact::new(SubjectID(i), PredicateID(0), ObjectID(i * 10), 0.9).unwrap();
+        executor
+            .block_on(kcm_runtime::async_executor::async_insert(db.clone(), fact))
+            .unwrap();
+    }
+
+    let count = executor
+        .block_on(kcm_runtime::async_executor::async_fact_count(db.clone()))
+        .unwrap();
+    assert_eq!(count, 5);
+}

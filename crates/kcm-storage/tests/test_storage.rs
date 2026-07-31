@@ -1,5 +1,6 @@
 use kcm_core::types::*;
 use kcm_storage::column::{Column, ColumnEncoding, CompressionCodec, Schema};
+use kcm_storage::compress::{Compressor, RleCompressor};
 use kcm_storage::index::{BitmapIndex, BloomFilter, ZoneMap};
 
 #[test]
@@ -206,4 +207,111 @@ fn test_schema_iter_active() {
     assert_eq!(active[0].0, 0);
     assert_eq!(active[1].0, 2);
     assert_eq!(active[2].0, 4);
+}
+
+#[test]
+fn test_rle_compressor_roundtrip() {
+    let compressor = RleCompressor;
+
+    let data = vec![1u8, 1, 1, 2, 2, 3, 3, 3, 3];
+    let compressed = compressor.compress(&data).unwrap();
+    let decompressed = compressor.decompress(&compressed, data.len()).unwrap();
+    assert_eq!(data, decompressed);
+
+    let empty: Vec<u8> = vec![];
+    let compressed_empty = compressor.compress(&empty).unwrap();
+    let decompressed_empty = compressor.decompress(&compressed_empty, 0).unwrap();
+    assert!(decompressed_empty.is_empty());
+
+    let single = vec![42u8];
+    let compressed_single = compressor.compress(&single).unwrap();
+    let decompressed_single = compressor
+        .decompress(&compressed_single, single.len())
+        .unwrap();
+    assert_eq!(single, decompressed_single);
+
+    let all_same = vec![7u8; 256];
+    let compressed_all = compressor.compress(&all_same).unwrap();
+    let decompressed_all = compressor
+        .decompress(&compressed_all, all_same.len())
+        .unwrap();
+    assert_eq!(all_same, decompressed_all);
+}
+
+#[test]
+fn test_bitmap_index_empty() {
+    let index = BitmapIndex::new(&[], 0).unwrap();
+    let result = index.range_query(0, 10).unwrap();
+    assert_eq!(result.count_ones(), 0);
+}
+
+#[test]
+fn test_bitmap_index_lookup_single_value() {
+    let column = vec![5u8];
+    let index = BitmapIndex::new(&column, 1).unwrap();
+
+    let bitmap = index.lookup(5).unwrap();
+    assert_eq!(bitmap.count_ones(), 1);
+    assert!(bitmap.get(0));
+
+    assert!(index.lookup(0).is_none());
+    assert!(index.lookup(6).is_none());
+}
+
+#[test]
+fn test_bitmap_index_range_query_full_range() {
+    let column = vec![0u8, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    let index = BitmapIndex::new(&column, 10).unwrap();
+
+    let result = index.range_query(0, 9).unwrap();
+    assert_eq!(result.count_ones(), 10);
+    for i in 0..10u32 {
+        assert!(result.get(i as usize));
+    }
+}
+
+#[test]
+fn test_bitmap_index_range_query_no_match() {
+    let column = vec![0u8, 1, 2];
+    let index = BitmapIndex::new(&column, 3).unwrap();
+
+    let result = index.range_query(5, 10).unwrap();
+    assert_eq!(result.count_ones(), 0);
+}
+
+#[test]
+fn test_column_set_and_get() {
+    let mut col = Column::<u32>::new(10, ColumnEncoding::Identity, CompressionCodec::None).unwrap();
+    col.append(10).unwrap();
+    col.append(20).unwrap();
+    col.append(30).unwrap();
+
+    col.set(1, 99).unwrap();
+    assert_eq!(col.get(1), Some(99));
+    assert_eq!(col.get(0), Some(10));
+    assert_eq!(col.get(2), Some(30));
+
+    assert!(col.set(5, 0).is_err());
+}
+
+#[test]
+fn test_column_iter() {
+    let mut col = Column::<u32>::new(10, ColumnEncoding::Identity, CompressionCodec::None).unwrap();
+    col.append(10).unwrap();
+    col.append(20).unwrap();
+    col.append(30).unwrap();
+
+    let collected: Vec<&u32> = col.iter().collect();
+    assert_eq!(collected, vec![&10, &20, &30]);
+}
+
+#[test]
+fn test_column_encoding_accessors() {
+    let col = Column::<u32>::new(10, ColumnEncoding::Dictionary, CompressionCodec::Zstd).unwrap();
+    assert_eq!(col.encoding(), ColumnEncoding::Dictionary);
+    assert_eq!(col.compression(), CompressionCodec::Zstd);
+
+    let col2 = Column::<u8>::new(5, ColumnEncoding::Delta, CompressionCodec::Lz4).unwrap();
+    assert_eq!(col2.encoding(), ColumnEncoding::Delta);
+    assert_eq!(col2.compression(), CompressionCodec::Lz4);
 }

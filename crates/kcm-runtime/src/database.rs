@@ -42,6 +42,10 @@ impl KnowledgeDatabase {
         })
     }
 
+    pub fn get_schema(&self) -> parking_lot::RwLockReadGuard<'_, Schema> {
+        self.schema.read()
+    }
+
     pub fn get_schema_mut(&self) -> parking_lot::RwLockWriteGuard<'_, Schema> {
         self.schema.write()
     }

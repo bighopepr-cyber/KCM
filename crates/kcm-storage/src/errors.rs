@@ -28,7 +28,7 @@ impl From<StorageError> for kcm_core::types::KcmError {
     fn from(err: StorageError) -> Self {
         match err {
             StorageError::Io(e) => kcm_core::types::KcmError::Io(e.to_string()),
-            StorageError::Compression(s) => kcm_core::types::KcmError::Io(s),
+            StorageError::Compression(s) => kcm_core::types::KcmError::Corrupted(s),
             StorageError::Corrupted(s) => kcm_core::types::KcmError::Corrupted(s),
             StorageError::ColumnFull { .. } => kcm_core::types::KcmError::OutOfMemory,
             StorageError::IndexOutOfBounds { index, len } => {

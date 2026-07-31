@@ -36,6 +36,9 @@ pub struct KCM_Fact {
     pub evidence: u8,
     pub timestamp: i64,
     pub context: u8,
+    pub version: i32,
+    pub priority: i8,
+    pub owner: u16,
 }
 
 impl From<&Fact> for KCM_Fact {
@@ -48,6 +51,9 @@ impl From<&Fact> for KCM_Fact {
             evidence: fact.evidence.0,
             timestamp: fact.timestamp,
             context: fact.context.0,
+            version: fact.version,
+            priority: fact.priority,
+            owner: fact.owner,
         }
     }
 }
@@ -62,9 +68,9 @@ impl From<&KCM_Fact> for Fact {
             evidence: EvidenceID(kcm_fact.evidence),
             timestamp: kcm_fact.timestamp,
             context: ContextID(kcm_fact.context),
-            version: 1,
-            priority: 0,
-            owner: 0,
+            version: kcm_fact.version,
+            priority: kcm_fact.priority,
+            owner: kcm_fact.owner,
         }
     }
 }
