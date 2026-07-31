@@ -1,3 +1,8 @@
+---
+name: kcm-engineering-decision-record
+description: Capture important technical decisions that have long-term impact on the KCM system, providing rationale for future engineers.
+---
+
 # Skill: Engineering Decision Record
 
 ## Skill Identity

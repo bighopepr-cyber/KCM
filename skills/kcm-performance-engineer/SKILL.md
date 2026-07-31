@@ -1,3 +1,8 @@
+---
+name: kcm-performance-engineer
+description: Ensure KCM meets performance targets through benchmark-driven development, SIMD optimization, memory efficiency, and algorithmic correctness
+---
+
 # Skill: Performance Engineering
 
 ## Skill Identity

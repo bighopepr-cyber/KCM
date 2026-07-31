@@ -1,3 +1,8 @@
+---
+name: kcm-architecture-guardian
+description: Maintain architectural integrity and PRD alignment across all KCM changes
+---
+
 # Skill: Architecture Guardian
 
 ## Skill Identity

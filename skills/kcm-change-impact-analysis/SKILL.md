@@ -1,3 +1,8 @@
+---
+name: kcm-change-impact-analysis
+description: Analyze the impact of proposed changes before implementation, identifying affected modules, specifications, compatibility requirements, and testing needs.
+---
+
 # Skill: Change Impact Analysis
 
 ## Skill Identity

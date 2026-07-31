@@ -1,3 +1,8 @@
+---
+name: kcm-engineering-orchestrator
+description: Coordinate all specialized engineering skills, decide which skill should activate for any given task, prevent conflicting recommendations, and enforce engineering priority order
+---
+
 # Skill: KCM Engineering Orchestrator
 
 ## Skill Identity

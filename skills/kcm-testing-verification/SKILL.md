@@ -1,3 +1,8 @@
+---
+name: kcm-testing-verification
+description: Prove correctness of every implementation through comprehensive testing strategies, ensuring no code ships without evidence of correctness
+---
+
 # Skill: Testing and Verification
 
 ## Skill Identity
@@ -117,7 +122,7 @@ Reject tests that:
 ### Test Validation
 
 ```
-1. cargo test --workspace — All tests pass
+1. cargo test —workspace — All tests pass
 2. Verify test actually tests behavior (not implementation)
 3. Verify test would fail if implementation is wrong
 4. Verify edge cases are covered

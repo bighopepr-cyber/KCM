@@ -1,3 +1,8 @@
+---
+name: kcm-documentation-guardian
+description: Maintain documentation as the Single Source of Truth (SSOT) for KCM, ensuring all specifications are consistent, complete, and aligned with implementation.
+---
+
 # Skill: Documentation and Specification Guardian
 
 ## Skill Identity

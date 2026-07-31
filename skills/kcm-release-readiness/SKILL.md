@@ -1,3 +1,8 @@
+---
+name: kcm-release-readiness
+description: Validate that the KCM codebase is ready for production release by verifying build, tests, performance, security, and quality standards.
+---
+
 # Skill: Release Readiness
 
 ## Skill Identity

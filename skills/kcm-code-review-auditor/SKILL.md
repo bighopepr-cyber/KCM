@@ -1,3 +1,8 @@
+---
+name: kcm-code-review-auditor
+description: Act as a senior engineering reviewer, providing thorough code reviews that identify architectural risks, hidden bugs, maintainability concerns, and quality issues.
+---
+
 # Skill: Code Review Auditor
 
 ## Skill Identity

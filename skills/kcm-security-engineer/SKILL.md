@@ -1,3 +1,8 @@
+---
+name: kcm-security-engineer
+description: Ensure KCM security implementation is cryptographically correct, follows best practices, and protects against known attack vectors
+---
+
 # Skill: Security Engineering
 
 ## Skill Identity

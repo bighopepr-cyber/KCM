@@ -1,3 +1,8 @@
+---
+name: kcm-code-quality-guardian
+description: Enforce Rust production code quality standards, prevent placeholders, and ensure every function is production-ready
+---
+
 # Skill: Code Quality Guardian
 
 ## Skill Identity

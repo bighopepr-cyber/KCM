@@ -1,3 +1,8 @@
+---
+name: kcm-database-engine-specialist
+description: Ensure KCM storage engine, query engine, transaction system, and indexing infrastructure are correct and production-ready
+---
+
 # Skill: Database Engine Specialist
 
 ## Skill Identity

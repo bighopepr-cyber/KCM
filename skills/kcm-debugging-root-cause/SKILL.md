@@ -1,3 +1,8 @@
+---
+name: kcm-debugging-root-cause
+description: Perform systematic debugging to find root causes of issues, ensuring fixes are minimal, correct, and prevent recurrence.
+---
+
 # Skill: Debugging and Root Cause Analysis
 
 ## Skill Identity
