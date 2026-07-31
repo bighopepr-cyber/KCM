@@ -65,9 +65,9 @@ For each block of block_size rows:
 - `insert(value)` — Set k bits
 - `contains(value) -> bool` — Check k bits (may false-positive)
 
-## 5. Composite Index
+### 2.4 Composite Index
 
-### 5.1 Structure
+#### 2.4.1 Structure
 
 ```rust
 struct CompositeIndex {
@@ -77,14 +77,14 @@ struct CompositeIndex {
 
 Key = (SubjectID, PredicateID), Value = Vec<row_index>
 
-### 5.2 Operations
+#### 2.4.2 Operations
 
 | Operation | Algorithm | Complexity |
 |-----------|-----------|------------|
 | build(subjects, predicates) | Single-pass hash table construction | O(n) |
 | lookup(subject, predicate) | HashMap get | O(1) amortized |
 
-### 5.3 Usage
+#### 2.4.3 Usage
 
 Accelerates queries that filter on both subject and predicate simultaneously:
 ```rust
@@ -94,7 +94,7 @@ if let Some(rows) = index.lookup(SubjectID(1).0, PredicateID(0).0) {
 }
 ```
 
-### 2.4 Dictionary Codec
+### 2.5 Dictionary Codec
 
 | Property | Value |
 |----------|-------|
@@ -140,3 +140,11 @@ let bitmap = index.lookup(predicate_id);
 | Bitmap index requires ≤256 unique values | Memory scales with cardinality |
 | ZoneMap is approximate | Block-level filtering only |
 | BloomFilter has false positives | Must verify with full column scan |
+
+---
+
+## 6. References
+
+- **Depends on:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_QUERY_EXECUTION_SPEC (KCM_QUERY_EXECUTION_SPEC), KCM_COMPRESSION_SPEC (KCM_COMPRESSION_SPEC)

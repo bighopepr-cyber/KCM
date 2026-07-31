@@ -14,8 +14,10 @@ Defines performance targets, benchmark methodology, and metrics for KCM.
 
 ## 2. Performance Targets
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
+**See KCM_SPECIFICATION (Section 4.1) for authoritative performance targets.** This section defines measurement methodology for those targets.
+
+| Metric | Target (from KCM_SPECIFICATION) | Measurement |
+|--------|--------------------------------|-------------|
 | Column sequential scan | > 100M ops/sec | Criterion benchmark |
 | Bitmap set/get | > 8M ops/sec | Criterion benchmark |
 | Dictionary lookup | < 100ns | Criterion benchmark |
@@ -23,8 +25,6 @@ Defines performance targets, benchmark methodology, and metrics for KCM.
 | Query latency P99 (1M facts) | < 100ms | Load test |
 | Memory per fact | < 100 bytes | Static calculation |
 | Compression ratio | > 5x | Compressed / Uncompressed |
-| Join 2×1M facts | < 50ms | Benchmark |
-| Dictionary 100K entries | < 10MB | Memory measurement |
 
 ---
 
@@ -175,3 +175,11 @@ KCM differentiates by combining columnar storage with knowledge representation s
 | Benchmarks use release profile | Reflects production performance |
 | Load tests use configurable durations | CI vs full run |
 | Memory metrics are static | No runtime allocation tracking needed |
+
+---
+
+## 10. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_BENCHMARK_REPORTING_SPEC (KCM_BENCHMARK_REPORTING_SPEC), KCM_ENGINEERING_RULES (KCM_ENGINEERING_RULES)

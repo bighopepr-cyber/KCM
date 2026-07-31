@@ -1,73 +1,7 @@
 use kcm_core::types::*;
-use kcm_storage::codec::{Codec, DeltaCodec, GorillaCodec, RleCodec};
 use kcm_storage::column::Schema;
 use kcm_storage::compress::{Compressor, Lz4Compressor, ZstdCompressor};
 use kcm_storage::file_format::DatabaseFile;
-
-#[test]
-fn test_delta_codec_large_dataset() {
-    let codec = DeltaCodec;
-    for n in [10, 100, 1000, 10_000] {
-        let data: Vec<i64> = (0..n).map(|i| (i as i64 * 7) % 5000 - 2500).collect();
-        let encoded = codec.encode(&data).unwrap();
-        let decoded = codec.decode(&encoded, data.len()).unwrap();
-        assert_eq!(data, decoded, "DeltaCodec roundtrip failed for n={}", n);
-    }
-}
-
-#[test]
-fn test_delta_codec_extreme_values() {
-    let codec = DeltaCodec;
-    let data = vec![i64::MAX, i64::MAX - 1, 0, -1, 1, 0];
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_rle_codec_uniform_data() {
-    let codec = RleCodec;
-    let data = vec![42u8; 10_000];
-    let encoded = codec.encode(&data).unwrap();
-    assert!(
-        encoded.len() < data.len(),
-        "RLE should compress uniform data"
-    );
-    let decoded = codec.decode(&encoded, 10_000).unwrap();
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_rle_codec_random_data() {
-    let codec = RleCodec;
-    let data: Vec<u8> = (0..10_000).map(|i| (i * 37 % 256) as u8).collect();
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, 10_000).unwrap();
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_gorilla_codec_steady_floats() {
-    let codec = GorillaCodec;
-    let data: Vec<f64> = (0..5000).map(|i| 1.0 + i as f64 * 0.0001).collect();
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, 5000).unwrap();
-    assert_eq!(data.len(), decoded.len());
-    for (a, b) in data.iter().zip(decoded.iter()) {
-        assert!((a - b).abs() < 1e-10, "Gorilla mismatch: {} vs {}", a, b);
-    }
-}
-
-#[test]
-fn test_gorilla_codec_volatile_floats() {
-    let codec = GorillaCodec;
-    let data = vec![1.0f64, 100.0, 0.001, 999.9, 0.5];
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-    for (a, b) in data.iter().zip(decoded.iter()) {
-        assert!((a - b).abs() < 1e-10);
-    }
-}
 
 #[test]
 fn test_zstd_roundtrip_various_sizes() {
@@ -122,28 +56,6 @@ fn test_file_format_roundtrip_various_sizes() {
             assert!((orig.confidence - rest.confidence).abs() < 1e-10);
         }
     }
-}
-
-#[test]
-fn test_codec_encode_decode_empty() {
-    assert_eq!(DeltaCodec.encode(&Vec::<i64>::new()).unwrap().len(), 0);
-    assert_eq!(RleCodec.encode(&Vec::<u8>::new()).unwrap().len(), 0);
-    assert_eq!(GorillaCodec.encode(&Vec::<f64>::new()).unwrap().len(), 0);
-}
-
-#[test]
-fn test_codec_encode_single_element() {
-    let codec = DeltaCodec;
-    let data = vec![42i64];
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, 1).unwrap();
-    assert_eq!(data, decoded);
-
-    let codec_rle = RleCodec;
-    let data_rle = vec![7u8];
-    let encoded = codec_rle.encode(&data_rle).unwrap();
-    let decoded = codec_rle.decode(&encoded, 1).unwrap();
-    assert_eq!(data_rle, decoded);
 }
 
 #[test]

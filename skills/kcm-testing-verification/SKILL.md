@@ -11,9 +11,17 @@ description: Prove correctness of every implementation through comprehensive tes
 
 **Role:** QA Engineer / Test Architect
 
-**Scope:** All test types (unit, integration, property, security, load, stress, recovery, regression), test quality, coverage analysis, and test infrastructure.
+**Scope:** All test types (unit, integration, property, security, load, stress, recovery, regression), test quality, coverage analysis, and test infrastructure across all 13 crates.
 
-**Non-responsibility:** Does not write production code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not optimize performance (Performance Skill).
+**Non-responsibility:** Does not write production code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not optimize performance (Performance Skill). Does not review security (Security Engineer). Does not review code quality (Code Quality Guardian).
+
+**Measurable Outcomes:**
+- 100% test pass rate
+- Every public function has unit test coverage
+- Every storage change has recovery tests
+- Every security change has security tests
+- Every numeric operation has property tests
+- No fake or always-passing tests
 
 ---
 
@@ -31,7 +39,7 @@ description: Prove correctness of every implementation through comprehensive tes
 - Architecture review needed (use Architecture Guardian)
 - Code quality review needed (use Code Quality Guardian)
 - Performance optimization needed (use Performance Skill)
-- Security implementation needed (use Security Skill)
+- Security implementation needed (use Security Engineer)
 
 ---
 
@@ -42,6 +50,28 @@ description: Prove correctness of every implementation through comprehensive tes
 3. The specific source file being tested
 4. Existing test files for the crate
 5. `crates/kcm-testing/` — Testing infrastructure
+
+---
+
+## Crate Awareness
+
+Testing scope covers all **13 crates**. Tests for each crate go in that crate's `tests/` directory or `#[cfg(test)]` modules:
+
+| Crate | Test Location |
+|-------|--------------|
+| kcm-core | `#[cfg(test)]` modules in each `.rs` file |
+| kcm-storage | `crates/kcm-storage/tests/` |
+| kcm-compute | `#[cfg(test)]` in `algebra.rs`, `simd.rs` |
+| kcm-reasoning | `#[cfg(test)]` in `rule.rs`, `inference.rs` |
+| kcm-optimizer | `#[cfg(test)]` in each `.rs` file |
+| kcm-runtime | `#[cfg(test)]` in `database.rs`, `transaction.rs` |
+| kcm-interface | `crates/kcm-interface/tests/` |
+| kcm-distributed | `#[cfg(test)]` in `sharding.rs`, `coordinator.rs` |
+| kcm-ml | `#[cfg(test)]` in each `.rs` file |
+| kcm-security | `#[cfg(test)]` in `encryption.rs`, `rbac.rs`, `audit.rs` |
+| kcm-compliance | `#[cfg(test)]` in `gdpr.rs`, `data_classification.rs` |
+| kcm-testing | `crates/kcm-testing/` (test infrastructure itself) |
+| kcm-server | `#[cfg(test)]` in `grpc_server.rs` |
 
 ---
 
@@ -122,7 +152,7 @@ Reject tests that:
 ### Test Validation
 
 ```
-1. cargo test —workspace — All tests pass
+1. cargo test --workspace — All tests pass
 2. Verify test actually tests behavior (not implementation)
 3. Verify test would fail if implementation is wrong
 4. Verify edge cases are covered
@@ -192,6 +222,7 @@ Reject tests that:
 | Security test coverage | All security scenarios |
 | Recovery test coverage | All crash scenarios |
 | Test quality | Tests would fail if implementation is wrong |
+| Crate coverage | All 13 crates have tests |
 
 ---
 
@@ -210,7 +241,10 @@ Reject tests that:
 ## Final Report Format
 
 ```
-# Testing Report
+# KCM Engineering Report
+
+## Skill
+kcm-testing-verification
 
 ## Component Tested
 [What was tested]
@@ -230,6 +264,12 @@ Reject tests that:
 - [ ] Edge cases covered
 - [ ] Error conditions covered
 - [ ] Boundary values tested
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
 
 ## Verdict
 PASS / FAIL

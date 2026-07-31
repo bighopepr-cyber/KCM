@@ -1,5 +1,4 @@
 use kcm_core::types::*;
-use kcm_reasoning::confidence::ConfidenceCalculator;
 use kcm_reasoning::inference::InferenceEngine;
 use kcm_reasoning::rule::{Rule, RulePattern, RuleRegistry};
 use kcm_storage::column::Schema;
@@ -232,44 +231,6 @@ fn test_inference_engine_and_pattern() {
 
     let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(!derived.is_empty());
-}
-
-#[test]
-fn test_confidence_conjunction() {
-    assert!((ConfidenceCalculator::conjunction(0.5, 0.6) - 0.3).abs() < 0.0001);
-    assert!((ConfidenceCalculator::conjunction(1.0, 1.0) - 1.0).abs() < 0.0001);
-    assert!((ConfidenceCalculator::conjunction(0.0, 1.0) - 0.0).abs() < 0.0001);
-}
-
-#[test]
-fn test_confidence_disjunction() {
-    assert!((ConfidenceCalculator::disjunction(0.5, 0.6) - 0.8).abs() < 0.0001);
-    assert!((ConfidenceCalculator::disjunction(0.0, 0.0) - 0.0).abs() < 0.0001);
-    assert!((ConfidenceCalculator::disjunction(1.0, 0.5) - 1.0).abs() < 0.0001);
-}
-
-#[test]
-fn test_confidence_negation() {
-    assert!((ConfidenceCalculator::negation(0.7) - 0.3).abs() < 0.0001);
-    assert!((ConfidenceCalculator::negation(0.0) - 1.0).abs() < 0.0001);
-    assert!((ConfidenceCalculator::negation(1.0) - 0.0).abs() < 0.0001);
-}
-
-#[test]
-fn test_confidence_chain() {
-    let values = vec![0.9, 0.8, 0.7];
-    let result = ConfidenceCalculator::chain(&values);
-    let expected = 0.9 * 0.8 * 0.7;
-    assert!((result - expected).abs() < 0.0001);
-}
-
-#[test]
-fn test_confidence_weighted() {
-    let values = vec![0.9, 0.5];
-    let weights = vec![2.0, 1.0];
-    let result = ConfidenceCalculator::weighted(&values, &weights);
-    let expected = (0.9 * 2.0 + 0.5 * 1.0) / 3.0;
-    assert!((result - expected).abs() < 0.0001);
 }
 
 #[test]

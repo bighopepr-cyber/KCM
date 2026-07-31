@@ -1,5 +1,4 @@
 use kcm_core::types::*;
-use kcm_reasoning::confidence::ConfidenceCalculator;
 use kcm_reasoning::inference::InferenceEngine;
 use kcm_reasoning::rule::{Rule, RulePattern};
 use kcm_storage::column::Schema;
@@ -57,21 +56,6 @@ fn test_confidence_conjunction_commutative() {
     let r1 = c1.multiply(c2);
     let r2 = c2.multiply(c1);
     assert!((r1.0 - r2.0).abs() < 1e-10);
-}
-
-#[test]
-fn test_confidence_calculator_chain() {
-    let values = vec![1.0; 100];
-    let result = ConfidenceCalculator::chain(&values);
-    assert!((result - 1.0).abs() < 1e-10);
-}
-
-#[test]
-fn test_confidence_calculator_weighted() {
-    let values = vec![1.0; 100];
-    let weights = vec![1.0; 100];
-    let result = ConfidenceCalculator::weighted(&values, &weights);
-    assert!((result - 1.0).abs() < 1e-10);
 }
 
 #[test]

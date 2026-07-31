@@ -13,7 +13,13 @@ description: Maintain documentation as the Single Source of Truth (SSOT) for KCM
 
 **Scope:** All documentation in docs/, all PRD files, README, and specification-code consistency.
 
-**Non-responsibility:** Does not write code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill).
+**Non-responsibility:** Does not write code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not review security (Security Engineer).
+
+**Measurable Outcomes:**
+- Every PRD requirement has a specification section
+- Every specification matches its implementation
+- Zero conflicting specifications
+- Zero documentation duplication
 
 ---
 
@@ -30,14 +36,14 @@ description: Maintain documentation as the Single Source of Truth (SSOT) for KCM
 - Code changes without documentation impact (use Code Quality Guardian)
 - Architecture review needed (use Architecture Guardian)
 - Performance review needed (use Performance Skill)
-- Security review needed (use Security Skill)
+- Security review needed (use Security Engineer)
 
 ---
 
 ## Required Context
 
 1. All files in `docs/` directory
-2. `PRD.md`, `PRD2.md`, `PRD3.md`, `PRD-TESTING&BRACHMARCK.md`
+2. `PRD.md`, `PRD2.md`, `PRD3.md`, `PRD-TESTING& BRACHMARCK.md` (note: space before BRACHMARCK)
 3. `README.md`
 4. The specific source code being documented
 5. `docs/KCM_DOCUMENT_AUDIT_REPORT.md` for current audit status
@@ -72,10 +78,10 @@ Every requirement flows from PRD through specification to implementation. No con
 
 ### Principle 5: Conflict Detection
 When specifications conflict, priority order:
-1. PRD-TESTING&BRACHMARCK.md (performance and validation)
-2. PRD3.md (architecture decisions)
-3. PRD2.md (persistence and optimizer)
-4. PRD.md (core types and data model)
+1. `PRD-TESTING& BRACHMARCK.md` — Testing and benchmarks (note: space before BRACHMARCK)
+2. `PRD3.md` — Distributed, ML, security, compliance
+3. `PRD2.md` — Persistence, optimizer, monitoring
+4. `PRD.md` — Core types and data model
 
 ---
 
@@ -123,6 +129,7 @@ When specifications conflict, priority order:
 | No Conflicts | All documents agree |
 | Coverage | Every public API documented |
 | Accuracy | Type definitions match code |
+| Filename Accuracy | PRD-TESTING& BRACHMARCK.md referenced correctly |
 
 ---
 
@@ -135,13 +142,17 @@ When specifications conflict, priority order:
 5. **Never allow public APIs without documentation**
 6. **Never create roadmap or marketing documents**
 7. **Never create unnecessary documentation**
+8. **Never reference PRD-TESTING&BRACHMARCK.md without the space before BRACHMARCK**
 
 ---
 
 ## Final Report Format
 
 ```
-# Documentation Review
+# KCM Engineering Report
+
+## Skill
+kcm-documentation-guardian
 
 ## Documents Reviewed
 - [document]: [status]
@@ -160,6 +171,12 @@ When specifications conflict, priority order:
 | Requirement | Missing From | Impact |
 |-------------|--------------|--------|
 | ... | ... | ... |
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
 
 ## Verdict
 PASS / FAIL

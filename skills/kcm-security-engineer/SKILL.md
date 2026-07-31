@@ -11,9 +11,17 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 
 **Role:** Security Engineer / Cryptographer
 
-**Scope:** Encryption (AES-256-GCM), key management, RBAC, audit logging, data classification, GDPR compliance, and all security-sensitive code paths.
+**Scope:** Encryption (AES-256-GCM), key management, RBAC, audit logging, data classification, GDPR compliance, gRPC/TLS security, and all security-sensitive code paths across kcm-security, kcm-compliance, and kcm-server.
 
-**Non-responsibility:** Does not review general code quality (Code Quality Guardian). Does not write functional tests (Testing Skill). Does not review architecture (Architecture Guardian).
+**Non-responsibility:** Does not review general code quality (Code Quality Guardian). Does not write functional tests (Testing Skill). Does not review architecture (Architecture Guardian). Does not review code design quality (Code Review Auditor).
+
+**Measurable Outcomes:**
+- All encryption uses AES-256-GCM with BLAKE3 KDF
+- Zero hardcoded keys or passwords
+- RBAC has no privilege escalation paths
+- Audit events are immutable after creation
+- gRPC transport uses TLS with proper certificate validation
+- GDPR operations verify consent before execution
 
 ---
 
@@ -27,6 +35,8 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 - Security-sensitive operations are added
 - User input handling changes
 - Data classification logic changes
+- gRPC server security changes (TLS, auth)
+- Compliance logic changes
 
 **Do NOT activate when:**
 - General code quality review (use Code Quality Guardian)
@@ -44,6 +54,34 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 4. `crates/kcm-security/src/audit.rs` — Audit logging
 5. `crates/kcm-compliance/src/gdpr.rs` — GDPR compliance
 6. `crates/kcm-compliance/src/data_classification.rs` — Data classification
+7. `crates/kcm-server/src/grpc_server.rs` — gRPC server security
+8. `crates/kcm-interface/proto/kcm.proto` — Proto definitions (security implications)
+
+---
+
+## Crate Awareness
+
+### Primary Scope: kcm-security
+
+| File | Responsibility |
+|------|---------------|
+| `encryption.rs` | AES-256-GCM, BLAKE3 KDF, CSPRNG key generation |
+| `rbac.rs` | Role-based access control, 5 permission levels, ACL → Role → Deny |
+| `audit.rs` | Audit logging, 5 event types, O(1) eviction |
+
+### Secondary Scope: kcm-compliance
+
+| File | Responsibility |
+|------|---------------|
+| `gdpr.rs` | GDPR data subject management, consent verification |
+| `data_classification.rs` | 4-tier classification system |
+
+### Tertiary Scope: kcm-server
+
+| File | Responsibility |
+|------|---------------|
+| `grpc_server.rs` | gRPC server — TLS configuration, authentication, authorization |
+| `grpc_main.rs` | gRPC main — server startup, TLS setup |
 
 ---
 
@@ -69,12 +107,14 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 - Audit logging for accountability
 - Data classification for retention
 - GDPR for data subject rights
+- TLS for transport security (gRPC)
 
 ### Principle 4: Secure Defaults
 - Encryption enabled by default
 - Audit logging enabled by default
 - RBAC deny by default
 - No insecure fallbacks
+- TLS required for gRPC connections
 
 ### Principle 5: Key Management
 - Keys derived from passwords via KDF
@@ -119,6 +159,25 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 5. Verify events are immutable once logged
 ```
 
+### Compliance Review
+
+```
+1. Verify GDPR consent verification before operations
+2. Verify data classification enforcement
+3. Verify data subject rights implementation
+4. Verify retention policy enforcement
+```
+
+### gRPC/TLS Review
+
+```
+1. Verify TLS is required for gRPC connections
+2. Verify certificate validation is enabled
+3. Verify authentication is enforced on all endpoints
+4. Verify authorization checks on protected operations
+5. Verify no plaintext transport for sensitive data
+```
+
 ---
 
 ## Validation Criteria
@@ -140,6 +199,9 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 | GDPR | Consent | 3 states |
 | GDPR | Operations | 6 operations |
 | Classification | Levels | 4 tiers |
+| gRPC/TLS | Transport | TLS required |
+| gRPC/TLS | Authentication | Enforced on all endpoints |
+| gRPC/TLS | Authorization | Checks on protected ops |
 
 ---
 
@@ -153,16 +215,21 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 6. **Never allow audit events to be modified after creation**
 7. **Never allow encryption without authentication (AEAD)**
 8. **Never allow GDPR operations without consent verification**
+9. **Never allow gRPC without TLS**
+10. **Never allow plaintext transport for sensitive data**
 
 ---
 
 ## Final Report Format
 
 ```
-# Security Review
+# KCM Engineering Report
+
+## Skill
+kcm-security-engineer
 
 ## Component Reviewed
-[Encryption/RBAC/Audit/GDPR/Classification]
+[Encryption/RBAC/Audit/GDPR/Classification/gRPC-TLS]
 
 ## Cryptographic Assessment
 | Check | Status | Details |
@@ -180,6 +247,25 @@ description: Ensure KCM security implementation is cryptographically correct, fo
 | Authorization algorithm | PASS/FAIL |
 | Context isolation | PASS/FAIL |
 | No privilege escalation | PASS/FAIL |
+
+## Transport Security Assessment
+| Check | Status |
+|-------|--------|
+| TLS required | PASS/FAIL |
+| Certificate validation | PASS/FAIL |
+| Authentication enforced | PASS/FAIL |
+
+## Compliance Assessment
+| Check | Status |
+|-------|--------|
+| GDPR consent verification | PASS/FAIL |
+| Data classification enforcement | PASS/FAIL |
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
 
 ## Verdict
 PASS / FAIL

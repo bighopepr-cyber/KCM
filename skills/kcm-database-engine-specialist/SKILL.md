@@ -11,9 +11,16 @@ description: Ensure KCM storage engine, query engine, transaction system, and in
 
 **Role:** Database Engine Architect / Storage Engine Engineer
 
-**Scope:** Storage layer (columns, codecs, WAL, file format, indexes), query execution (parser, planner, optimizer, operators), transaction management (ACID, recovery, versioning), and all data integrity invariants.
+**Scope:** Storage layer (columns, codecs, WAL, file format, indexes, dict codec, backup, recovery, errors), query execution (parser, planner, optimizer, operators), transaction management (ACID, recovery, versioning), and all data integrity invariants.
 
-**Non-responsibility:** Does not review general code quality (Code Quality Guardian). Does not review security (Security Skill). Does not write tests (Testing Skill).
+**Non-responsibility:** Does not review general code quality (Code Quality Guardian). Does not review security (Security Engineer). Does not write tests (Testing Skill). Does not validate architecture (Architecture Guardian). Does not review design quality (Code Review Auditor).
+
+**Measurable Outcomes:**
+- Binary format is deterministic and versioned
+- WAL entries preserve all Fact fields
+- All operators skip tombstoned rows
+- Recovery is complete and lossless
+- Codec/compression roundtrip tests pass
 
 ---
 
@@ -27,12 +34,14 @@ description: Ensure KCM storage engine, query engine, transaction system, and in
 - Transaction or recovery logic changes
 - Index implementation changes
 - Data integrity concerns arise
+- Backup or recovery logic changes
+- Dict codec changes
 
 **Do NOT activate when:**
 - General code quality review (use Code Quality Guardian)
 - Architecture-level decisions (use Architecture Guardian)
 - Performance-only changes (use Performance Skill)
-- Security review (use Security Skill)
+- Security review (use Security Engineer)
 
 ---
 
@@ -46,6 +55,34 @@ description: Ensure KCM storage engine, query engine, transaction system, and in
 6. `docs/KCM_INDEXING_SPEC.md` — Index structures
 7. The specific source file being modified
 8. Related test files for the modified component
+
+---
+
+## Crate Awareness
+
+Primary responsibility: **kcm-storage** — all files:
+
+| File | Responsibility |
+|------|---------------|
+| `column.rs` | Column<T>, Schema |
+| `codec.rs` | Delta, RLE, Gorilla codecs |
+| `compress.rs` | Zstd, LZ4, RLE compressors |
+| `file_format.rs` | Binary DB format |
+| `wal.rs` | Write-Ahead Log |
+| `index.rs` | BitmapIndex, ZoneMap, BloomFilter, CompositeIndex |
+| `dict_codec.rs` | Dictionary encoding |
+| `errors.rs` | Storage-specific error types |
+| `backup.rs` | Backup and restore |
+| `recovery.rs` | Crash recovery |
+
+Secondary responsibility: Related files in other crates:
+
+| Crate | File | Relevance |
+|-------|------|-----------|
+| kcm-compute | `algebra.rs` | Query operators (Scan, Filter, Project, Join, Aggregate) |
+| kcm-optimizer | `planner.rs`, `cost_model.rs`, `statistics.rs` | Query planning |
+| kcm-runtime | `database.rs`, `transaction.rs` | Transaction management |
+| kcm-server | `grpc_server.rs` | Server-side storage access |
 
 ---
 
@@ -135,6 +172,7 @@ description: Ensure KCM storage engine, query engine, transaction system, and in
 | Recovery | DB+WAL | Correct after crash |
 | Recovery | WAL-only | Correct without DB file |
 | Recovery | Fresh | Empty schema created |
+| Backup | Roundtrip | backup→restore = identity |
 
 ---
 
@@ -154,10 +192,13 @@ description: Ensure KCM storage engine, query engine, transaction system, and in
 ## Final Report Format
 
 ```
-# Database Engine Review
+# KCM Engineering Report
+
+## Skill
+kcm-database-engine-specialist
 
 ## Component Reviewed
-[Storage/Query/Transaction/Index]
+[Storage/Query/Transaction/Index/Backup/Recovery]
 
 ## Specification Reference
 [Which spec document and section]
@@ -175,6 +216,16 @@ description: Ensure KCM storage engine, query engine, transaction system, and in
 - [ ] Tombstone persisted
 - [ ] WAL fsync'd
 - [ ] Compression lossless
+- [ ] Backup roundtrip correct
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
+
+## Validation Required
+[tests/benchmarks]
 
 ## Verdict
 PASS / FAIL

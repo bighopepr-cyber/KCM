@@ -66,15 +66,17 @@ kcm-storage (depends on: kcm-core)
 kcm-compute (depends on: kcm-core, kcm-storage)
 kcm-reasoning (depends on: kcm-core, kcm-storage)
 kcm-optimizer (depends on: kcm-core, kcm-storage)
+kcm-distributed (depends on: kcm-core, kcm-storage)
+kcm-ml (depends on: kcm-core, kcm-reasoning)
     ↑
 kcm-runtime (depends on: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer)
     ↑
 kcm-interface (depends on: kcm-core, kcm-runtime)
-kcm-distributed (depends on: kcm-core)
-kcm-ml (depends on: kcm-core, kcm-reasoning)
-kcm-security (depends on: kcm-core)
-kcm-compliance (depends on: kcm-core)
+kcm-security (depends on: kcm-core, kcm-storage)
+kcm-compliance (depends on: kcm-core, kcm-storage)
 kcm-testing (depends on: kcm-core, kcm-storage, kcm-runtime, kcm-security)
+    ↑
+kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, kcm-security)
 ```
 
 ---
@@ -213,6 +215,17 @@ kcm-testing (depends on: kcm-core, kcm-storage, kcm-runtime, kcm-security)
 | **Dependency** | kcm-core, kcm-storage, kcm-runtime, kcm-security, parking_lot |
 | **Constraint** | All test runners must be invokable via `cargo test`; load/stress tests must be configurable for CI duration |
 
+### 4.13 kcm-server
+
+| Field | Value |
+|-------|-------|
+| **Purpose** | Production server binary |
+| **Responsibility** | HTTP/gRPC server, configuration loading, graceful shutdown, signal handling |
+| **Input** | Configuration files, command-line arguments |
+| **Output** | Running server process |
+| **Dependency** | kcm-core, kcm-runtime, kcm-interface, kcm-distributed, kcm-security, parking_lot |
+| **Constraint** | Must support graceful shutdown on SIGTERM/SIGINT; must expose health endpoint |
+
 ---
 
 ## 5. Data Flow
@@ -313,3 +326,11 @@ InferenceEngine::infer_forward_chaining(&mut schema)
 | WAL fsync on flush | Ensures crash recovery correctness |
 | No circular crate dependencies | Enforces clean module boundaries |
 | Foundation crate (kcm-core) has zero internal dependencies | Enables maximum reuse and testability |
+
+---
+
+## 8. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_RUNTIME_SPEC (KCM_RUNTIME_SPEC), KCM_API_SPEC (KCM_API_SPEC)

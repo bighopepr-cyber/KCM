@@ -11,9 +11,17 @@ description: Validate that the KCM codebase is ready for production release by v
 
 **Role:** Release Engineer
 
-**Scope:** Build verification, test suite validation, performance benchmarking, security checks, quality gates, and production readiness assessment.
+**Scope:** Build verification, test suite validation, performance benchmarking, security checks, quality gates, and production readiness assessment for all 13 crates.
 
-**Non-responsibility:** Does not write code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill).
+**Non-responsibility:** Does not write code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not review security (Security Engineer).
+
+**Measurable Outcomes:**
+- `cargo build --release --workspace` passes (0 errors)
+- `cargo test --workspace` passes (100% pass rate, >= 372 tests)
+- `cargo clippy --workspace -- -D warnings` passes (0 warnings)
+- `cargo fmt --all -- --check` passes
+- No performance regression > 5%
+- All 13 crates build successfully
 
 ---
 
@@ -29,7 +37,7 @@ description: Validate that the KCM codebase is ready for production release by v
 - Development-phase code review (use Code Quality Guardian)
 - Architecture changes (use Architecture Guardian)
 - Performance optimization (use Performance Skill)
-- Security implementation (use Security Skill)
+- Security implementation (use Security Engineer)
 
 ---
 
@@ -44,11 +52,33 @@ description: Validate that the KCM codebase is ready for production release by v
 
 ---
 
+## Crate Awareness
+
+Build validation covers all **13 crates**:
+
+| Crate | Key Validation |
+|-------|---------------|
+| kcm-core | Core types compile, all tests pass |
+| kcm-storage | Storage engine compiles, format tests pass |
+| kcm-compute | Operators and SIMD compile |
+| kcm-reasoning | Rules and inference compile |
+| kcm-optimizer | Cost model and planner compile |
+| kcm-runtime | Database, transactions, executor compile |
+| kcm-interface | FFI, REST, KQL, Python compile |
+| kcm-distributed | Sharding and coordinator compile |
+| kcm-ml | Learned index and confidence learner compile |
+| kcm-security | Encryption, RBAC, audit compile |
+| kcm-compliance | GDPR and classification compile |
+| kcm-testing | Test infrastructure compiles |
+| kcm-server | gRPC server, gRPC main, main entry compile |
+
+---
+
 ## Operating Principles
 
 ### Principle 1: All Gates Must Pass
 Every quality gate must pass before release:
-- Compilation (0 errors, 0 warnings)
+- Compilation (0 errors, 0 warnings) — all 13 crates
 - Clippy (0 warnings with -D warnings)
 - Format (cargo fmt clean)
 - Tests (100% pass rate)
@@ -80,7 +110,7 @@ Every quality gate must pass before release:
 ### Pre-Release Checklist
 
 ```
-1. Build Verification
+1. Build Verification (all 13 crates)
    □ cargo build --workspace — 0 errors
    □ cargo build --release --workspace — 0 errors
    □ cargo clippy --workspace -- -D warnings — 0 warnings
@@ -106,6 +136,7 @@ Every quality gate must pass before release:
    □ No weak encryption
    □ RBAC tests pass
    □ Audit logging functional
+   □ gRPC/TLS security functional
 
 5. Documentation Verification
    □ All specs up to date
@@ -120,7 +151,7 @@ Every quality gate must pass before release:
 
 | Gate | Criterion | Pass Condition |
 |------|-----------|---------------|
-| Build | Compilation | 0 errors, 0 warnings |
+| Build | Compilation | 0 errors, 0 warnings (all 13 crates) |
 | Build | Clippy | 0 warnings |
 | Build | Format | cargo fmt clean |
 | Tests | Pass rate | 100% |
@@ -142,19 +173,23 @@ Every quality gate must pass before release:
 5. **Never release with known security vulnerabilities**
 6. **Never release with incomplete documentation**
 7. **Never release without CI pipeline passing**
+8. **Never release without validating all 13 crates build**
 
 ---
 
 ## Final Report Format
 
 ```
-# Release Readiness Report
+# KCM Engineering Report
+
+## Skill
+kcm-release-readiness
 
 ## Build Status
 | Check | Status |
 |-------|--------|
-| Debug build | PASS/FAIL |
-| Release build | PASS/FAIL |
+| Debug build (13 crates) | PASS/FAIL |
+| Release build (13 crates) | PASS/FAIL |
 | Clippy | PASS/FAIL (N warnings) |
 | Format | PASS/FAIL |
 
@@ -181,6 +216,7 @@ Every quality gate must pass before release:
 | Encryption | PASS/FAIL |
 | RBAC | PASS/FAIL |
 | Audit | PASS/FAIL |
+| gRPC/TLS | PASS/FAIL |
 
 ## Quality Status
 | Metric | Value | Status |
@@ -188,6 +224,12 @@ Every quality gate must pass before release:
 | TODO/FIXME | N | PASS/FAIL |
 | Dead code | N | PASS/FAIL |
 | Documentation | N% | PASS/FAIL |
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
 
 ## Verdict
 READY / NOT READY

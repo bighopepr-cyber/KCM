@@ -97,22 +97,6 @@ impl ColumnPruningOptimizer {
     }
 }
 
-pub struct ConstantFoldingOptimizer;
-
-impl ConstantFoldingOptimizer {
-    pub fn fold_predicate(pred: &PlannerFilterPredicate) -> Option<bool> {
-        let _ = pred;
-        None
-    }
-
-    pub fn can_fold(pred: &PlannerFilterPredicate) -> bool {
-        matches!(
-            pred,
-            PlannerFilterPredicate::EqualSubject(0) | PlannerFilterPredicate::EqualObject(0)
-        )
-    }
-}
-
 pub struct JoinOrderingOptimizer;
 
 impl JoinOrderingOptimizer {

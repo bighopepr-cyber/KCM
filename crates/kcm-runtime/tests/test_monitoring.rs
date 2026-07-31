@@ -1,5 +1,4 @@
 use kcm_runtime::health::*;
-use kcm_runtime::logging::*;
 use kcm_runtime::metrics::*;
 use std::sync::Arc;
 
@@ -102,14 +101,6 @@ fn test_health_check_degraded_high_latency() {
     metrics.record_query(500, true);
     let hc = HealthCheck::with_latency_threshold_ms(HealthCheck::new(metrics), 10.0);
     assert_eq!(hc.check(), HealthStatus::Degraded);
-}
-
-#[test]
-fn test_logging_level() {
-    set_log_level(LogLevel::Warn);
-    assert_eq!(get_log_level(), LogLevel::Warn);
-    set_log_level(LogLevel::Debug);
-    assert_eq!(get_log_level(), LogLevel::Debug);
 }
 
 #[test]

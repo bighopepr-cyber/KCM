@@ -184,7 +184,15 @@ The benchmark CI job:
 - Generates reports
 - Uploads artifacts
 
-The job does NOT fail on performance regression (regression is informational). It fails only if:
+The job:
+- Builds benchmarks in release mode
+- Executes all benchmarks
+- Generates reports
+- Uploads artifacts
+- **Fails CI** if regression > 10% (per Regression Policy §4.2)
+- **Warns** if regression > 5% (per Regression Policy §4.2)
+
+The job fails unconditionally only if:
 - Benchmark compilation fails
 - Report generation fails
 
@@ -204,3 +212,11 @@ The job does NOT fail on performance regression (regression is informational). I
 | Distributed | 1 | Sharding routing |
 | Memory | 2 | Per-fact, bitmap |
 | **Total** | **29** | |
+
+---
+
+## 7. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_PERFORMANCE_SPEC (KCM_PERFORMANCE_SPEC), KCM_ENGINEERING_RULES (KCM_ENGINEERING_RULES)

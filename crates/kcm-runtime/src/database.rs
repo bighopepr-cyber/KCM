@@ -1,4 +1,4 @@
-use crate::transaction::{Transaction, VersionStore};
+use crate::transaction::Transaction;
 use kcm_core::dictionary::{DictID, SharedDictionary};
 use kcm_core::types::*;
 use kcm_storage::column::Schema;
@@ -12,8 +12,6 @@ use std::sync::Arc;
 pub struct KnowledgeDatabase {
     schema: Arc<RwLock<Schema>>,
     dictionaries: Arc<Dictionaries>,
-    #[allow(dead_code)]
-    version_store: Arc<RwLock<VersionStore>>,
 }
 
 pub struct Dictionaries {
@@ -37,12 +35,10 @@ impl KnowledgeDatabase {
             context: SharedDictionary::new(),
             owner: SharedDictionary::new(),
         });
-        let version_store = Arc::new(RwLock::new(VersionStore::new()?));
 
         Ok(KnowledgeDatabase {
             schema,
             dictionaries,
-            version_store,
         })
     }
 

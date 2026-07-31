@@ -11,9 +11,15 @@ description: Perform systematic debugging to find root causes of issues, ensurin
 
 **Role:** Senior Debugging Engineer
 
-**Scope:** Bug investigation, root cause analysis, crash analysis, data corruption investigation, performance regression diagnosis.
+**Scope:** Bug investigation, root cause analysis, crash analysis, data corruption investigation, performance regression diagnosis across all 13 crates.
 
-**Non-responsibility:** Does not write new features. Does not review architecture. Does not write tests (but recommends regression tests).
+**Non-responsibility:** Does not write new features. Does not review architecture. Does not write tests (but recommends regression tests). Does not review code quality (Code Quality Guardian). Does not review security (Security Engineer).
+
+**Measurable Outcomes:**
+- Every bug has a documented root cause
+- Every fix is minimal (smallest change that fixes the issue)
+- Every fix has a regression test
+- Every fix is verified against all existing tests
 
 ---
 
@@ -31,6 +37,7 @@ description: Perform systematic debugging to find root causes of issues, ensurin
 - New feature implementation (use Code Quality Guardian)
 - Architecture review (use Architecture Guardian)
 - Performance optimization (use Performance Skill)
+- Security implementation (use Security Engineer)
 
 ---
 
@@ -41,6 +48,12 @@ description: Perform systematic debugging to find root causes of issues, ensurin
 3. Stack trace or error message
 4. Steps to reproduce
 5. Expected vs actual behavior
+
+---
+
+## Crate Awareness
+
+Debugging scope covers all **13 crates**: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, kcm-runtime, kcm-interface, kcm-distributed, kcm-ml, kcm-security, kcm-compliance, kcm-testing, kcm-server.
 
 ---
 
@@ -127,7 +140,10 @@ Symptom → Evidence Collection → Hypothesis → Root Cause → Minimal Fix �
 ## Final Report Format
 
 ```
-# Debugging Report
+# KCM Engineering Report
+
+## Skill
+kcm-debugging-root-cause
 
 ## Symptom
 [What is the problem?]
@@ -148,6 +164,12 @@ Change: [description]
 [Test that prevents recurrence]
 File: [path]
 Test: [name]
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
 
 ## Verification
 - [ ] Fix resolves the issue

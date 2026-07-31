@@ -42,7 +42,7 @@ Defines testing standards, coverage requirements, test categories, and validatio
 | Framework | #[test] with assert!/assert_eq! |
 | Coverage target | ≥ 95% line coverage |
 
-**Current count: 82 unit tests** across kcm-core (43), kcm-compute (15+7), kcm-storage (codec/compress/index inline).
+**Current count: 90 unit tests** across kcm-core (43), kcm-storage (14), kcm-compute (22), kcm-optimizer (8), kcm-interface (3).
 
 ### 3.2 Integration Tests
 
@@ -55,7 +55,7 @@ Defines testing standards, coverage requirements, test categories, and validatio
 | Location | `crates/*/tests/` |
 | Coverage target | ≥ 80% |
 
-**Current count: 64 integration tests** across kcm-storage (18), kcm-runtime (12+11), kcm-storage/persistence (8), kcm-compute (15), kcm-reasoning (17), kcm-optimizer (14+8).
+**Current count: 108 integration tests** across kcm-core (10), kcm-storage (18), kcm-reasoning (17), kcm-optimizer (14), kcm-runtime (23), kcm-distributed (10), kcm-ml (9), kcm-compliance (7).
 
 ### 3.3 Property-Based Tests
 
@@ -161,7 +161,7 @@ Defines testing standards, coverage requirements, test categories, and validatio
 | kcm-testing | — | — | — | 18 | 18 |
 | **TOTAL** | **90** | **108** | **8** | **29** | **235+** |
 
-**Actual total: 313 tests** (includes inline module tests).
+**Actual total: 474 tests** (includes inline module tests).
 
 ---
 
@@ -207,3 +207,11 @@ Defines testing standards, coverage requirements, test categories, and validatio
 | No external service dependencies | Self-contained testing |
 | Deterministic test results | Reproducible validation |
 | Property tests use fixed seed | Reproducible debugging |
+
+---
+
+## 8. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_ENGINEERING_RULES (KCM_ENGINEERING_RULES), KCM_PERFORMANCE_SPEC (KCM_PERFORMANCE_SPEC), KCM_BENCHMARK_REPORTING_SPEC (KCM_BENCHMARK_REPORTING_SPEC)

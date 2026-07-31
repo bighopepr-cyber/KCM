@@ -13,7 +13,13 @@ description: Maintain architectural integrity and PRD alignment across all KCM c
 
 **Scope:** All crates, all modules, all architectural decisions, dependency boundaries, and system invariants.
 
-**Non-responsibility:** Does not write implementation code. Does not perform performance optimization. Does not write tests.
+**Non-responsibility:** Does not write implementation code. Does not perform performance optimization. Does not write tests. Does not review code quality (Code Quality Guardian). Does not review security (Security Engineer).
+
+**Measurable Outcomes:**
+- Zero dependency direction violations in workspace
+- Every public API returns `Result<T, KcmError>`
+- Zero circular dependencies
+- Every storage format change is versioned
 
 ---
 
@@ -33,6 +39,7 @@ description: Maintain architectural integrity and PRD alignment across all KCM c
 - Test-only changes (use Testing Skill)
 - Documentation-only changes (use Documentation Guardian)
 - Performance optimization within existing architecture (use Performance Skill)
+- Security implementation (use Security Engineer)
 
 ---
 
@@ -43,11 +50,38 @@ Before making any architectural decision, read these files in order:
 1. `PRD.md` — Core specification (highest priority)
 2. `PRD2.md` — Persistence, optimizer, monitoring
 3. `PRD3.md` — Distributed, ML, security, compliance
-4. `PRD-TESTING&BRACHMARCK.md` — Testing and benchmarks
+4. `PRD-TESTING& BRACHMARCK.md` — Testing and benchmarks (note: space before BRACHMARCK)
 5. `docs/KCM_SPECIFICATION.md` — Technical constitution
 6. `docs/KCM_ARCHITECTURE.md` — System architecture
 7. `Cargo.toml` (workspace root) — Dependency graph
 8. The specific crate's `Cargo.toml` being modified
+
+---
+
+## Crate Architecture
+
+The workspace contains **13 crates**:
+
+```
+kcm-core          → Types, DenseVec, Bitmap, Dictionary (zero internal deps)
+kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup, Recovery, Errors, DictCodec
+kcm-compute       → Algebra operators, SIMD AVX2
+kcm-reasoning     → Rules, Forward-chaining inference
+kcm-optimizer     → Cost model, Planner, Statistics, Rewriting, Adaptive
+kcm-runtime       → Database, Transactions, Metrics, Health, Executor
+kcm-interface     → C FFI, Python, REST, KQL parser
+kcm-distributed   → Sharding (Hash/Range/ConsistentHash), 2PC Coordinator
+kcm-ml            → Learned Index, Confidence Learner, Rule Discovery
+kcm-security      → RBAC, AES-256-GCM encryption, Audit Log
+kcm-compliance    → GDPR Manager, Data Classification
+kcm-testing       → Load/Stress/Security/Recovery test infrastructure, Metrics Dashboard
+kcm-server        → gRPC server, gRPC main, main entry point
+```
+
+**Dependency flow:**
+```
+core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
+```
 
 ---
 
@@ -59,7 +93,7 @@ Every architectural decision must trace to a PRD requirement. If a decision cann
 ### Principle 2: Dependency Hygiene
 - kcm-core must have ZERO internal dependencies
 - No circular crate dependencies allowed
-- Dependencies flow downward only: core → storage → compute/reasoning/optimizer → runtime → interface
+- Dependencies flow downward only: core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
 - New external dependencies require justification
 
 ### Principle 3: Separation of Concerns
@@ -67,12 +101,14 @@ Every architectural decision must trace to a PRD requirement. If a decision cann
 - Compute layer knows nothing about persistence
 - Reasoning layer knows nothing about storage format
 - Interface layer knows nothing about internal data structures
+- Server layer knows nothing about internal data structures
 
 ### Principle 4: Interface Stability
 - Public APIs must return `Result<T, KcmError>`
 - Breaking changes require version bump
 - C FFI functions must validate null pointers
 - Builder pattern methods consume `self`
+- gRPC proto definitions must be stable
 
 ### Principle 5: Data Integrity Invariants
 - Schema column lengths must always be equal
@@ -116,6 +152,26 @@ Every architectural decision must trace to a PRD requirement. If a decision cann
 
 ---
 
+## Files Validated
+
+| Crate | Files |
+|-------|-------|
+| kcm-core | `types.rs`, `vec.rs`, `bitmap.rs`, `dictionary.rs` |
+| kcm-storage | `column.rs`, `codec.rs`, `compress.rs`, `file_format.rs`, `wal.rs`, `index.rs`, `dict_codec.rs`, `errors.rs`, `backup.rs`, `recovery.rs` |
+| kcm-compute | `algebra.rs`, `simd.rs` |
+| kcm-reasoning | `rule.rs`, `inference.rs` |
+| kcm-optimizer | `cost_model.rs`, `planner.rs`, `statistics.rs`, `rewriting.rs`, `adaptive.rs` |
+| kcm-runtime | `database.rs`, `transaction.rs`, `executor.rs`, `async_executor.rs`, `metrics.rs`, `health.rs` |
+| kcm-interface | `lib.rs`, `rest_api.rs`, `kql_parser.rs`, `python.rs` |
+| kcm-distributed | `sharding.rs`, `coordinator.rs` |
+| kcm-ml | `learned_index.rs`, `confidence_learner.rs`, `rule_discovery.rs` |
+| kcm-security | `rbac.rs`, `encryption.rs`, `audit.rs` |
+| kcm-compliance | `gdpr.rs`, `data_classification.rs` |
+| kcm-testing | `security_tests.rs`, `load_tests.rs`, `stress_tests.rs`, `regression_detector.rs`, `metrics_dashboard.rs` |
+| kcm-server | `grpc_server.rs`, `grpc_main.rs`, `main.rs` |
+
+---
+
 ## Validation Criteria
 
 | Criterion | Pass Condition |
@@ -126,6 +182,7 @@ Every architectural decision must trace to a PRD requirement. If a decision cann
 | Format Compatibility | File format changes are versioned |
 | Invariant Preservation | All system invariants maintained |
 | Separation of Concerns | No cross-layer violations |
+| Crate Count | 13 crates in workspace |
 
 ---
 
@@ -144,7 +201,10 @@ Every architectural decision must trace to a PRD requirement. If a decision cann
 ## Final Report Format
 
 ```
-# Architecture Review Report
+# KCM Engineering Report
+
+## Skill
+kcm-architecture-guardian
 
 ## Decision
 [What architectural decision was made]
@@ -164,6 +224,15 @@ Every architectural decision must trace to a PRD requirement. If a decision cann
 - [ ] Public API returns Result
 - [ ] Format changes versioned
 - [ ] System invariants preserved
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
+
+## Validation Required
+[tests/benchmarks]
 
 ## Verdict
 APPROVED / REJECTED / NEEDS DISCUSSION

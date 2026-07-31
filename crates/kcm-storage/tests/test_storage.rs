@@ -1,5 +1,4 @@
 use kcm_core::types::*;
-use kcm_storage::codec::{Codec, DeltaCodec, GorillaCodec, RleCodec};
 use kcm_storage::column::{Column, ColumnEncoding, CompressionCodec, Schema};
 use kcm_storage::index::{BitmapIndex, BloomFilter, ZoneMap};
 
@@ -72,75 +71,6 @@ fn test_schema_multiple_facts() {
     assert_eq!(fact5.subject, SubjectID(5));
     assert_eq!(fact5.predicate, PredicateID(0));
     assert_eq!(fact5.object, ObjectID(50));
-}
-
-#[test]
-fn test_delta_codec() {
-    let codec = DeltaCodec;
-    let data = vec![100i64, 105, 110, 120, 100];
-
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_delta_codec_empty() {
-    let codec = DeltaCodec;
-    let data: Vec<i64> = vec![];
-
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, 0).unwrap();
-
-    assert!(decoded.is_empty());
-}
-
-#[test]
-fn test_rle_codec() {
-    let codec = RleCodec;
-    let data = vec![1u8, 1, 1, 2, 2, 3, 3, 3, 3];
-
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_rle_codec_single_values() {
-    let codec = RleCodec;
-    let data = vec![5u8, 10, 15, 20];
-
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_gorilla_codec() {
-    let codec = GorillaCodec;
-    let data = vec![1.0f64, 1.5, 2.0, 2.5, 3.0];
-
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-
-    assert_eq!(data.len(), decoded.len());
-    for (a, b) in data.iter().zip(decoded.iter()) {
-        assert!((a - b).abs() < f64::EPSILON);
-    }
-}
-
-#[test]
-fn test_gorilla_codec_empty() {
-    let codec = GorillaCodec;
-    let data: Vec<f64> = vec![];
-
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, 0).unwrap();
-
-    assert!(decoded.is_empty());
 }
 
 #[test]

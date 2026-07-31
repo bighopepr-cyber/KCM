@@ -1,5 +1,4 @@
 use kcm_core::types::*;
-use kcm_storage::column::Schema;
 
 pub mod adaptive;
 pub mod cost_model;
@@ -189,8 +188,6 @@ impl PlanNode {
 pub struct QueryOptimizer {
     enable_filter_pushdown: bool,
     enable_join_reorder: bool,
-    #[allow(dead_code)]
-    enable_projection_pushdown: bool,
 }
 
 impl QueryOptimizer {
@@ -198,7 +195,6 @@ impl QueryOptimizer {
         QueryOptimizer {
             enable_filter_pushdown: true,
             enable_join_reorder: true,
-            enable_projection_pushdown: true,
         }
     }
 
@@ -354,26 +350,6 @@ impl QueryOptimizer {
             },
             other => other,
         }
-    }
-
-    /// Estimate selectivity for a column filter.
-    /// Currently uses a simplified model based on column cardinality.
-    /// The `value` parameter is reserved for future histogram-based estimation.
-    #[allow(dead_code)]
-    pub fn estimate_selectivity(&self, schema: &Schema, column: ColumnID, _value: &str) -> f64 {
-        let total = schema.len() as f64;
-        if total == 0.0 {
-            return 0.0;
-        }
-
-        let matching = match column {
-            ColumnID::Subject => schema.subject_col.iter().filter(|&&v| v == 0).count(),
-            ColumnID::Predicate => schema.predicate_col.iter().filter(|&&v| v == 0).count(),
-            ColumnID::Object => schema.object_col.iter().filter(|&&v| v == 0).count(),
-            _ => 0,
-        };
-
-        matching as f64 / total
     }
 }
 

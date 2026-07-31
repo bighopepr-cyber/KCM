@@ -5,9 +5,24 @@ description: Help AI agents understand the complete repository structure before 
 
 # Skill: Repository Intelligence
 
-## Purpose
+## Skill Identity
 
-Before any code change, the agent must understand where the change belongs in the repository. This skill provides structured analysis of the KCM codebase to prevent misplaced code, duplicated implementations, and incorrect dependency usage.
+**Purpose:** Before any code change, the agent must understand where the change belongs in the repository. This skill provides structured analysis of the KCM codebase to prevent misplaced code, duplicated implementations, and incorrect dependency usage.
+
+**Role:** Codebase Intelligence Analyst
+
+**Scope:** Repository structure analysis, dependency graph understanding, module ownership identification, existing implementation discovery, test location mapping.
+
+**Non-responsibility:** Does not implement code. Does not write tests. Does not review architecture (Architecture Guardian). Does not review code quality (Code Quality Guardian).
+
+**Measurable Outcomes:**
+- Every change targets the correct crate
+- No duplicated implementations exist
+- Dependencies flow in correct direction
+- Tests are in the correct location
+- All 13 crates and their files are accurately mapped
+
+---
 
 ## Activation Rules
 
@@ -23,21 +38,14 @@ Before any code change, the agent must understand where the change belongs in th
 - Change is a simple bug fix in a known location
 - Change is test-only in a known test file
 
-## Responsibilities
-
-This skill controls:
-- Repository structure analysis
-- Dependency graph understanding
-- Module ownership identification
-- Existing implementation discovery
-- Test location mapping
+---
 
 ## Required Inspection
 
 When activated, analyze these in order:
 
 ### 1. Workspace Structure
-Read `Cargo.toml` at workspace root to understand all crates and their dependencies.
+Read `Cargo.toml` at workspace root. The workspace contains **13 crates**.
 
 ### 2. Crate Map
 For each crate, identify:
@@ -47,15 +55,15 @@ For each crate, identify:
 
 ### 3. Dependency Graph
 ```
-kcm-core (zero deps)
+kcm-core (zero internal deps)
   ↑
 kcm-storage
   ↑
-kcm-compute, kcm-reasoning, kcm-optimizer, kcm-distributed
+kcm-compute, kcm-reasoning, kcm-optimizer, kcm-distributed, kcm-ml
   ↑
 kcm-runtime
   ↑
-kcm-interface, kcm-testing
+kcm-interface, kcm-testing, kcm-server
 ```
 
 ### 4. Module Ownership
@@ -72,11 +80,14 @@ kcm-interface, kcm-testing
 | file_format.rs | kcm-storage | Binary DB format |
 | wal.rs | kcm-storage | Write-Ahead Log |
 | index.rs | kcm-storage | BitmapIndex, ZoneMap, BloomFilter, CompositeIndex |
+| dict_codec.rs | kcm-storage | Dictionary encoding |
+| errors.rs | kcm-storage | Storage-specific error types |
+| backup.rs | kcm-storage | Backup and restore |
+| recovery.rs | kcm-storage | Crash recovery |
 | algebra.rs | kcm-compute | Scan, Filter, Project, Join, Aggregate operators |
 | simd.rs | kcm-compute | AVX2 SIMD operations |
 | rule.rs | kcm-reasoning | Rule, RulePattern, RuleRegistry |
 | inference.rs | kcm-reasoning | Forward-chaining inference |
-| confidence.rs | kcm-reasoning | Confidence calculus |
 | cost_model.rs | kcm-optimizer | Cost estimation |
 | planner.rs | kcm-optimizer | Query planner |
 | statistics.rs | kcm-optimizer | Column statistics |
@@ -96,21 +107,34 @@ kcm-interface, kcm-testing
 | sharding.rs | kcm-distributed | Hash/Range/ConsistentHash |
 | coordinator.rs | kcm-distributed | 2PC coordinator |
 | learned_index.rs | kcm-ml | Regression-based index |
-| confidence_learner.rs | kcm-ml | Accuracy tracking |
+| confidence_learner.rs | kcm-ml | Accuracy tracking (NOT in kcm-reasoning) |
 | rule_discovery.rs | kcm-ml | Pattern mining |
 | rbac.rs | kcm-security | Role-based access control |
 | encryption.rs | kcm-security | AES-256-GCM |
 | audit.rs | kcm-security | Audit logging |
 | gdpr.rs | kcm-compliance | GDPR data subject management |
 | data_classification.rs | kcm-compliance | 4-tier classification |
+| security_tests.rs | kcm-testing | Security test infrastructure |
+| load_tests.rs | kcm-testing | Load test infrastructure |
+| stress_tests.rs | kcm-testing | Stress test infrastructure |
+| regression_detector.rs | kcm-testing | Performance regression detection |
+| metrics_dashboard.rs | kcm-testing | Metrics dashboard |
+| grpc_server.rs | kcm-server | gRPC server implementation |
+| grpc_main.rs | kcm-server | gRPC main entry point |
+| main.rs | kcm-server | Main entry point |
+
+---
 
 ## Operating Rules
 
 1. **Search before creating** — Before writing new code, search for existing implementations
 2. **Respect crate boundaries** — Don't put storage logic in compute, don't put API logic in core
-3. **Follow dependency direction** — core → storage → compute → runtime → interface
+3. **Follow dependency direction** — core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
 4. **Check public API** — Use existing public APIs instead of reaching into internals
 5. **Find test location** — Tests go in the crate that owns the code being tested
+6. **confidence_learner.rs is in kcm-ml** — NOT in kcm-reasoning
+
+---
 
 ## Validation Checklist
 
@@ -119,10 +143,18 @@ kcm-interface, kcm-testing
 - [ ] Dependencies flow in correct direction
 - [ ] Public API used correctly
 - [ ] Tests in correct location
+- [ ] All 13 crates recognized
+
+---
 
 ## Final Report Format
 
 ```
+# KCM Engineering Report
+
+## Skill
+kcm-repository-intelligence
+
 ## Repository Intelligence Report
 
 Change Request: [description]
@@ -137,4 +169,10 @@ Validation:
 - [ ] No duplication
 - [ ] Correct dependencies
 - [ ] Tests located
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
 ```

@@ -13,7 +13,13 @@ description: Analyze the impact of proposed changes before implementation, ident
 
 **Scope:** Pre-implementation analysis of all code changes, identifying ripple effects across the system.
 
-**Non-responsibility:** Does not implement changes. Does not write tests. Does not make go/no-go decisions (defers to Architecture Guardian).
+**Non-responsibility:** Does not implement changes. Does not write tests. Does not make go/no-go decisions (defers to Architecture Guardian). Does not review code quality (Code Quality Guardian). Does not review security (Security Engineer).
+
+**Measurable Outcomes:**
+- Every proposed change has a complete impact matrix
+- All affected files identified before implementation
+- All specification documents identified for updates
+- All breaking changes catalogued with migration paths
 
 ---
 
@@ -30,15 +36,43 @@ description: Analyze the impact of proposed changes before implementation, ident
 - Bug fix within single module (use Code Quality Guardian)
 - Test-only changes (use Testing Skill)
 - Documentation-only changes (use Documentation Guardian)
+- Architecture decisions needed (use Architecture Guardian)
 
 ---
 
 ## Required Context
 
 1. The proposed change description
-2. The crate dependency graph (workspace Cargo.toml)
+2. The crate dependency graph (workspace Cargo.toml) — **13 crates**
 3. The specification documents for affected components
 4. The existing test coverage for affected components
+
+---
+
+## Crate Awareness
+
+The workspace contains **13 crates** organized as:
+
+```
+kcm-core          → Types, DenseVec, Bitmap, Dictionary
+kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup, Recovery, Errors, DictCodec
+kcm-compute       → Algebra operators, SIMD AVX2
+kcm-reasoning     → Rules, Forward-chaining inference
+kcm-optimizer     → Cost model, Planner, Statistics, Rewriting, Adaptive
+kcm-runtime       → Database, Transactions, Metrics, Health, Executor
+kcm-interface     → C FFI, Python, REST, KQL parser
+kcm-distributed   → Sharding, 2PC Coordinator
+kcm-ml            → Learned Index, Confidence Learner, Rule Discovery
+kcm-security      → RBAC, AES-256-GCM encryption, Audit Log
+kcm-compliance    → GDPR Manager, Data Classification
+kcm-testing       → Load/Stress/Security/Recovery test infrastructure, Metrics Dashboard
+kcm-server        → gRPC server, gRPC main, main entry point
+```
+
+**Dependency flow:**
+```
+core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
+```
 
 ---
 
@@ -79,10 +113,19 @@ Change → Direct Impact → Indirect Impact → Spec Impact → Test Impact →
 
 ---
 
+## Files Validated
+
+All source files across all 13 crates are within scope for impact analysis.
+
+---
+
 ## Final Report Format
 
 ```
-# Change Impact Analysis
+# KCM Engineering Report
+
+## Skill
+kcm-change-impact-analysis
 
 ## Proposed Change
 [Description of the change]

@@ -18,10 +18,7 @@ pub struct KCM_Database {
 use kcm_runtime::transaction::Transaction;
 
 pub struct KCM_Transaction {
-    #[allow(dead_code)]
     inner: Option<Transaction>,
-    #[allow(dead_code)]
-    db: *mut KCM_Database,
 }
 
 pub struct KCM_Query {
@@ -318,10 +315,7 @@ pub unsafe extern "C" fn KCM_DatabaseBeginTransaction(
     unsafe {
         let db_ref = &*db;
         let txn = db_ref.inner.lock().begin_transaction();
-        *txn_out = Box::into_raw(Box::new(KCM_Transaction {
-            inner: Some(txn),
-            db,
-        }));
+        *txn_out = Box::into_raw(Box::new(KCM_Transaction { inner: Some(txn) }));
         KCM_Error::KCM_OK
     }
 }

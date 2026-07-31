@@ -131,18 +131,7 @@ Read Path:
 
 ## 5. Codec Registry
 
-| Column | Encoding | Compressor | Rationale |
-|--------|----------|------------|-----------|
-| subject | Dictionary | Zstd | Entity references, compresses well |
-| predicate | Dictionary | RLE | Low cardinality (≤256), repeated runs |
-| object | Dictionary | Zstd | Entity references |
-| confidence | Gorilla | Zstd | Float XOR encoding + compression |
-| evidence | Dictionary | RLE | Low cardinality |
-| timestamp | Delta | Zstd | Monotonically increasing |
-| context | Dictionary | RLE | Low cardinality |
-| version | Delta | LZ4 | Fast decompression for version checks |
-| priority | Identity | RLE | Small integer values |
-| owner | Dictionary | Zstd | Moderate cardinality |
+**See KCM_DATA_MODEL_SPEC (Section 5.2) for the authoritative codec-per-column registry.** This section documents the encoding and compression implementations available in the storage engine.
 
 ---
 
@@ -183,3 +172,11 @@ trait Compressor {
 | No lossy compression | Knowledge integrity must be preserved |
 | Decompression must be deterministic | Identical compressed data produces identical output |
 | Column encoding chosen at schema creation | Prevents runtime encoding mismatch |
+
+---
+
+## 9. References
+
+- **Depends on:** KCM_COLUMNAR_FORMAT_SPEC (KCM_COLUMNAR_FORMAT_SPEC)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_COLUMNAR_FORMAT_SPEC (KCM_COLUMNAR_FORMAT_SPEC)

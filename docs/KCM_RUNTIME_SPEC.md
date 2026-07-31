@@ -75,8 +75,8 @@ Writers (insert):   ──write lock──► append to all columns ──releas
 | Lock | Type | Protects |
 |------|------|----------|
 | schema RwLock | parking_lot::RwLock | Schema read/write |
-| WAL Mutex | std::sync::Mutex | WAL file write |
-| WAL buffer Mutex | std::sync::Mutex | WAL write buffer |
+| WAL Mutex | parking_lot::Mutex | WAL file write |
+| WAL buffer Mutex | parking_lot::Mutex | WAL write buffer |
 | Dictionary RwLock | parking_lot::RwLock | Dictionary read/write |
 | AuditLog Mutex | parking_lot::Mutex | Audit event append |
 | Metrics | AtomicU64 | Lock-free counters |
@@ -182,3 +182,11 @@ struct MetricsSnapshot {
 | Schema capacity pre-allocated | Avoids reallocation |
 | Maximum 100K audit events | Memory bound |
 | Thread pool bounded by CPU count | Prevents thread explosion |
+
+---
+
+## 9. References
+
+- **Depends on:** KCM_ARCHITECTURE (KCM_ARCHITECTURE)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_API_SPEC (KCM_API_SPEC), KCM_SECURITY_TRUST_SPEC (KCM_SECURITY_TRUST_SPEC)

@@ -17,7 +17,13 @@ pub struct ApiResponse {
 
 impl ApiResponse {
     fn escape_json(s: &str) -> String {
-        s.replace('\\', "\\\\").replace('"', "\\\"")
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+            .replace('\r', "\\r")
+            .replace('\t', "\\t")
+            .replace('\x08', "\\b")
+            .replace('\x0C', "\\f")
     }
 
     pub fn ok(body: &str) -> Self {

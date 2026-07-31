@@ -13,7 +13,13 @@ description: Capture important technical decisions that have long-term impact on
 
 **Scope:** Architecture changes, protocol changes, storage format changes, major performance decisions, and security model changes.
 
-**Non-responsibility:** Does not make decisions. Does not review code. Does not write tests. Only documents decisions that have already been made.
+**Non-responsibility:** Does not make decisions. Does not review code. Does not write tests. Only documents decisions that have already been made. Does not validate architecture (Architecture Guardian). Does not review code quality (Code Quality Guardian).
+
+**Measurable Outcomes:**
+- Every significant decision has a documented EDR
+- Every EDR includes context, decision, consequences, and alternatives
+- Every EDR references relevant PRD sections
+- No undocumented architectural decisions
 
 ---
 
@@ -22,7 +28,7 @@ description: Capture important technical decisions that have long-term impact on
 **Activate when:**
 - Architecture change is made
 - Storage format change is made
-- Protocol change is made
+- Protocol change is made (including gRPC proto changes)
 - Major performance decision is made
 - Security model change is made
 - Breaking change is approved
@@ -33,6 +39,21 @@ description: Capture important technical decisions that have long-term impact on
 - Test additions
 - Documentation updates
 - Dependency version bumps (unless breaking)
+
+---
+
+## Required Context
+
+1. The decision that was made
+2. The PRD sections relevant to the decision
+3. The specification documents affected
+4. The alternatives that were considered
+
+---
+
+## Crate Awareness
+
+Decisions may affect any of the **13 crates**: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, kcm-runtime, kcm-interface, kcm-distributed, kcm-ml, kcm-security, kcm-compliance, kcm-testing, kcm-server.
 
 ---
 
@@ -47,6 +68,7 @@ Only create records for decisions that:
 - Have performance implications
 - Have security implications
 - Are difficult to reverse
+- Change gRPC proto definitions
 
 ### When NOT to Create a Record
 
@@ -105,4 +127,7 @@ Each record must include:
 ## References
 - [PRD section]
 - [Specification section]
+
+## Affected Crates
+- [list of crates affected]
 ```

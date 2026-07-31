@@ -53,6 +53,12 @@ members = [
     "crates/kcm-optimizer",
     "crates/kcm-runtime",
     "crates/kcm-interface",
+    "crates/kcm-distributed",
+    "crates/kcm-ml",
+    "crates/kcm-security",
+    "crates/kcm-compliance",
+    "crates/kcm-testing",
+    "crates/kcm-server",
 ]
 
 resolver = "2"
@@ -69,14 +75,23 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# Zero dependencies - pure Rust
-parking_lot = "0.12"       # Fast synchronization primitives
-siphasher = "0.3"          # SipHash for dictionary
-num-traits = "0.2"         # Numeric traits
+parking_lot = "0.12"
+
+[features]
+serialization = ["serde", "serde_json"]
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+optional = true
+
+[dependencies.serde_json]
+version = "1.0"
+optional = true
 
 [dev-dependencies]
-criterion = "0.5"          # Benchmarking
-proptest = "1.0"           # Property-based testing
+criterion = "0.5"
+proptest = "1.0"
 quickcheck = "1.0"
 ```
 
@@ -87,11 +102,13 @@ quickcheck = "1.0"
 
 [dependencies]
 kcm-core = { path = "../kcm-core" }
-parking_lot = "0.12"
-zstd = "0.13"              # Zstandard compression
-lz4 = "1.24"               # LZ4 compression
-blake3 = "1.5"             # Blake3 hashing
-thiserror = "1.0"          # Error handling macro
+zstd = "0.13"
+lz4 = "1.24"
+blake3 = "1.5"
+thiserror = "1.0"
+
+[dev-dependencies]
+tempfile = "3"
 ```
 
 ### 2.4 Compute Crate Dependencies
@@ -102,7 +119,9 @@ thiserror = "1.0"          # Error handling macro
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
-packed_simd_2 = "0.3"      # SIMD operations
+
+[dev-dependencies]
+criterion = "0.5"
 ```
 
 ### 2.5 Runtime Crate Dependencies
@@ -113,13 +132,16 @@ packed_simd_2 = "0.3"      # SIMD operations
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
-kcm-compute = { path = "../kcm-compute" }
-kcm-reasoning = { path = "../kcm-reasoning" }
-kcm-optimizer = { path = "../kcm-optimizer" }
 parking_lot = "0.12"
-rayon = "1.7"              # Data parallelism
-crossbeam = "0.8"          # Multi-threading utilities
-tokio = { version = "1.35", features = ["full"] }  # Async (optional)
+rayon = "1.7"
+tokio = { version = "1.35", features = ["full"] }
+
+[dev-dependencies]
+criterion = "0.5"
+tempfile = "3"
+kcm-distributed = { path = "../kcm-distributed" }
+kcm-reasoning = { path = "../kcm-reasoning" }
+kcm-compute = { path = "../kcm-compute" }
 ```
 
 ### 2.6 Interface Crate Dependencies
@@ -128,9 +150,24 @@ tokio = { version = "1.35", features = ["full"] }  # Async (optional)
 # crates/kcm-interface/Cargo.toml
 
 [dependencies]
+kcm-core = { path = "../kcm-core" }
+kcm-storage = { path = "../kcm-storage" }
 kcm-runtime = { path = "../kcm-runtime" }
+parking_lot = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+[dependencies.pyo3]
+version = "0.20"
+optional = true
+
+[features]
+default = []
+python = ["pyo3"]
+
+[lib]
+name = "kcm_interface"
+crate-type = ["lib", "cdylib"]
 ```
 
 ---
@@ -2741,9 +2778,25 @@ members = [
     "crates/kcm-optimizer",
     "crates/kcm-runtime",
     "crates/kcm-interface",
+    "crates/kcm-distributed",
+    "crates/kcm-ml",
+    "crates/kcm-security",
+    "crates/kcm-compliance",
+    "crates/kcm-testing",
+    "crates/kcm-server",
 ]
 
 resolver = "2"
+
+[workspace.dependencies]
+kcm-core = { path = "crates/kcm-core" }
+kcm-storage = { path = "crates/kcm-storage" }
+kcm-compute = { path = "crates/kcm-compute" }
+kcm-reasoning = { path = "crates/kcm-reasoning" }
+kcm-optimizer = { path = "crates/kcm-optimizer" }
+kcm-runtime = { path = "crates/kcm-runtime" }
+kcm-interface = { path = "crates/kcm-interface" }
+criterion = "0.5"
 
 [profile.release]
 opt-level = 3

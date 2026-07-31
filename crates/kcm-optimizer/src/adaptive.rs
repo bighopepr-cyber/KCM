@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
 
 pub struct ExecutionStats {
     pub actual_rows: usize,
@@ -127,33 +126,5 @@ impl AdaptiveExecutor {
 impl Default for AdaptiveExecutor {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-pub struct TimerGuard {
-    start: Instant,
-    label: String,
-}
-
-impl TimerGuard {
-    pub fn new(label: &str) -> Self {
-        TimerGuard {
-            start: Instant::now(),
-            label: label.to_string(),
-        }
-    }
-
-    pub fn elapsed_ms(&self) -> u64 {
-        self.start.elapsed().as_millis() as u64
-    }
-
-    pub fn label(&self) -> &str {
-        &self.label
-    }
-}
-
-impl Drop for TimerGuard {
-    fn drop(&mut self) {
-        let _elapsed = self.elapsed_ms();
     }
 }

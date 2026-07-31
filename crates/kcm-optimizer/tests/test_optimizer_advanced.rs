@@ -123,15 +123,6 @@ fn test_column_pruning() {
 }
 
 #[test]
-fn test_constant_folding() {
-    let pred = PlannerFilterPredicate::EqualSubject(0);
-    assert!(ConstantFoldingOptimizer::can_fold(&pred));
-    let pred2 = PlannerFilterPredicate::EqualSubject(1);
-    assert!(!ConstantFoldingOptimizer::can_fold(&pred2));
-    assert_eq!(ConstantFoldingOptimizer::fold_predicate(&pred), None);
-}
-
-#[test]
 fn test_join_ordering() {
     let cost = JoinOrderingOptimizer::estimate_join_cost(100, 1000);
     assert!(cost > 0.0);
@@ -170,12 +161,4 @@ fn test_optimizer_pipeline() {
     };
     let optimized = pipeline.optimize(&plan);
     assert!(matches!(optimized, PlanNode::Scan { .. }));
-}
-
-#[test]
-fn test_timer_guard() {
-    let timer = TimerGuard::new("test");
-    std::thread::sleep(std::time::Duration::from_millis(10));
-    assert!(timer.elapsed_ms() >= 5);
-    assert_eq!(timer.label(), "test");
 }

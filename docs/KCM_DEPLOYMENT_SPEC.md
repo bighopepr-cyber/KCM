@@ -209,3 +209,11 @@ spec:
 | SSD recommended for WAL | WAL fsync latency critical |
 | Minimum 512MB RAM | Schema pre-allocates DenseVec |
 | Graceful shutdown required | Flush WAL before exit |
+
+---
+
+## 9. References
+
+- **Depends on:** KCM_ARCHITECTURE (KCM_ARCHITECTURE), KCM_SECURITY_TRUST_SPEC (KCM_SECURITY_TRUST_SPEC)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_RUNTIME_SPEC (KCM_RUNTIME_SPEC), KCM_API_SPEC (KCM_API_SPEC)

@@ -29,7 +29,7 @@ typedef struct {
     uint8_t evidence;
     int64_t timestamp;
     uint8_t context;
-} KCM_Fact;
+} KCM_Fact;  // See KCM_DATA_MODEL_SPEC for canonical Fact definition
 
 typedef enum {
     KCM_OK = 0,
@@ -194,3 +194,11 @@ service KnowledgeService {
 | All pointers validated for null | Prevents segfault |
 | QueryBuilder consumes self | Prevents accidental reuse |
 | REST handlers are stateless functions | No framework dependency |
+
+---
+
+## 8. References
+
+- **Depends on:** KCM-DATA-001 (KCM_DATA_MODEL_SPEC), KCM_ARCHITECTURE-001 (KCM_ARCHITECTURE)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_QUERY_EXECUTION_SPEC (KCM_QUERY_EXECUTION_SPEC), KCM_RUNTIME_SPEC (KCM_RUNTIME_SPEC)

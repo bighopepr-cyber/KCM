@@ -52,7 +52,7 @@ PATCH: Backward-compatible bug fixes
 File Header Byte 5: Format version (u8)
 ```
 
-Current: `1`
+Current: `2`
 
 ### 3.2 Migration Rules
 
@@ -115,3 +115,11 @@ Current: `1`
 | No implicit migration | User must explicitly upgrade |
 | WAL forward-compatible within MAJOR | Recovery must work across patches |
 | Breaking changes require MAJOR bump | Prevents silent data corruption |
+
+---
+
+## 7. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_COLUMNAR_FORMAT_SPEC (KCM_COLUMNAR_FORMAT_SPEC), KCM_API_SPEC (KCM_API_SPEC)

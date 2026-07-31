@@ -11,9 +11,14 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 
 **Role:** Senior Staff Engineer / Code Reviewer
 
-**Scope:** Code review for all changes, severity classification, risk assessment, and review recommendations.
+**Scope:** Code review for all changes across all 13 crates, severity classification, risk assessment, and review recommendations.
 
-**Non-responsibility:** Does not write implementation code. Does not write tests. Does not make architecture decisions (defers to Architecture Guardian).
+**Non-responsibility:** Does not write implementation code. Does not write tests. Does not make architecture decisions (defers to Architecture Guardian). Does not enforce Rust code quality patterns (defers to Code Quality Guardian). Does not review security (defers to Security Engineer).
+
+**Measurable Outcomes:**
+- Every PR has a structured review with severity-classified findings
+- Every critical/high issue has a clear remediation path
+- No architectural risks merged without documentation
 
 ---
 
@@ -28,8 +33,9 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 **Do NOT activate when:**
 - Architecture decision needed (use Architecture Guardian)
 - Performance optimization needed (use Performance Skill)
-- Security review needed (use Security Skill)
+- Security review needed (use Security Engineer)
 - Test coverage needed (use Testing Skill)
+- Automated code quality check (use Code Quality Guardian)
 
 ---
 
@@ -39,6 +45,13 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 2. Related specification documents
 3. Existing tests for changed code
 4. The crate's Cargo.toml for dependency context
+5. Workspace crate structure (13 crates)
+
+---
+
+## Crate Awareness
+
+Reviews code across all **13 crates**: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, kcm-runtime, kcm-interface, kcm-distributed, kcm-ml, kcm-security, kcm-compliance, kcm-testing, kcm-server.
 
 ---
 
@@ -82,6 +95,7 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 □ Testing: Is the code adequately tested?
 □ Maintainability: Is the code readable and maintainable?
 □ Specification: Does it match the specification?
+□ Dependency direction: Correct across crates?
 ```
 
 ---
@@ -100,8 +114,9 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 7. Check concurrency safety
 8. Check performance implications
 9. Check security implications
-10. Classify severity of issues found
-11. Provide recommendations
+10. Check dependency direction across crates
+11. Classify severity of issues found
+12. Provide recommendations
 ```
 
 ---
@@ -109,7 +124,10 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 ## Final Report Format
 
 ```
-# Code Review Report
+# KCM Engineering Report
+
+## Skill
+kcm-code-review-auditor
 
 ## Change Summary
 [What was changed and why]
@@ -124,6 +142,18 @@ description: Act as a senior engineering reviewer, providing thorough code revie
 
 ## Positive Observations
 [What was done well]
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
+
+## Validation Required
+[tests/benchmarks]
+
+## Risks
+[list]
 
 ## Verdict
 APPROVE / REQUEST CHANGES / NEEDS DISCUSSION

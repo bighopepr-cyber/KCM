@@ -138,3 +138,13 @@ Undocumented conflicts are recorded in change history rather than resolved by as
 | KCM_ENGINEERING_RULES.md | Development rules |
 | KCM_VERSIONING_SPEC.md | Versioning and compatibility |
 | KCM_GLOSSARY.md | Terminology definitions |
+| KCM_DEPLOYMENT_SPEC.md | Deployment and container specifications |
+| KCM_DOCUMENT_AUDIT_REPORT.md | Documentation audit results |
+
+---
+
+## 7. References
+
+- **Depends on:** PRD.md, PRD2.md, PRD3.md, PRD-TESTING&BRACHMARCK.md
+- **Parent specs:** None (this is the root specification)
+- **Related:** All KCM specification documents

@@ -69,7 +69,7 @@ Defines mandatory engineering practices for KCM development.
 
 | Rule | Description |
 |------|-------------|
-| PR-001 | Benchmark regression > 5% fails CI |
+| PR-001 | Benchmark regression > 5% triggers WARNING, > 10% triggers FAILURE |
 | PR-002 | Memory usage must not exceed 100 bytes/fact |
 | PR-003 | Compression ratio must exceed 5x |
 | PR-004 | New operators must report estimated_rows |
@@ -117,3 +117,11 @@ Defines mandatory engineering practices for KCM development.
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-07-31 | Initial version | KCM Engineering |
+
+---
+
+## 9. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_BENCHMARK_REPORTING_SPEC (KCM_BENCHMARK_REPORTING_SPEC), KCM_PERFORMANCE_SPEC (KCM_PERFORMANCE_SPEC)

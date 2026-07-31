@@ -4,16 +4,16 @@
 
 **KCM — Knowledge Columnar Model** is a production-grade columnar knowledge representation, storage, and reasoning engine implemented in Rust.
 
-- 12 crates, ~12,000 lines of Rust
-- 372 tests, 0 failures
-- 17 specification documents
+- 13 crates, ~12,000 lines of Rust
+- 474 tests, 0 failures
+- 18 specification documents
 - 4 PRD source documents
 
 ## Single Source of Truth (SSOT)
 
 ### Priority Order (highest to lowest)
 
-1. `PRD-TESTING&BRACHMARCK.md` — Performance targets, validation methodology
+1. `PRD-TESTING& BRACHMARCK.md` — Performance targets, validation methodology
 2. `PRD3.md` — Distributed architecture, ML, security, compliance
 3. `PRD2.md` — Persistence, optimizer, monitoring
 4. `PRD.md` — Core types, storage, query, reasoning
@@ -160,20 +160,21 @@ APPROVE / REJECT / REQUIRE CHANGE
 
 ```
 kcm-core          → Types, DenseVec, Bitmap, Dictionary (zero internal deps)
-kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup
+kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup, Recovery, DictCodec
 kcm-compute       → Algebra operators, SIMD AVX2
 kcm-reasoning     → Rules, Forward-chaining inference, Confidence calculus
 kcm-optimizer     → Cost model, Planner, Statistics, Rewriting, Adaptive
-kcm-runtime       → Database, Transactions, Metrics, Health, Executor
+kcm-runtime       → Database, Transactions, Metrics, Health, Executor, AsyncExecutor
 kcm-interface     → C FFI, Python, REST, KQL parser
 kcm-distributed   → Sharding (Hash/Range/ConsistentHash), 2PC Coordinator
 kcm-ml            → Learned Index, Confidence Learner, Rule Discovery
 kcm-security      → RBAC, AES-256-GCM encryption, Audit Log, Compliance
 kcm-compliance    → GDPR Manager, Data Classification
 kcm-testing       → Load/Stress/Security/Recovery test infrastructure
+kcm-server        → HTTP (actix-web) + gRPC (tonic) server
 ```
 
-Dependency flow: `core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface/testing`
+Dependency flow: `core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server`
 
 ## Build and Test Commands
 

@@ -168,3 +168,11 @@ Defines all technical terms used in KCM documentation.
 | **Stress Test** | Maximum capacity testing for breaking point identification |
 | **Regression Test** | Comparison against performance baselines |
 | **Quality Gate** | Pass/fail criteria for CI pipeline stages |
+
+---
+
+## 14. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** All KCM documentation files

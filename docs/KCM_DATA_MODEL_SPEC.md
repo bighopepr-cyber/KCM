@@ -8,7 +8,7 @@
 
 ## 1. Purpose
 
-Defines the knowledge representation model, type system, validation rules, and schema design for KCM.
+Defines the knowledge representation model, type system, validation rules, and schema design for KCM. **This document is the SINGLE SOURCE OF TRUTH for Fact, Schema, Column types, and KcmError definitions.**
 
 ---
 
@@ -219,3 +219,11 @@ All public API methods return `Result<T, KcmError>`.
 | Tombstone bitmap size | Schema::new() | Creation |
 | Dictionary deduplication | Dictionary::insert() | Every insert |
 | File checksum | DatabaseFile::verify() | After load |
+
+---
+
+## 8. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION), KCM_ARCHITECTURE (KCM_ARCHITECTURE)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_COLUMNAR_FORMAT_SPEC (KCM_COLUMNAR_FORMAT_SPEC), KCM_COMPRESSION_SPEC (KCM_COMPRESSION_SPEC), KCM_QUERY_EXECUTION_SPEC (KCM_QUERY_EXECUTION_SPEC), KCM_INDEXING_SPEC (KCM_INDEXING_SPEC)

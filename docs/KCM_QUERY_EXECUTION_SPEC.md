@@ -218,3 +218,11 @@ WHERE <condition> [AND|OR <condition>]*
 | Join uses hash algorithm | O(n+m) vs O(n×m) nested loop |
 | SIMD path requires runtime detection | Portable across CPU architectures |
 | Optimizer must be idempotent | Repeated optimization must not change result |
+
+---
+
+## 8. References
+
+- **Depends on:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_ARCHITECTURE (KCM_ARCHITECTURE)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_INDEXING_SPEC (KCM_INDEXING_SPEC), KCM_API_SPEC (KCM_API_SPEC), KCM_PERFORMANCE_SPEC (KCM_PERFORMANCE_SPEC)

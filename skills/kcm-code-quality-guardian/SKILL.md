@@ -11,9 +11,16 @@ description: Enforce Rust production code quality standards, prevent placeholder
 
 **Role:** Senior Rust Engineer
 
-**Scope:** All Rust source code quality, error handling, ownership patterns, naming conventions, and implementation completeness.
+**Scope:** All Rust source code quality, error handling, ownership patterns, naming conventions, and implementation completeness across all 13 crates.
 
-**Non-responsibility:** Does not validate architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not optimize performance (Performance Skill).
+**Non-responsibility:** Does not validate architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not optimize performance (Performance Skill). Does not review security (Security Engineer). Does not review design quality (Code Review Auditor).
+
+**Measurable Outcomes:**
+- Zero `unwrap()` in production code
+- Zero TODO/FIXME/HACK in codebase
+- All public functions return `Result<T, KcmError>`
+- `cargo clippy --workspace -- -D warnings` passes clean
+- `cargo fmt --all -- --check` passes clean
 
 ---
 
@@ -29,8 +36,9 @@ description: Enforce Rust production code quality standards, prevent placeholder
 **Do NOT activate when:**
 - Architecture decisions needed (use Architecture Guardian)
 - Performance optimization needed (use Performance Skill)
-- Security review needed (use Security Skill)
+- Security review needed (use Security Engineer)
 - Test coverage needed (use Testing Skill)
+- Design quality review (use Code Review Auditor)
 
 ---
 
@@ -40,6 +48,28 @@ description: Enforce Rust production code quality standards, prevent placeholder
 2. The crate's `Cargo.toml` for dependency context
 3. Adjacent modules that interact with the changed code
 4. `docs/KCM_ENGINEERING_RULES.md` for coding standards
+
+---
+
+## Crate Awareness
+
+Validates code quality across all **13 crates**:
+
+| Crate | Key Files |
+|-------|-----------|
+| kcm-core | `types.rs`, `vec.rs`, `bitmap.rs`, `dictionary.rs` |
+| kcm-storage | `column.rs`, `codec.rs`, `compress.rs`, `file_format.rs`, `wal.rs`, `index.rs`, `dict_codec.rs`, `errors.rs`, `backup.rs`, `recovery.rs` |
+| kcm-compute | `algebra.rs`, `simd.rs` |
+| kcm-reasoning | `rule.rs`, `inference.rs` |
+| kcm-optimizer | `cost_model.rs`, `planner.rs`, `statistics.rs`, `rewriting.rs`, `adaptive.rs` |
+| kcm-runtime | `database.rs`, `transaction.rs`, `executor.rs`, `async_executor.rs`, `metrics.rs`, `health.rs` |
+| kcm-interface | `lib.rs`, `rest_api.rs`, `kql_parser.rs`, `python.rs` |
+| kcm-distributed | `sharding.rs`, `coordinator.rs` |
+| kcm-ml | `learned_index.rs`, `confidence_learner.rs`, `rule_discovery.rs` |
+| kcm-security | `rbac.rs`, `encryption.rs`, `audit.rs` |
+| kcm-compliance | `gdpr.rs`, `data_classification.rs` |
+| kcm-testing | `security_tests.rs`, `load_tests.rs`, `stress_tests.rs`, `regression_detector.rs`, `metrics_dashboard.rs` |
+| kcm-server | `grpc_server.rs`, `grpc_main.rs`, `main.rs` |
 
 ---
 
@@ -125,6 +155,7 @@ Every function must have a real implementation. Detect and reject:
 | TODO/FIXME | 0 in codebase |
 | Function Length | < 50 lines average |
 | Error Handling | All public APIs return Result |
+| Crate Coverage | All 13 crates validated |
 
 ---
 
@@ -144,7 +175,10 @@ Every function must have a real implementation. Detect and reject:
 ## Final Report Format
 
 ```
-# Code Quality Report
+# KCM Engineering Report
+
+## Skill
+kcm-code-quality-guardian
 
 ## Files Reviewed
 - [file path]: [line count] lines
@@ -161,6 +195,15 @@ Every function must have a real implementation. Detect and reject:
 | # | File | Line | Issue | Severity |
 |---|------|------|-------|----------|
 | 1 | ... | ... | ... | Critical/High/Medium/Low |
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
+
+## Validation Required
+[tests/benchmarks]
 
 ## Verdict
 PASS / FAIL

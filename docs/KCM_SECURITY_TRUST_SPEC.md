@@ -174,7 +174,7 @@ struct AuditEvent {
 ### 6.2 Data Classification
 
 | Classification | Requires Encryption | Requires Audit | Max Retention |
-|---------------|--------------------|--------------|--------------| 
+|---------------|--------------------|--------------|--------------|
 | Public | No | No | 7 years |
 | Internal | No | No | 3 years |
 | Confidential | Yes | No | 1 year |
@@ -191,3 +191,11 @@ struct AuditEvent {
 | RBAC denies unauthorized | User without role cannot access |
 | Audit log caps at 100K | Oldest events evicted |
 | GDPR consent workflow | Register → Grant → Withdraw → Delete |
+
+---
+
+## 8. References
+
+- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_RUNTIME_SPEC (KCM_RUNTIME_SPEC), KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_DEPLOYMENT_SPEC (KCM_DEPLOYMENT_SPEC)

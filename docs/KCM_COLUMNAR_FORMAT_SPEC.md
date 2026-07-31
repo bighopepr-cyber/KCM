@@ -20,11 +20,11 @@ Defines the physical binary storage format for KCM database files.
 │  Magic Bytes (5):     "KCMDB"               │
 │  Version (1):         0x02                   │
 │  Row Count (8):       u64 little-endian     │
-│  Column Count (1):    u8 = 11               │
+│  Column Count (1):    u8 = 10               │
 │  Created Timestamp (8): i64 LE              │
 │  Modified Timestamp (8): i64 LE             │
 ├─────────────────────────────────────────────┤
-│              Column Blocks (×11)             │
+│              Column Blocks (×10)             │
 │  For each column:                            │
 │    ┌────────────────────────────────────┐   │
 │    │ Length (8):     u64 LE             │   │
@@ -43,7 +43,7 @@ Defines the physical binary storage format for KCM database files.
 | 0 | 5 | [u8; 5] | Magic bytes: `b"KCMDB"` |
 | 5 | 1 | u8 | Format version: `2` |
 | 6 | 8 | u64 LE | Total row count |
-| 14 | 1 | u8 | Column count: `11` (fixed) |
+| 14 | 1 | u8 | Column count: `10` (fixed) |
 | 15 | 8 | i64 LE | Created timestamp (nanoseconds since epoch) |
 | 23 | 8 | i64 LE | Modified timestamp (nanoseconds since epoch) |
 
@@ -168,7 +168,15 @@ Load → Read from disk → Decompress → Populate DenseVec
 
 | Constraint | Rationale |
 |------------|-----------|
-| Fixed column count (11) | Enables zero-parse column access |
+| Fixed column count (10) | Enables zero-parse column access |
 | Little-endian encoding | x86_64 native, avoids byte-swap overhead |
 | Blake3 checksum (not CRC32) | Cryptographic integrity verification |
 | WAL entries are variable-length | Insert (34 bytes) vs Delete (9 bytes) |
+
+---
+
+## 7. References
+
+- **Depends on:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC)
+- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
+- **Related:** KCM_VERSIONING_SPEC (KCM_VERSIONING_SPEC), KCM_COMPRESSION_SPEC (KCM_COMPRESSION_SPEC)

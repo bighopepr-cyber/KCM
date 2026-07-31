@@ -1,7 +1,5 @@
 use kcm_core::types::*;
 use kcm_storage::column::Schema;
-use parking_lot::RwLock;
-use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TransactionState {
@@ -28,8 +26,6 @@ pub enum TransactionChange {
 pub struct Transaction {
     state: TransactionState,
     changes: Vec<TransactionChange>,
-    #[allow(dead_code)]
-    timestamp: i64,
 }
 
 impl Transaction {
@@ -37,10 +33,6 @@ impl Transaction {
         Transaction {
             state: TransactionState::Active,
             changes: Vec::new(),
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos() as i64,
         }
     }
 
@@ -148,47 +140,5 @@ impl Transaction {
 impl Default for Transaction {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-pub struct VersionStore {
-    versions: Vec<Arc<Schema>>,
-    current_version: Arc<RwLock<usize>>,
-}
-
-impl VersionStore {
-    pub fn new() -> Result<Self, KcmError> {
-        const DEFAULT_VERSION_STORE_CAPACITY: usize = 1_000_000;
-        let initial_schema = Schema::new(DEFAULT_VERSION_STORE_CAPACITY)?;
-        Ok(VersionStore {
-            versions: vec![Arc::new(initial_schema)],
-            current_version: Arc::new(RwLock::new(0)),
-        })
-    }
-
-    pub fn current(&self) -> Arc<Schema> {
-        let idx = *self.current_version.read();
-        self.versions[idx].clone()
-    }
-
-    pub fn create_new_version(&mut self, schema: Schema) -> Result<usize, KcmError> {
-        self.versions.push(Arc::new(schema));
-        let new_idx = self.versions.len() - 1;
-        *self.current_version.write() = new_idx;
-        Ok(new_idx)
-    }
-
-    pub fn version_count(&self) -> usize {
-        self.versions.len()
-    }
-
-    pub fn get_version(&self, idx: usize) -> Option<Arc<Schema>> {
-        self.versions.get(idx).cloned()
-    }
-}
-
-impl Default for VersionStore {
-    fn default() -> Self {
-        Self::new().expect("Failed to create default VersionStore")
     }
 }

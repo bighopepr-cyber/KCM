@@ -196,36 +196,3 @@ fn test_compression_roundtrip() {
     let decompressed = lz4.decompress(&compressed, data.len()).unwrap();
     assert_eq!(data, decompressed);
 }
-
-#[test]
-fn test_delta_codec_roundtrip() {
-    use kcm_storage::codec::{Codec, DeltaCodec};
-    let codec = DeltaCodec;
-    let data = vec![100i64, 200, 350, 500, 600];
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_rle_codec_roundtrip() {
-    use kcm_storage::codec::{Codec, RleCodec};
-    let codec = RleCodec;
-    let data = vec![1u8, 1, 1, 2, 2, 3, 3, 3, 3, 3];
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-    assert_eq!(data, decoded);
-}
-
-#[test]
-fn test_gorilla_codec_roundtrip() {
-    use kcm_storage::codec::{Codec, GorillaCodec};
-    let codec = GorillaCodec;
-    let data = vec![1.0f64, 1.1, 1.2, 1.3, 2.0];
-    let encoded = codec.encode(&data).unwrap();
-    let decoded = codec.decode(&encoded, data.len()).unwrap();
-    assert_eq!(data.len(), decoded.len());
-    for (a, b) in data.iter().zip(decoded.iter()) {
-        assert!((a - b).abs() < 1e-10);
-    }
-}

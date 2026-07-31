@@ -414,38 +414,6 @@ fn bench_inference_pattern_matching(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_confidence_calculation(c: &mut Criterion) {
-    use kcm_reasoning::confidence::ConfidenceCalculator;
-    let mut group = c.benchmark_group("confidence_calculation");
-    let values: Vec<f64> = (0..1000).map(|i| i as f64 / 1000.0).collect();
-    group.bench_function("conjunction_1000", |b| {
-        b.iter(|| {
-            let mut result = 1.0f64;
-            for &v in &values {
-                result = ConfidenceCalculator::conjunction(result, v);
-            }
-            black_box(result)
-        });
-    });
-    group.bench_function("disjunction_1000", |b| {
-        b.iter(|| {
-            let mut result = 0.0f64;
-            for &v in &values {
-                result = ConfidenceCalculator::disjunction(result, v);
-            }
-            black_box(result)
-        });
-    });
-    group.bench_function("chain_1000", |b| {
-        b.iter(|| black_box(ConfidenceCalculator::chain(&values)));
-    });
-    group.bench_function("weighted_1000", |b| {
-        let weights: Vec<f64> = (0..1000).map(|i| (i as f64 + 1.0) / 1000.0).collect();
-        b.iter(|| black_box(ConfidenceCalculator::weighted(&values, &weights)));
-    });
-    group.finish();
-}
-
 fn bench_inference_full_engine(c: &mut Criterion) {
     use kcm_reasoning::inference::InferenceEngine;
     use kcm_reasoning::rule::{Rule, RulePattern};
@@ -628,27 +596,6 @@ fn bench_compression_decode(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_codec_encode(c: &mut Criterion) {
-    use kcm_storage::codec::{Codec, DeltaCodec, GorillaCodec, RleCodec};
-    let mut group = c.benchmark_group("codec_encode");
-    let delta_data: Vec<i64> = (0..100_000).map(|i| (i * 7 % 500) as i64).collect();
-    let gorilla_data: Vec<f64> = (0..100_000).map(|i| 1.0 + i as f64 * 0.001).collect();
-    let rle_data: Vec<u8> = (0..100_000).map(|i| (i % 10) as u8).collect();
-    group.bench_function("delta", |b| {
-        let codec = DeltaCodec;
-        b.iter(|| black_box(codec.encode(&delta_data).unwrap()));
-    });
-    group.bench_function("gorilla", |b| {
-        let codec = GorillaCodec;
-        b.iter(|| black_box(codec.encode(&gorilla_data).unwrap()));
-    });
-    group.bench_function("rle", |b| {
-        let codec = RleCodec;
-        b.iter(|| black_box(codec.encode(&rle_data).unwrap()));
-    });
-    group.finish();
-}
-
 // ============================================================================
 // DISTRIBUTED
 // ============================================================================
@@ -758,7 +705,6 @@ criterion_group!(
     bench_database_query_filtered,
     bench_database_join,
     bench_inference_pattern_matching,
-    bench_confidence_calculation,
     bench_inference_full_engine,
     bench_rule_registry,
     bench_wal_append,
@@ -766,7 +712,6 @@ criterion_group!(
     bench_file_format_save_load,
     bench_compression_encode,
     bench_compression_decode,
-    bench_codec_encode,
     bench_sharding,
     bench_memory_metrics,
 );

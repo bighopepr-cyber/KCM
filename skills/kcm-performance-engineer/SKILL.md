@@ -13,7 +13,13 @@ description: Ensure KCM meets performance targets through benchmark-driven devel
 
 **Scope:** Benchmarks, SIMD operations, memory allocation patterns, cache efficiency, algorithm complexity, and performance regression detection.
 
-**Non-responsibility:** Does not write functional code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill).
+**Non-responsibility:** Does not write functional code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not review security (Security Engineer). Does not review code quality (Code Quality Guardian).
+
+**Measurable Outcomes:**
+- Every performance claim has a benchmark
+- All SIMD has runtime detection and scalar fallback
+- Performance regression threshold: 5% from baseline
+- Memory per fact target: < 34 bytes uncompressed
 
 ---
 
@@ -30,8 +36,9 @@ description: Ensure KCM meets performance targets through benchmark-driven devel
 **Do NOT activate when:**
 - Functional correctness needed (use Code Quality Guardian)
 - Architecture review needed (use Architecture Guardian)
-- Security review needed (use Security Skill)
+- Security review needed (use Security Engineer)
 - Test coverage needed (use Testing Skill)
+- Code quality review (use Code Quality Guardian)
 
 ---
 
@@ -42,6 +49,22 @@ description: Ensure KCM meets performance targets through benchmark-driven devel
 3. `crates/kcm-runtime/benches/micro.rs` — Existing benchmarks
 4. `crates/kcm-compute/src/simd.rs` — SIMD implementation
 5. The specific performance-critical code being reviewed
+
+---
+
+## Crate Awareness
+
+Performance-sensitive crates:
+
+| Crate | Performance-Relevant Files |
+|-------|---------------------------|
+| kcm-core | `vec.rs` (DenseVec alignment), `bitmap.rs` (64-bit word ops) |
+| kcm-storage | `column.rs`, `codec.rs`, `compress.rs`, `index.rs` |
+| kcm-compute | `algebra.rs` (operators), `simd.rs` (AVX2) |
+| kcm-optimizer | `planner.rs`, `cost_model.rs` |
+| kcm-runtime | `database.rs`, `executor.rs` |
+| kcm-ml | `learned_index.rs` |
+| kcm-server | `grpc_server.rs` (throughput) |
 
 ---
 
@@ -153,7 +176,10 @@ description: Ensure KCM meets performance targets through benchmark-driven devel
 ## Final Report Format
 
 ```
-# Performance Review
+# KCM Engineering Report
+
+## Skill
+kcm-performance-engineer
 
 ## Component Reviewed
 [What was reviewed]
@@ -177,6 +203,15 @@ description: Ensure KCM meets performance targets through benchmark-driven devel
 | Operation | Expected | Actual |
 |-----------|----------|--------|
 | ... | O(...) | O(...) |
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
+
+## Validation Required
+[tests/benchmarks]
 
 ## Verdict
 PASS / FAIL
