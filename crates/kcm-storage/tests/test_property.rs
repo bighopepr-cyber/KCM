@@ -154,15 +154,19 @@ fn test_wal_checksum_validation() {
     let wal_path = dir.path().join("test.wal");
     let wal = WriteAheadLog::new(&wal_path).unwrap();
 
-    let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
-    wal.append_fact(&fact).unwrap();
+    for i in 0..5u32 {
+        let fact = Fact::new(SubjectID(i), PredicateID(0), ObjectID(i), 0.9).unwrap();
+        wal.append_fact(&fact).unwrap();
+    }
     wal.flush_buffer().unwrap();
 
     let mut data = std::fs::read(&wal_path).unwrap();
-    if !data.len() >= 36 {
-        panic!("WAL data too short for corruption test");
-    }
-    data[36] = data[36].wrapping_add(1);
+    assert!(
+        data.len() > 40,
+        "WAL data should be > 40 bytes, got {}",
+        data.len()
+    );
+    data[40] = data[40].wrapping_add(1);
     std::fs::write(&wal_path, &data).unwrap();
 
     let wal2 = WriteAheadLog::new(&wal_path).unwrap();
