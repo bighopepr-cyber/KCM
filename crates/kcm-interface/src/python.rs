@@ -38,14 +38,14 @@ pub mod bindings {
 
             self.kb
                 .lock()
-                .unwrap()
+                .unwrap_or_else(|e| e.into_inner())
                 .insert(&fact)
                 .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))?;
             Ok(())
         }
 
         fn query_all(&self) -> PyResult<Vec<(u32, u8, u32, f64)>> {
-            let kb = self.kb.lock().unwrap();
+            let kb = self.kb.lock().unwrap_or_else(|e| e.into_inner());
             let facts = kb
                 .query()
                 .execute()
@@ -57,7 +57,10 @@ pub mod bindings {
         }
 
         fn fact_count(&self) -> usize {
-            self.kb.lock().unwrap().fact_count()
+            self.kb
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .fact_count()
         }
     }
 

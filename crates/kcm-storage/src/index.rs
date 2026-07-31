@@ -20,7 +20,7 @@ impl BitmapIndex {
         values.sort_unstable();
         let bitmaps = values
             .iter()
-            .map(|v| value_to_bitmap.remove(v).unwrap())
+            .filter_map(|v| value_to_bitmap.remove(v))
             .collect();
         Ok(BitmapIndex { values, bitmaps })
     }

@@ -23,6 +23,10 @@ impl Bitmap {
         self.len == 0
     }
 
+    /// Set a bit at the given index.
+    ///
+    /// # Panics
+    /// Panics if `idx >= self.len`.
     pub fn set(&mut self, idx: usize) {
         assert!(idx < self.len);
         let word_idx = idx / Self::WORD_SIZE;
@@ -30,6 +34,10 @@ impl Bitmap {
         self.words[word_idx] |= 1u64 << bit_idx;
     }
 
+    /// Clear a bit at the given index.
+    ///
+    /// # Panics
+    /// Panics if `idx >= self.len`.
     pub fn clear(&mut self, idx: usize) {
         assert!(idx < self.len);
         let word_idx = idx / Self::WORD_SIZE;
@@ -58,6 +66,10 @@ impl Bitmap {
         self.words.iter().map(|w| w.count_ones() as usize).sum()
     }
 
+    /// Compute AND of self and other, storing result in self.
+    ///
+    /// # Panics
+    /// Panics if bitmaps have different lengths.
     pub fn and_inplace(&mut self, other: &Bitmap) {
         assert_eq!(self.words.len(), other.words.len());
         for (a, b) in self.words.iter_mut().zip(&other.words) {
@@ -65,6 +77,10 @@ impl Bitmap {
         }
     }
 
+    /// Compute OR of self and other, storing result in self.
+    ///
+    /// # Panics
+    /// Panics if bitmaps have different lengths.
     pub fn or_inplace(&mut self, other: &Bitmap) {
         assert_eq!(self.words.len(), other.words.len());
         for (a, b) in self.words.iter_mut().zip(&other.words) {

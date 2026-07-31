@@ -11,6 +11,9 @@ pub struct DenseVec<T: Copy> {
     _phantom: PhantomData<T>,
 }
 
+// SAFETY: DenseVec manages its own memory via Layout-based alloc/dealloc.
+// DenseVec is Send when T is Send: owned memory with no shared references.
+// DenseVec is Sync when T is Send+Sync: safe to share references across threads.
 unsafe impl<T: Copy + Send> Send for DenseVec<T> {}
 unsafe impl<T: Copy + Send + Sync> Sync for DenseVec<T> {}
 

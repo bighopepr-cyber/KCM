@@ -103,6 +103,9 @@ impl<T: Copy> Column<T> {
 
     pub fn compress_data(&mut self) -> Result<(), KcmError> {
         let slice = self.data.as_slice();
+        // SAFETY: reinterpret &[T] as &[u8] for compression input.
+        // T is Copy (all integer/float types), all bit patterns are valid.
+        // size_of_val computes exact byte count. Alignment preserved.
         let byte_slice = unsafe {
             std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice))
         };
@@ -120,6 +123,9 @@ impl<T: Copy> Column<T> {
         let compressor = make_compressor(self.compression);
         let decompressed = compressor.decompress(&self.raw_bytes, expected)?;
         let ptr = self.data.as_mut_slice().as_mut_ptr();
+        // SAFETY: decompressed bytes are valid T representation from column data.
+        // ptr points to DenseVec buffer with capacity >= expected bytes.
+        // copy_len is min(decompressed_len, expected) to prevent buffer overflow.
         unsafe {
             std::ptr::copy_nonoverlapping(
                 decompressed.as_ptr(),

@@ -255,6 +255,86 @@ impl WriteAheadLog {
         Ok(count)
     }
 
+    pub fn verify_integrity(&self) -> Result<(), KcmError> {
+        let data = std::fs::read(&self.path)
+            .map_err(|e| KcmError::Io(format!("Failed to read WAL for verification: {}", e)))?;
+
+        let mut offset = 0;
+        let mut entry_count = 0;
+
+        while offset < data.len() {
+            let op_type = data[offset];
+            offset += 1;
+
+            match op_type {
+                1 => {
+                    if offset + 34 > data.len() {
+                        return Err(KcmError::Corrupted(format!(
+                            "Truncated INSERT entry at offset {}",
+                            offset - 1
+                        )));
+                    }
+                    let data_start = offset;
+                    offset += 33;
+                    let stored_crc = u32::from_le_bytes([
+                        data[offset],
+                        data[offset + 1],
+                        data[offset + 2],
+                        data[offset + 3],
+                    ]);
+                    offset += 4;
+                    let computed_crc = crc32(&data[data_start..data_start + 33]);
+                    if stored_crc != computed_crc {
+                        return Err(KcmError::Corrupted(format!(
+                            "CRC32 mismatch at INSERT entry {}: stored={:#x}, computed={:#x}",
+                            entry_count, stored_crc, computed_crc
+                        )));
+                    }
+                    entry_count += 1;
+                }
+                2 => {
+                    if offset + 12 > data.len() {
+                        return Err(KcmError::Corrupted(format!(
+                            "Truncated DELETE entry at offset {}",
+                            offset - 1
+                        )));
+                    }
+                    let data_start = offset;
+                    offset += 8;
+                    let stored_crc = u32::from_le_bytes([
+                        data[offset],
+                        data[offset + 1],
+                        data[offset + 2],
+                        data[offset + 3],
+                    ]);
+                    offset += 4;
+                    let computed_crc = crc32(&data[data_start..data_start + 8]);
+                    if stored_crc != computed_crc {
+                        return Err(KcmError::Corrupted(format!(
+                            "CRC32 mismatch at DELETE entry {}: stored={:#x}, computed={:#x}",
+                            entry_count, stored_crc, computed_crc
+                        )));
+                    }
+                    entry_count += 1;
+                }
+                other => {
+                    return Err(KcmError::Corrupted(format!(
+                        "Unknown op type {} at offset {}",
+                        other,
+                        offset - 1
+                    )));
+                }
+            }
+        }
+
+        eprintln!(
+            "WAL verification passed: {} entries, {} bytes",
+            entry_count,
+            data.len()
+        );
+        Ok(())
+    }
+
     pub fn path(&self) -> &Path {
         &self.path
     }

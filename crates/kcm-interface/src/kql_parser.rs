@@ -286,11 +286,11 @@ impl Parser {
             let right = self.parse_condition()?;
             let last = conditions
                 .pop()
-                .expect("parse_where called with empty conditions");
+                .ok_or_else(|| "Empty conditions in WHERE clause".to_string())?;
             let combined = match op_token {
                 Token::And => Condition::And(Box::new(last), Box::new(right)),
                 Token::Or => Condition::Or(Box::new(last), Box::new(right)),
-                _ => unreachable!(),
+                _ => return Err(format!("Unexpected token: {:?}", op_token)),
             };
             conditions.push(combined);
         }

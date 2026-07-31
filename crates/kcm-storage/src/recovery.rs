@@ -58,6 +58,7 @@ impl RecoveryManager {
     fn replay_wal(schema: &mut Schema, wal_path: impl AsRef<Path>) -> Result<(), KcmError> {
         let wal_path_buf = wal_path.as_ref().to_path_buf();
         let wal = WriteAheadLog::new(&wal_path_buf)?;
+        wal.verify_integrity()?;
         let count = wal.replay(|entry| match entry {
             crate::wal::WALEntry::Insert { .. } => {
                 if let Some(fact) = entry.to_fact() {

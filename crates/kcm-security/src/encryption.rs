@@ -9,7 +9,10 @@ pub struct EncryptionKey {
 
 impl Drop for EncryptionKey {
     fn drop(&mut self) {
+        // Zeroize key material to prevent sensitive data lingering in freed memory.
         for byte in self.key.iter_mut() {
+            // SAFETY: key is a fixed-size [u8; 32] array. Volatile write prevents
+            // compiler optimization from removing the zeroing.
             unsafe {
                 std::ptr::write_volatile(byte, 0);
             }

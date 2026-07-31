@@ -294,6 +294,9 @@ impl DatabaseFile {
             let mut buf = [0u8; 8];
             let copy_len = type_size.min(8);
             buf[..copy_len].copy_from_slice(&data[offset..offset + copy_len]);
+            // SAFETY: buf contains valid bytes from the serialized column data.
+            // For integer/float types (u8..u64, i8..i64, f32, f64), all bit patterns
+            // are valid values. The source data was serialized from the same type.
             values.push(unsafe { std::ptr::read(buf.as_ptr() as *const T) });
         }
 
@@ -373,5 +376,10 @@ impl DatabaseFile {
 }
 
 fn as_bytes<T>(slice: &[T]) -> &[u8] {
+    // SAFETY: reinterpret &[T] as &[u8]. This is safe because:
+    // 1. slice is a valid, properly aligned, initialized &[T]
+    // 2. size_of_val computes the exact byte count
+    // 3. u8 has alignment of 1, always satisfied by T alignment
+    // 4. Resulting &[u8] has same lifetime as input slice
     unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice)) }
 }

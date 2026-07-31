@@ -16,6 +16,10 @@ pub struct ApiResponse {
 }
 
 impl ApiResponse {
+    fn escape_json(s: &str) -> String {
+        s.replace('\\', "\\\\").replace('"', "\\\"")
+    }
+
     pub fn ok(body: &str) -> Self {
         ApiResponse {
             status: 200,
@@ -31,19 +35,19 @@ impl ApiResponse {
     pub fn bad_request(msg: &str) -> Self {
         ApiResponse {
             status: 400,
-            body: format!(r#"{{"error":"{}"}}"#, msg),
+            body: format!(r#"{{"error":"{}"}}"#, Self::escape_json(msg)),
         }
     }
     pub fn not_found(msg: &str) -> Self {
         ApiResponse {
             status: 404,
-            body: format!(r#"{{"error":"{}"}}"#, msg),
+            body: format!(r#"{{"error":"{}"}}"#, Self::escape_json(msg)),
         }
     }
     pub fn internal_error(msg: &str) -> Self {
         ApiResponse {
             status: 500,
-            body: format!(r#"{{"error":"{}"}}"#, msg),
+            body: format!(r#"{{"error":"{}"}}"#, Self::escape_json(msg)),
         }
     }
 }
