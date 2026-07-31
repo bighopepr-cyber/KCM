@@ -1,7 +1,9 @@
+use kcm_compliance::gdpr::*;
 use kcm_core::types::*;
 use kcm_security::audit::*;
 use kcm_security::encryption::*;
 use kcm_security::rbac::*;
+use tempfile;
 
 #[test]
 fn test_rbac_create_user_and_role() {
@@ -107,4 +109,114 @@ fn test_audit_log_eviction() {
         log.log_query(&format!("user_{}", i % 10), "query");
     }
     assert!(log.event_count() <= 100_000);
+}
+
+#[test]
+fn test_encrypt_file_roundtrip() {
+    let dir = tempfile::tempdir().unwrap();
+    let src_path = dir.path().join("source.bin");
+    let enc_path = dir.path().join("encrypted.bin");
+    let dec_path = dir.path().join("decrypted.bin");
+
+    let data = vec![42u8; 10000];
+    std::fs::write(&src_path, &data).unwrap();
+
+    let key = EncryptionKey::random();
+    EncryptedStorage::encrypt_file(&src_path, &enc_path, &key).unwrap();
+    assert!(enc_path.exists());
+
+    EncryptedStorage::decrypt_file(&enc_path, &dec_path, &key).unwrap();
+    let decrypted = std::fs::read(&dec_path).unwrap();
+    assert_eq!(decrypted, data);
+}
+
+#[test]
+fn test_encrypt_file_wrong_key() {
+    let dir = tempfile::tempdir().unwrap();
+    let src_path = dir.path().join("source.bin");
+    let enc_path = dir.path().join("encrypted.bin");
+    let dec_path = dir.path().join("decrypted.bin");
+
+    std::fs::write(&src_path, b"secret data").unwrap();
+
+    let key1 = EncryptionKey::random();
+    let key2 = EncryptionKey::random();
+
+    EncryptedStorage::encrypt_file(&src_path, &enc_path, &key1).unwrap();
+    let result = EncryptedStorage::decrypt_file(&enc_path, &dec_path, &key2);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_random_keys_unique() {
+    let key1 = EncryptionKey::random();
+    let key2 = EncryptionKey::random();
+    let key3 = EncryptionKey::random();
+    assert_ne!(key1.as_bytes(), key2.as_bytes());
+    assert_ne!(key2.as_bytes(), key3.as_bytes());
+    assert_ne!(key1.as_bytes(), key3.as_bytes());
+}
+
+#[test]
+fn test_audit_log_capacity_overflow() {
+    let log = AuditLog::new();
+    for i in 0..150_000 {
+        log.log_query("stress_user", &format!("query_{}", i));
+    }
+    assert!(log.event_count() <= 100_000);
+    let events = log.get_events();
+    let last_event = events.last().unwrap();
+    assert!(last_event.timestamp > 0);
+}
+
+#[test]
+fn test_rbac_multi_role() {
+    let acl = ACLManager::new();
+    acl.create_user("manager");
+    acl.create_role("reader");
+    acl.create_role("writer");
+    acl.add_permission_to_role("reader", Permission::Read);
+    acl.add_permission_to_role("writer", Permission::Write);
+    acl.assign_role("manager", "reader");
+    acl.assign_role("manager", "writer");
+
+    assert!(acl.check_permission("manager", ContextID(1), Permission::Read));
+    assert!(acl.check_permission("manager", ContextID(1), Permission::Write));
+    assert!(!acl.check_permission("manager", ContextID(1), Permission::Delete));
+}
+
+#[test]
+fn test_encrypt_large_data() {
+    let key = EncryptionKey::random();
+    let data: Vec<u8> = (0..100_000).map(|i| (i % 256) as u8).collect();
+    let encrypted = EncryptedStorage::encrypt(&data, &key).unwrap();
+    let decrypted = EncryptedStorage::decrypt(&encrypted, &key).unwrap();
+    assert_eq!(data, decrypted);
+    assert!(encrypted.len() > data.len());
+}
+
+#[test]
+fn test_gdpr_concurrent_access() {
+    use std::sync::Arc;
+    let mgr = Arc::new(GDPRManager::new());
+    let mut handles = Vec::new();
+
+    for i in 0..4 {
+        let mgr = mgr.clone();
+        handles.push(std::thread::spawn(move || {
+            for j in 0..100 {
+                let subject = DataSubject {
+                    subject_id: format!("user_{}_{}", i, j),
+                    email: format!("u{}{}@test.com", i, j),
+                    consent: ConsentStatus::NotProvided,
+                };
+                mgr.register_subject(subject).ok();
+                mgr.grant_consent(&format!("user_{}_{}", i, j)).ok();
+            }
+        }));
+    }
+
+    for h in handles {
+        h.join().unwrap();
+    }
 }

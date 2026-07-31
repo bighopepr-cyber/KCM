@@ -1,4 +1,5 @@
 use crate::planner::{PlanNode, PlannerFilterPredicate};
+use kcm_core::types::ColumnID;
 use std::collections::HashSet;
 
 pub trait RuleOptimizer {
@@ -24,6 +25,24 @@ impl RuleOptimizer for FilterPushdownOptimizer {
                 right: Box::new(self.apply(right)),
                 join_column: *join_column,
             },
+            PlanNode::Filter { child, predicate } => match child.as_ref() {
+                PlanNode::Join {
+                    left,
+                    right,
+                    join_column,
+                } => PlanNode::Join {
+                    left: Box::new(self.apply(&PlanNode::Filter {
+                        child: left.clone(),
+                        predicate: predicate.clone(),
+                    })),
+                    right: right.clone(),
+                    join_column: *join_column,
+                },
+                other => PlanNode::Filter {
+                    child: Box::new(self.apply(other)),
+                    predicate: predicate.clone(),
+                },
+            },
             other => other.clone(),
         }
     }
@@ -32,15 +51,14 @@ impl RuleOptimizer for FilterPushdownOptimizer {
     }
 }
 
-#[allow(dead_code)]
 pub struct ColumnPruningOptimizer {
-    required_columns: HashSet<crate::planner::PlanNode>,
+    required_columns: HashSet<ColumnID>,
 }
 
 impl ColumnPruningOptimizer {
-    pub fn new(_required_columns: Vec<String>) -> Self {
+    pub fn new(required_columns: Vec<ColumnID>) -> Self {
         ColumnPruningOptimizer {
-            required_columns: HashSet::new(),
+            required_columns: required_columns.into_iter().collect(),
         }
     }
 
@@ -53,10 +71,7 @@ impl ColumnPruningOptimizer {
                 child: Box::new(self.prune(child)),
                 predicate: predicate.clone(),
             },
-            PlanNode::Project { child, columns } => PlanNode::Project {
-                child: Box::new(self.prune(child)),
-                columns: columns.clone(),
-            },
+            PlanNode::Project { child, .. } => self.prune(child),
             PlanNode::Join {
                 left,
                 right,
@@ -66,20 +81,34 @@ impl ColumnPruningOptimizer {
                 right: Box::new(self.prune(right)),
                 join_column: *join_column,
             },
-            other => other.clone(),
+            PlanNode::Aggregate { child, group_by } => PlanNode::Aggregate {
+                child: Box::new(self.prune(child)),
+                group_by: *group_by,
+            },
+            PlanNode::Infer { child, rule_id } => PlanNode::Infer {
+                child: Box::new(self.prune(child)),
+                rule_id: *rule_id,
+            },
         }
+    }
+
+    pub fn required_column_ids(&self) -> &HashSet<ColumnID> {
+        &self.required_columns
     }
 }
 
 pub struct ConstantFoldingOptimizer;
 
 impl ConstantFoldingOptimizer {
-    pub fn fold_predicate(pred: &PlannerFilterPredicate) -> Option<bool> {
-        match pred {
-            PlannerFilterPredicate::EqualSubject(_v) => None,
-            PlannerFilterPredicate::EqualPredicate(_v) => None,
-            PlannerFilterPredicate::EqualObject(_v) => None,
-        }
+    pub fn fold_predicate(_pred: &PlannerFilterPredicate) -> Option<bool> {
+        None
+    }
+
+    pub fn can_fold(pred: &PlannerFilterPredicate) -> bool {
+        matches!(
+            pred,
+            PlannerFilterPredicate::EqualSubject(0) | PlannerFilterPredicate::EqualObject(0)
+        )
     }
 }
 
@@ -90,6 +119,16 @@ impl JoinOrderingOptimizer {
         let smaller = left_rows.min(right_rows) as f64;
         let larger = left_rows.max(right_rows) as f64;
         smaller + larger * smaller.log2()
+    }
+
+    pub fn reorder(left: &PlanNode, right: &PlanNode) -> (PlanNode, PlanNode) {
+        let left_cost = Self::estimate_join_cost(left.estimated_cost_rows(), 1);
+        let right_cost = Self::estimate_join_cost(right.estimated_cost_rows(), 1);
+        if left_cost <= right_cost {
+            (left.clone(), right.clone())
+        } else {
+            (right.clone(), left.clone())
+        }
     }
 }
 
@@ -173,6 +212,21 @@ impl OptimizerPipeline {
 impl Default for OptimizerPipeline {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl PlanNode {
+    pub fn estimated_cost_rows(&self) -> usize {
+        match self {
+            PlanNode::Scan { .. } => 1000,
+            PlanNode::Filter { child, .. } => child.estimated_cost_rows() / 2,
+            PlanNode::Join { left, right, .. } => {
+                left.estimated_cost_rows().max(right.estimated_cost_rows())
+            }
+            PlanNode::Aggregate { child, .. } => child.estimated_cost_rows(),
+            PlanNode::Infer { child, .. } => child.estimated_cost_rows(),
+            PlanNode::Project { child, .. } => child.estimated_cost_rows(),
+        }
     }
 }
 

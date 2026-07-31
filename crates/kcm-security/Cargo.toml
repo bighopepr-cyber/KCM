@@ -12,4 +12,5 @@ aes-gcm = "0.10"
 getrandom = "0.2"
 
 [dev-dependencies]
+kcm-compliance = { path = "../kcm-compliance" }
 tempfile = "3"
