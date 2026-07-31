@@ -1,4 +1,4 @@
-use kcm_interface::kql_parser::{Lexer, Parser, Token};
+use kcm_interface::kql_parser::{KqlError, Lexer, Parser, Token};
 
 #[test]
 fn test_lexer_empty_input() {
@@ -21,7 +21,7 @@ fn test_lexer_unterminated_string() {
     let mut lexer = Lexer::new(r#"SELECT * FROM facts WHERE name = "test"#);
     let result = lexer.tokenize();
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Unterminated string"));
+    assert!(matches!(result.unwrap_err(), KqlError::UnterminatedString));
 }
 
 #[test]
@@ -106,7 +106,7 @@ fn test_lexer_exclamation_without_equals() {
     let mut lexer = Lexer::new("!");
     let result = lexer.tokenize();
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Expected '=' after '!'"));
+    assert!(matches!(result.unwrap_err(), KqlError::UnexpectedCharacter('!')));
 }
 
 #[test]
@@ -114,7 +114,7 @@ fn test_lexer_unexpected_character() {
     let mut lexer = Lexer::new("@");
     let result = lexer.tokenize();
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Unexpected character"));
+    assert!(matches!(result.unwrap_err(), KqlError::UnexpectedCharacter('@')));
 }
 
 #[test]
@@ -268,7 +268,7 @@ fn test_parser_and_condition() {
     let mut parser = Parser::new("SELECT * FROM facts WHERE subject = 1 AND object = 2").unwrap();
     let query = parser.parse().unwrap();
     let wc = query.where_clause.unwrap();
-    assert_eq!(wc.conditions.len(), 1);
+    assert_eq!(wc.conditions.len(), 2);
 }
 
 #[test]
@@ -276,5 +276,5 @@ fn test_parser_or_condition() {
     let mut parser = Parser::new("SELECT * FROM facts WHERE subject = 1 OR subject = 2").unwrap();
     let query = parser.parse().unwrap();
     let wc = query.where_clause.unwrap();
-    assert_eq!(wc.conditions.len(), 1);
+    assert_eq!(wc.conditions.len(), 2);
 }

@@ -99,6 +99,29 @@ impl ColumnPruningOptimizer {
 
 pub struct JoinOrderingOptimizer;
 
+impl RuleOptimizer for JoinOrderingOptimizer {
+    fn apply(&self, node: &PlanNode) -> PlanNode {
+        match node {
+            PlanNode::Join {
+                left,
+                right,
+                join_column,
+            } => {
+                let (new_left, new_right) = Self::reorder(left, right);
+                PlanNode::Join {
+                    left: Box::new(new_left),
+                    right: Box::new(new_right),
+                    join_column: *join_column,
+                }
+            }
+            other => other.clone(),
+        }
+    }
+    fn name(&self) -> &str {
+        "JoinOrdering"
+    }
+}
+
 impl JoinOrderingOptimizer {
     pub fn estimate_join_cost(left_rows: usize, right_rows: usize) -> f64 {
         let smaller = left_rows.min(right_rows) as f64;
