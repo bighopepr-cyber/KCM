@@ -1,6 +1,6 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -37,17 +37,16 @@ impl LoadTestResults {
     }
 }
 
-pub fn run_load_test(scenario: &LoadTestScenario) -> LoadTestResults {
-    let kb = Arc::new(KnowledgeDatabase::new().unwrap());
+pub fn run_load_test(scenario: &LoadTestScenario) -> Result<LoadTestResults, KcmError> {
+    let kb = Arc::new(KnowledgeDatabase::new()?);
     for i in 0..scenario.initial_facts {
         let f = Fact::new(
             SubjectID((i % 1000) as u32),
             PredicateID((i % 10) as u8),
             ObjectID(((i * 2) % 2000) as u32),
             0.7,
-        )
-        .unwrap();
-        kb.insert(&f).unwrap();
+        )?;
+        kb.insert(&f)?;
     }
 
     let total_ops = Arc::new(AtomicU64::new(0));
@@ -73,15 +72,17 @@ pub fn run_load_test(scenario: &LoadTestScenario) -> LoadTestResults {
                         PredicateID(5),
                         ObjectID((i % 1000) as u32),
                         0.8,
-                    )
-                    .unwrap();
-                    kb.insert(&fact).is_ok()
+                    );
+                    match fact {
+                        Ok(f) => kb.insert(&f).is_ok(),
+                        Err(_) => false,
+                    }
                 } else {
                     kb.query().with_predicate(PredicateID(5)).execute().is_ok()
                 };
-                total_ops.fetch_add(1, Ordering::Relaxed);
+                total_ops.fetch_add(1, AtomicOrdering::Relaxed);
                 if !success {
-                    failed_ops.fetch_add(1, Ordering::Relaxed);
+                    failed_ops.fetch_add(1, AtomicOrdering::Relaxed);
                 }
                 latencies
                     .lock()
@@ -91,12 +92,13 @@ pub fn run_load_test(scenario: &LoadTestScenario) -> LoadTestResults {
     }
 
     for h in handles {
-        h.join().unwrap();
+        h.join()
+            .map_err(|e| KcmError::Io(format!("Thread panicked during load test: {:?}", e)))?;
     }
     let elapsed = start.elapsed().as_secs_f64();
 
     let mut lat = latencies.lock().clone();
-    lat.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    lat.sort_by(|a, b| a.total_cmp(b));
     let p99_idx = (lat.len() as f64 * 0.99) as usize;
     let avg = if lat.is_empty() {
         0.0
@@ -104,15 +106,15 @@ pub fn run_load_test(scenario: &LoadTestScenario) -> LoadTestResults {
         lat.iter().sum::<f64>() / lat.len() as f64
     };
 
-    LoadTestResults {
+    Ok(LoadTestResults {
         scenario: scenario.name.clone(),
-        total_operations: total_ops.load(Ordering::Relaxed),
-        failed_operations: failed_ops.load(Ordering::Relaxed),
+        total_operations: total_ops.load(AtomicOrdering::Relaxed),
+        failed_operations: failed_ops.load(AtomicOrdering::Relaxed),
         elapsed_secs: elapsed,
-        actual_qps: total_ops.load(Ordering::Relaxed) as f64 / elapsed,
+        actual_qps: total_ops.load(AtomicOrdering::Relaxed) as f64 / elapsed,
         avg_latency_ms: avg,
         p99_latency_ms: lat.get(p99_idx).copied().unwrap_or(0.0),
-    }
+    })
 }
 
 #[cfg(test)]
@@ -129,7 +131,7 @@ mod tests {
             expected_qps: 100.0,
             max_latency_p99_ms: 500.0,
         };
-        let results = run_load_test(&scenario);
+        let results = run_load_test(&scenario).unwrap();
         assert!(results.total_operations > 0, "Should complete operations");
         assert_eq!(results.failed_operations, 0, "No operations should fail");
         assert!(results.pass(&scenario), "Light load should pass");
@@ -146,7 +148,7 @@ mod tests {
             expected_qps: 100.0,
             max_latency_p99_ms: 1000.0,
         };
-        let results = run_load_test(&scenario);
+        let results = run_load_test(&scenario).unwrap();
         assert!(results.total_operations > 0);
         assert!(results.pass(&scenario));
         println!("{}", results.to_report());
@@ -166,14 +168,14 @@ mod tests {
                     let fact = Fact::new(SubjectID(t * 1000 + i), PredicateID(0), ObjectID(i), 0.9)
                         .unwrap();
                     kb.insert(&fact).unwrap();
-                    total_ops.fetch_add(1, Ordering::Relaxed);
+                    total_ops.fetch_add(1, AtomicOrdering::Relaxed);
                 }
             }));
         }
         for h in handles {
             h.join().unwrap();
         }
-        assert_eq!(total_ops.load(Ordering::Relaxed), 400);
+        assert_eq!(total_ops.load(AtomicOrdering::Relaxed), 400);
         assert_eq!(kb.fact_count(), 400);
     }
 

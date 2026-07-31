@@ -31,8 +31,8 @@ impl StressTestResults {
     }
 }
 
-pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
-    let kb = Arc::new(KnowledgeDatabase::new().unwrap());
+pub fn run_stress_test(scenario: &StressTestScenario) -> Result<StressTestResults, KcmError> {
+    let kb = Arc::new(KnowledgeDatabase::new()?);
     let running = Arc::new(AtomicBool::new(true));
     let total_ops = Arc::new(AtomicU64::new(0));
     let failed_ops = Arc::new(AtomicU64::new(0));
@@ -54,13 +54,17 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
                     PredicateID((count % 10) as u8),
                     ObjectID((count % 1000) as u32),
                     (0.5 + (count as f64 % 0.5)).min(0.99),
-                )
-                .unwrap();
+                );
 
-                let success = if count.is_multiple_of(3) {
-                    kb.insert(&fact).is_ok()
-                } else {
-                    kb.query().with_predicate(PredicateID(5)).execute().is_ok()
+                let success = match fact {
+                    Ok(f) => {
+                        if count.is_multiple_of(3) {
+                            kb.insert(&f).is_ok()
+                        } else {
+                            kb.query().with_predicate(PredicateID(5)).execute().is_ok()
+                        }
+                    }
+                    Err(_) => false,
                 };
 
                 total_ops.fetch_add(1, Ordering::Relaxed);
@@ -75,14 +79,15 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
     std::thread::sleep(Duration::from_secs(scenario.duration_secs));
     running.store(false, Ordering::Relaxed);
     for h in handles {
-        h.join().unwrap();
+        h.join()
+            .map_err(|e| KcmError::Io(format!("Thread panicked during stress test: {:?}", e)))?;
     }
 
     let elapsed = start.elapsed().as_secs_f64();
     let total = total_ops.load(Ordering::Relaxed);
     let failed = failed_ops.load(Ordering::Relaxed);
 
-    StressTestResults {
+    Ok(StressTestResults {
         scenario: scenario.name.clone(),
         total_ops: total,
         failed_ops: failed,
@@ -94,7 +99,7 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
             0.0
         },
         graceful_degradation: (failed as f64 / total.max(1) as f64) < 0.10,
-    }
+    })
 }
 
 #[cfg(test)]
@@ -108,7 +113,7 @@ mod tests {
             max_concurrent_users: 8,
             duration_secs: 2,
         };
-        let results = run_stress_test(&scenario);
+        let results = run_stress_test(&scenario).unwrap();
         assert!(results.total_ops > 0, "Should complete operations");
         assert!(results.graceful_degradation, "Should degrade gracefully");
         println!("{}", results.to_report());
@@ -121,7 +126,7 @@ mod tests {
             max_concurrent_users: 16,
             duration_secs: 1,
         };
-        let results = run_stress_test(&scenario);
+        let results = run_stress_test(&scenario).unwrap();
         assert!(results.total_ops > 0);
         println!("{}", results.to_report());
     }
@@ -133,7 +138,7 @@ mod tests {
             max_concurrent_users: 0,
             duration_secs: 1,
         };
-        let results = run_stress_test(&scenario);
+        let results = run_stress_test(&scenario).unwrap();
         assert_eq!(results.total_ops, 0);
         assert!(results.graceful_degradation);
     }
