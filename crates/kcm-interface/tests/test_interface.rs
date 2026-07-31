@@ -271,11 +271,7 @@ fn test_kcm_query_iterator_exhaustion() {
     while has_next {
         let result = unsafe { KCM_QueryNext(query, &mut fact_out, &mut has_next) };
         assert_eq!(result, KCM_Error::KCM_OK);
-        if !has_next && count < 10 {
-            count += 1;
-        } else if has_next {
-            count += 1;
-        }
+        count += 1;
     }
 
     assert_eq!(count, 10);

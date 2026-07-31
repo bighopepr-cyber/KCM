@@ -45,7 +45,7 @@ fn test_batch_insert_consistency() {
             Fact::new(
                 SubjectID(i % 20),
                 PredicateID((i % 5) as u8),
-                ObjectID(i as u32),
+                ObjectID(i),
                 0.5 + (i as f64 * 0.001),
             )
             .unwrap()

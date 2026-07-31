@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_reasoning::confidence::ConfidenceCalculator;
 use kcm_reasoning::inference::InferenceEngine;
-use kcm_reasoning::rule::{Rule, RuleID, RulePattern, RuleRegistry};
+use kcm_reasoning::rule::{Rule, RulePattern, RuleRegistry};
 use kcm_storage::column::Schema;
 
 #[test]

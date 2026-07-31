@@ -1,7 +1,6 @@
 use kcm_core::types::*;
 use kcm_distributed::coordinator::*;
 use kcm_distributed::sharding::*;
-use kcm_runtime::database::KnowledgeDatabase;
 
 #[test]
 fn test_hash_sharding_consistency() {
@@ -95,7 +94,6 @@ fn test_2pc_not_found() {
 
 #[test]
 fn test_concurrent_inserts_across_shards() {
-    let kb = KnowledgeDatabase::new().unwrap();
     let mut handles = Vec::new();
     for t in 0..4 {
         let kb_clone = kcm_runtime::database::KnowledgeDatabase::new().unwrap();

@@ -113,9 +113,6 @@ fn test_wal_fact_fields_preserved() {
         wal.flush_buffer().unwrap();
     }
 
-    let mut schema = Schema::new(100).unwrap();
-    RecoveryManager::recover(&std::path::PathBuf::from("/nonexistent"), &wal_path)
-        .unwrap_or_else(|_| Schema::new(100).unwrap());
     let wal = WriteAheadLog::new(&wal_path).unwrap();
     let mut facts = Vec::new();
     wal.replay(|entry| {

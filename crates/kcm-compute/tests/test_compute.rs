@@ -165,7 +165,7 @@ fn test_join_op() {
     let right: Vec<usize> = (3..8).collect();
     let join = JoinOp::new(left, right, &schema, ColumnID::Object);
     let result = join.execute().unwrap();
-    assert!(result.len() % 2 == 0);
+    assert!(result.len().is_multiple_of(2));
 }
 
 #[test]
@@ -239,31 +239,28 @@ fn test_aggregate_grouped() {
 
 #[test]
 fn test_simd_filter_eq_u8() {
-    let data = vec![1u8, 2, 3, 2, 5, 2, 7];
+    let data = [1u8, 2, 3, 2, 5, 2, 7];
     assert_eq!(
         data.simd_filter_eq(2),
-        vec![false, true, false, true, false, true, false]
+        [false, true, false, true, false, true, false]
     );
 }
 
 #[test]
 fn test_simd_filter_ge_u8() {
-    let data = vec![10u8, 20, 30, 40, 50];
-    assert_eq!(
-        data.simd_filter_ge(30),
-        vec![false, false, true, true, true]
-    );
+    let data = [10u8, 20, 30, 40, 50];
+    assert_eq!(data.simd_filter_ge(30), [false, false, true, true, true]);
 }
 
 #[test]
 fn test_simd_count_u32() {
-    let data = vec![0u32, 1, 0, 3, 5, 0];
+    let data = [0u32, 1, 0, 3, 5, 0];
     assert_eq!(data.simd_count(), 3);
 }
 
 #[test]
 fn test_simd_count_f64() {
-    let data = vec![0.0f64, 1.5, 0.0, 3.0];
+    let data = [0.0f64, 1.5, 0.0, 3.0];
     assert_eq!(data.simd_count(), 2);
 }
 

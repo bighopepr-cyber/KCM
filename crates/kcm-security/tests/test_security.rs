@@ -3,7 +3,6 @@ use kcm_core::types::*;
 use kcm_security::audit::*;
 use kcm_security::encryption::*;
 use kcm_security::rbac::*;
-use tempfile;
 
 #[test]
 fn test_rbac_create_user_and_role() {

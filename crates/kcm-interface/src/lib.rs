@@ -100,8 +100,13 @@ impl From<kcm_core::types::KcmError> for KCM_Error {
     }
 }
 
+/// Create a new KCM database.
+///
+/// # Safety
+/// - `db_out` must be a valid pointer to a `*mut KCM_Database` slot.
+/// - Caller must free the returned pointer with `KCM_DatabaseFree`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseNew(db_out: *mut *mut KCM_Database) -> KCM_Error {
+pub unsafe extern "C" fn KCM_DatabaseNew(db_out: *mut *mut KCM_Database) -> KCM_Error {
     if db_out.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
@@ -118,8 +123,13 @@ pub extern "C" fn KCM_DatabaseNew(db_out: *mut *mut KCM_Database) -> KCM_Error {
     }
 }
 
+/// Free a KCM database and all associated resources.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `db` must not be used after this call (use-after-free).
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseFree(db: *mut KCM_Database) {
+pub unsafe extern "C" fn KCM_DatabaseFree(db: *mut KCM_Database) {
     if !db.is_null() {
         unsafe {
             drop(Box::from_raw(db));
@@ -127,8 +137,16 @@ pub extern "C" fn KCM_DatabaseFree(db: *mut KCM_Database) {
     }
 }
 
+/// Insert a fact into the database.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `fact` must be a valid pointer to a `KCM_Fact`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseInsert(db: *mut KCM_Database, fact: *const KCM_Fact) -> KCM_Error {
+pub unsafe extern "C" fn KCM_DatabaseInsert(
+    db: *mut KCM_Database,
+    fact: *const KCM_Fact,
+) -> KCM_Error {
     if db.is_null() || fact.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
@@ -143,8 +161,13 @@ pub extern "C" fn KCM_DatabaseInsert(db: *mut KCM_Database, fact: *const KCM_Fac
     }
 }
 
+/// Update an existing fact in the database.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `fact` must be a valid pointer to a `KCM_Fact`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseUpdate(
+pub unsafe extern "C" fn KCM_DatabaseUpdate(
     db: *mut KCM_Database,
     row_id: u64,
     fact: *const KCM_Fact,
@@ -163,8 +186,12 @@ pub extern "C" fn KCM_DatabaseUpdate(
     }
 }
 
+/// Delete a fact from the database by row ID.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseDelete(db: *mut KCM_Database, row_id: u64) -> KCM_Error {
+pub unsafe extern "C" fn KCM_DatabaseDelete(db: *mut KCM_Database, row_id: u64) -> KCM_Error {
     if db.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
@@ -177,24 +204,38 @@ pub extern "C" fn KCM_DatabaseDelete(db: *mut KCM_Database, row_id: u64) -> KCM_
     }
 }
 
+/// Get the total fact count (including deleted).
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseFactCount(db: *mut KCM_Database) -> u64 {
+pub unsafe extern "C" fn KCM_DatabaseFactCount(db: *mut KCM_Database) -> u64 {
     if db.is_null() {
         return 0;
     }
     unsafe { (*db).inner.lock().fact_count() as u64 }
 }
 
+/// Get the active fact count (excluding deleted).
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseActiveCount(db: *mut KCM_Database) -> u64 {
+pub unsafe extern "C" fn KCM_DatabaseActiveCount(db: *mut KCM_Database) -> u64 {
     if db.is_null() {
         return 0;
     }
     unsafe { (*db).inner.lock().active_fact_count() as u64 }
 }
 
+/// Execute a query returning all facts.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `query_out` must be a valid pointer to a `*mut KCM_Query` slot.
+/// - Caller must free the returned query with `KCM_QueryFree`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseQuery(
+pub unsafe extern "C" fn KCM_DatabaseQuery(
     db: *mut KCM_Database,
     query_out: *mut *mut KCM_Query,
 ) -> KCM_Error {
@@ -217,8 +258,14 @@ pub extern "C" fn KCM_DatabaseQuery(
     }
 }
 
+/// Get the next fact from a query result.
+///
+/// # Safety
+/// - `query` must be a valid pointer previously returned by `KCM_DatabaseQuery`.
+/// - `fact_out` must be a valid pointer to a `KCM_Fact` slot.
+/// - `has_next` must be a valid pointer to a `bool` slot.
 #[no_mangle]
-pub extern "C" fn KCM_QueryNext(
+pub unsafe extern "C" fn KCM_QueryNext(
     query: *mut KCM_Query,
     fact_out: *mut KCM_Fact,
     has_next: *mut bool,
@@ -241,8 +288,13 @@ pub extern "C" fn KCM_QueryNext(
     }
 }
 
+/// Free a query result.
+///
+/// # Safety
+/// - `query` must be a valid pointer previously returned by `KCM_DatabaseQuery`.
+/// - `query` must not be used after this call.
 #[no_mangle]
-pub extern "C" fn KCM_QueryFree(query: *mut KCM_Query) {
+pub unsafe extern "C" fn KCM_QueryFree(query: *mut KCM_Query) {
     if !query.is_null() {
         unsafe {
             drop(Box::from_raw(query));
@@ -250,8 +302,14 @@ pub extern "C" fn KCM_QueryFree(query: *mut KCM_Query) {
     }
 }
 
+/// Begin a new transaction.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `txn_out` must be a valid pointer to a `*mut KCM_Transaction` slot.
+/// - Caller must free the returned transaction with `KCM_TransactionFree`.
 #[no_mangle]
-pub extern "C" fn KCM_DatabaseBeginTransaction(
+pub unsafe extern "C" fn KCM_DatabaseBeginTransaction(
     db: *mut KCM_Database,
     txn_out: *mut *mut KCM_Transaction,
 ) -> KCM_Error {
@@ -269,8 +327,13 @@ pub extern "C" fn KCM_DatabaseBeginTransaction(
     }
 }
 
+/// Free a transaction handle.
+///
+/// # Safety
+/// - `txn` must be a valid pointer previously returned by `KCM_DatabaseBeginTransaction`.
+/// - `txn` must not be used after this call.
 #[no_mangle]
-pub extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
+pub unsafe extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
     if !txn.is_null() {
         unsafe {
             drop(Box::from_raw(txn));
@@ -278,8 +341,14 @@ pub extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
     }
 }
 
+/// Get error message string for an error code.
+///
+/// # Safety
+/// - Returns a pointer to a static null-terminated string.
+/// - The string is valid for the lifetime of the program.
+/// - Caller must not free or modify the returned pointer.
 #[no_mangle]
-pub extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
+pub unsafe extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
     match err {
         KCM_Error::KCM_OK => c"OK".as_ptr(),
         KCM_Error::KCM_ERR_NOT_FOUND => c"Not found".as_ptr(),

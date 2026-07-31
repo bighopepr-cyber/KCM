@@ -107,7 +107,7 @@ fn test_database_insert_batch() {
             Fact::new(
                 SubjectID(i % 10),
                 PredicateID((i % 5) as u8),
-                ObjectID(i as u32),
+                ObjectID(i),
                 0.5,
             )
             .unwrap()
@@ -374,8 +374,8 @@ fn test_database_active_count_after_multiple_operations() {
 
     assert_eq!(kb.active_fact_count(), 10);
 
-    for i in 0..5 {
-        kb.delete(row_ids[i]).unwrap();
+    for row_id in &row_ids[..5] {
+        kb.delete(*row_id).unwrap();
     }
 
     assert_eq!(kb.active_fact_count(), 5);
