@@ -59,8 +59,8 @@ impl<T: Copy> DenseVec<T> {
         }
 
         unsafe {
-            // SAFETY: Caller guarantees idx < self.len (precondition checked by bounds check above).
-            // DenseVec is contiguous memory with capacity > idx.
+            // SAFETY: DenseVec is contiguous memory. push() has already verified
+            // that self.len < self.capacity. Writing at self.len is within bounds.
             *self.ptr.as_ptr().add(self.len) = value;
         }
         self.len += 1;

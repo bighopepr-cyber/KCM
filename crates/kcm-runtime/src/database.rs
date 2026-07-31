@@ -27,7 +27,8 @@ pub struct Dictionaries {
 
 impl KnowledgeDatabase {
     pub fn new() -> Result<Self, KcmError> {
-        let schema = Arc::new(RwLock::new(Schema::new(1_000_000)?));
+        const DEFAULT_SCHEMA_CAPACITY: usize = 1_000_000;
+        let schema = Arc::new(RwLock::new(Schema::new(DEFAULT_SCHEMA_CAPACITY)?));
         let dictionaries = Arc::new(Dictionaries {
             subjects: SharedDictionary::new(),
             objects: SharedDictionary::new(),
@@ -43,6 +44,10 @@ impl KnowledgeDatabase {
             dictionaries,
             version_store,
         })
+    }
+
+    pub fn get_schema_mut(&self) -> parking_lot::RwLockWriteGuard<'_, Schema> {
+        self.schema.write()
     }
 
     pub fn begin_transaction(&self) -> Transaction {

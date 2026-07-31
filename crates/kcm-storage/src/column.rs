@@ -301,6 +301,18 @@ impl Schema {
         self.tombstones.get(idx)
     }
 
+    pub fn clear_tombstone(&mut self, idx: usize) -> Result<(), KcmError> {
+        if idx >= self.len() {
+            return Err(KcmError::InvalidArgument(format!(
+                "Index {} out of bounds (len {})",
+                idx,
+                self.len()
+            )));
+        }
+        self.tombstones.clear(idx);
+        Ok(())
+    }
+
     pub fn tombstone_bytes(&self) -> &[u8] {
         self.tombstones.as_bytes()
     }

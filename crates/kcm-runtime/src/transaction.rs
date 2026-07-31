@@ -101,7 +101,7 @@ impl Transaction {
         for change in self.changes.iter().rev() {
             match change {
                 TransactionChange::Insert(_) => {
-                    let last = schema.len() - 1;
+                    let last = schema.len().saturating_sub(1);
                     schema.delete_fact(last)?;
                 }
                 TransactionChange::Update {
@@ -112,8 +112,8 @@ impl Transaction {
                     }
                 }
                 TransactionChange::Delete { row_idx, old_fact } => {
+                    schema.clear_tombstone(*row_idx)?;
                     schema.update_fact(*row_idx, old_fact)?;
-                    schema.delete_fact(*row_idx).ok();
                 }
             }
         }
@@ -158,7 +158,8 @@ pub struct VersionStore {
 
 impl VersionStore {
     pub fn new() -> Result<Self, KcmError> {
-        let initial_schema = Schema::new(1_000_000)?;
+        const DEFAULT_VERSION_STORE_CAPACITY: usize = 1_000_000;
+        let initial_schema = Schema::new(DEFAULT_VERSION_STORE_CAPACITY)?;
         Ok(VersionStore {
             versions: vec![Arc::new(initial_schema)],
             current_version: Arc::new(RwLock::new(0)),

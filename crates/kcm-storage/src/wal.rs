@@ -4,6 +4,8 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Mutex;
 
+const WAL_BUFFER_SIZE: usize = 65536;
+
 pub const WAL_MAGIC: &[u8; 5] = b"WALDB";
 pub const WAL_VERSION: u8 = 2;
 pub const WAL_INSERT_SIZE: usize = 38;
@@ -90,8 +92,8 @@ impl WriteAheadLog {
         Ok(WriteAheadLog {
             file: Mutex::new(file),
             path,
-            buffer: Mutex::new(Vec::with_capacity(65536)),
-            buffer_threshold: 65536,
+            buffer: Mutex::new(Vec::with_capacity(WAL_BUFFER_SIZE)),
+            buffer_threshold: WAL_BUFFER_SIZE,
         })
     }
 

@@ -143,6 +143,7 @@ impl Confidence {
     feature = "serialization",
     derive(serde::Serialize, serde::Deserialize)
 )]
+/// A knowledge fact (triple with metadata) stored in the columnar schema.
 pub struct Fact {
     pub subject: SubjectID,
     pub predicate: PredicateID,

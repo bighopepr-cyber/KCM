@@ -101,12 +101,8 @@ pub struct ConstantFoldingOptimizer;
 
 impl ConstantFoldingOptimizer {
     pub fn fold_predicate(pred: &PlannerFilterPredicate) -> Option<bool> {
-        match pred {
-            PlannerFilterPredicate::EqualSubject(0) => Some(false),
-            PlannerFilterPredicate::EqualPredicate(0) => Some(true),
-            PlannerFilterPredicate::EqualObject(0) => Some(false),
-            _ => None,
-        }
+        let _ = pred;
+        None
     }
 
     pub fn can_fold(pred: &PlannerFilterPredicate) -> bool {

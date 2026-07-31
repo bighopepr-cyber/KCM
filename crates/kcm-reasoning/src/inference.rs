@@ -10,10 +10,12 @@ pub struct InferenceEngine {
 
 impl InferenceEngine {
     pub fn new() -> Self {
+        const DEFAULT_MAX_ITERATIONS: usize = 1000;
+        const DEFAULT_CONFIDENCE_THRESHOLD: f64 = 0.3;
         InferenceEngine {
             rule_registry: RuleRegistry::new(),
-            max_iterations: 1000,
-            confidence_threshold: 0.3,
+            max_iterations: DEFAULT_MAX_ITERATIONS,
+            confidence_threshold: DEFAULT_CONFIDENCE_THRESHOLD,
         }
     }
 

@@ -356,6 +356,10 @@ impl QueryOptimizer {
         }
     }
 
+    /// Estimate selectivity for a column filter.
+    /// Currently uses a simplified model based on column cardinality.
+    /// The `value` parameter is reserved for future histogram-based estimation.
+    #[allow(dead_code)]
     pub fn estimate_selectivity(&self, schema: &Schema, column: ColumnID, _value: &str) -> f64 {
         let total = schema.len() as f64;
         if total == 0.0 {
