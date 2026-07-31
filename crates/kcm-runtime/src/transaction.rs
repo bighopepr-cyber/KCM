@@ -183,6 +183,6 @@ impl VersionStore {
 
 impl Default for VersionStore {
     fn default() -> Self {
-        Self::new().unwrap()
+        Self::new().expect("Failed to create default VersionStore")
     }
 }

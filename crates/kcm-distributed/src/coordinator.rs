@@ -27,10 +27,10 @@ impl DistributedTransaction {
         }
     }
 
-    pub fn record_vote(&self, shard_id: bool) -> bool {
+    pub fn record_vote(&self, vote: bool) -> bool {
         let mut votes = self.votes.lock();
-        let shard_count = votes.len();
-        votes.insert(shard_count, shard_id);
+        let idx = votes.len();
+        votes.insert(idx, vote);
         votes.values().all(|&v| v)
     }
 

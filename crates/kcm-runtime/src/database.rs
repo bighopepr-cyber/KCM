@@ -108,7 +108,7 @@ impl KnowledgeDatabase {
 
 impl Default for KnowledgeDatabase {
     fn default() -> Self {
-        Self::new().unwrap()
+        Self::new().expect("Failed to create default KnowledgeDatabase")
     }
 }
 

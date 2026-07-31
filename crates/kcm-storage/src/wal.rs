@@ -81,7 +81,7 @@ impl WriteAheadLog {
     }
 
     pub fn append_fact(&self, fact: &Fact) -> Result<(), KcmError> {
-        let mut buffer = self.buffer.lock().unwrap();
+        let mut buffer = self.buffer.lock().unwrap_or_else(|e| e.into_inner());
         buffer.extend_from_slice(&1u8.to_le_bytes());
         buffer.extend_from_slice(&fact.subject.0.to_le_bytes());
         buffer.extend_from_slice(&fact.predicate.0.to_le_bytes());
@@ -100,7 +100,7 @@ impl WriteAheadLog {
     }
 
     pub fn append_delete(&self, row_id: u64) -> Result<(), KcmError> {
-        let mut buffer = self.buffer.lock().unwrap();
+        let mut buffer = self.buffer.lock().unwrap_or_else(|e| e.into_inner());
         buffer.extend_from_slice(&2u8.to_le_bytes());
         buffer.extend_from_slice(&row_id.to_le_bytes());
         if buffer.len() >= self.buffer_threshold {
@@ -111,11 +111,11 @@ impl WriteAheadLog {
     }
 
     pub fn flush_buffer(&self) -> Result<(), KcmError> {
-        let mut buffer = self.buffer.lock().unwrap();
+        let mut buffer = self.buffer.lock().unwrap_or_else(|e| e.into_inner());
         if buffer.is_empty() {
             return Ok(());
         }
-        let mut file = self.file.lock().unwrap();
+        let mut file = self.file.lock().unwrap_or_else(|e| e.into_inner());
         file.write_all(&buffer)
             .map_err(|e| KcmError::Io(format!("WAL write failed: {}", e)))?;
         file.sync_all()

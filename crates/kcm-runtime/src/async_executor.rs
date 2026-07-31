@@ -22,7 +22,7 @@ impl AsyncExecutor {
 
 impl Default for AsyncExecutor {
     fn default() -> Self {
-        Self::new().unwrap()
+        Self::new().expect("Failed to create default AsyncExecutor")
     }
 }
 

@@ -31,8 +31,11 @@ impl BackupManager {
     pub fn create_incremental_backup(
         &self,
         schema: &Schema,
-        _last_backup: &Path,
+        last_backup: &Path,
     ) -> Result<PathBuf, KcmError> {
+        if !last_backup.exists() {
+            return self.create_full_backup(schema);
+        }
         let ts = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
@@ -40,7 +43,13 @@ impl BackupManager {
         let name = format!("backup_incr_{}.kcm", ts);
         let path = self.backup_dir.join(&name);
         DatabaseFile::save(schema, &path)?;
-        self.write_manifest(&path, "incremental")?;
+        let manifest_path = path.with_extension("manifest");
+        let content = format!(
+            "backup_type: incremental\ncreated: {}\nbase: {}\nactive_rows: {}\n",
+            ts, last_backup.display(), schema.active_count()
+        );
+        std::fs::write(manifest_path, content)
+            .map_err(|e| KcmError::Io(format!("Failed to write manifest: {}", e)))?;
         Ok(path)
     }
 
