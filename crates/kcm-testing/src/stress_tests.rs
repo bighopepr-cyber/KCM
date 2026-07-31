@@ -8,7 +8,6 @@ pub struct StressTestScenario {
     pub name: String,
     pub max_concurrent_users: usize,
     pub duration_secs: u64,
-    pub memory_limit_mb: u64,
 }
 
 pub struct StressTestResults {
@@ -21,21 +20,14 @@ pub struct StressTestResults {
     pub graceful_degradation: bool,
 }
 
-pub fn sustained_load_scenario() -> StressTestScenario {
-    StressTestScenario {
-        name: "Sustained Load".to_string(),
-        max_concurrent_users: 50,
-        duration_secs: 10,
-        memory_limit_mb: 4096,
-    }
-}
-
-pub fn spike_scenario() -> StressTestScenario {
-    StressTestScenario {
-        name: "Spike Load".to_string(),
-        max_concurrent_users: 200,
-        duration_secs: 5,
-        memory_limit_mb: 4096,
+impl StressTestResults {
+    pub fn to_report(&self) -> String {
+        format!(
+            "Stress Test: {}\n  Operations: {} (failed: {})\n  Elapsed: {:.2}s\n  Peak QPS: {:.0}\n  Failure Rate: {:.4}%\n  Graceful Degradation: {}",
+            self.scenario, self.total_ops, self.failed_ops,
+            self.elapsed_secs, self.peak_qps, self.failure_rate * 100.0,
+            self.graceful_degradation,
+        )
     }
 }
 
@@ -61,7 +53,7 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
                     SubjectID((user % 100) as u32),
                     PredicateID((count % 10) as u8),
                     ObjectID((count % 1000) as u32),
-                    0.5 + (count as f64 % 0.5).min(1.0),
+                    (0.5 + (count as f64 % 0.5)).min(0.99),
                 )
                 .unwrap();
 
@@ -82,10 +74,10 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
 
     std::thread::sleep(Duration::from_secs(scenario.duration_secs));
     running.store(false, Ordering::Relaxed);
-
     for h in handles {
         h.join().unwrap();
     }
+
     let elapsed = start.elapsed().as_secs_f64();
     let total = total_ops.load(Ordering::Relaxed);
     let failed = failed_ops.load(Ordering::Relaxed);
@@ -102,5 +94,47 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
             0.0
         },
         graceful_degradation: (failed as f64 / total.max(1) as f64) < 0.10,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stress_sustained_load() {
+        let scenario = StressTestScenario {
+            name: "Sustained Load".to_string(),
+            max_concurrent_users: 8,
+            duration_secs: 2,
+        };
+        let results = run_stress_test(&scenario);
+        assert!(results.total_ops > 0, "Should complete operations");
+        assert!(results.graceful_degradation, "Should degrade gracefully");
+        println!("{}", results.to_report());
+    }
+
+    #[test]
+    fn test_stress_spike() {
+        let scenario = StressTestScenario {
+            name: "Spike".to_string(),
+            max_concurrent_users: 16,
+            duration_secs: 1,
+        };
+        let results = run_stress_test(&scenario);
+        assert!(results.total_ops > 0);
+        println!("{}", results.to_report());
+    }
+
+    #[test]
+    fn test_stress_zero_users() {
+        let scenario = StressTestScenario {
+            name: "No Users".to_string(),
+            max_concurrent_users: 0,
+            duration_secs: 1,
+        };
+        let results = run_stress_test(&scenario);
+        assert_eq!(results.total_ops, 0);
+        assert!(results.graceful_degradation);
     }
 }

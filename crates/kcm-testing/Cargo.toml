@@ -8,5 +8,5 @@ description = "Testing infrastructure for KCM"
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
 kcm-runtime = { path = "../kcm-runtime" }
-tokio = { version = "1.35", features = ["rt-multi-thread", "macros"] }
+kcm-security = { path = "../kcm-security" }
 parking_lot = "0.12"

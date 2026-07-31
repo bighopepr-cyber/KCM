@@ -13,6 +13,19 @@ pub struct RegressionAlert {
     pub severity: Severity,
 }
 
+impl RegressionAlert {
+    pub fn to_report(&self) -> String {
+        format!(
+            "[{:?}] {}: {:.2} -> {:.2} ({:+.1}%)",
+            self.severity,
+            self.metric,
+            self.baseline_value,
+            self.current_value,
+            self.change_ratio * 100.0,
+        )
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Severity {
     Low,
@@ -75,6 +88,10 @@ impl RegressionDetector {
         }
         alerts
     }
+
+    pub fn baseline_count(&self) -> usize {
+        self.baselines.len()
+    }
 }
 
 impl Default for RegressionDetector {
@@ -87,43 +104,35 @@ impl Default for RegressionDetector {
 mod tests {
     use super::*;
 
+    fn make_baseline(metrics: Vec<(&str, f64)>) -> RegressionBaseline {
+        RegressionBaseline {
+            metrics: metrics
+                .into_iter()
+                .map(|(k, v)| (k.to_string(), v))
+                .collect(),
+            label: "v1".to_string(),
+        }
+    }
+
     #[test]
     fn test_no_regression() {
         let mut detector = RegressionDetector::new();
-        let baseline = RegressionBaseline {
-            metrics: {
-                let mut m = HashMap::new();
-                m.insert("qps".to_string(), 1000.0);
-                m
-            },
-            label: "v1".to_string(),
-        };
-        detector.load_baseline(baseline);
-        let current = {
-            let mut m = HashMap::new();
-            m.insert("qps".to_string(), 1010.0);
-            m
-        };
+        detector.load_baseline(make_baseline(vec![("qps", 1000.0), ("latency", 50.0)]));
+        let current = vec![("qps", 1010.0), ("latency", 49.5)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
         assert!(detector.detect(&current).is_empty());
     }
 
     #[test]
-    fn test_detects_regression() {
+    fn test_detects_high_regression() {
         let mut detector = RegressionDetector::new();
-        let baseline = RegressionBaseline {
-            metrics: {
-                let mut m = HashMap::new();
-                m.insert("qps".to_string(), 1000.0);
-                m
-            },
-            label: "v1".to_string(),
-        };
-        detector.load_baseline(baseline);
-        let current = {
-            let mut m = HashMap::new();
-            m.insert("qps".to_string(), 800.0);
-            m
-        };
+        detector.load_baseline(make_baseline(vec![("qps", 1000.0)]));
+        let current = vec![("qps", 800.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
         let alerts = detector.detect(&current);
         assert_eq!(alerts.len(), 1);
         assert!(matches!(
@@ -133,13 +142,91 @@ mod tests {
     }
 
     #[test]
+    fn test_detects_critical_regression() {
+        let mut detector = RegressionDetector::new();
+        detector.load_baseline(make_baseline(vec![("qps", 1000.0)]));
+        let current = vec![("qps", 500.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        let alerts = detector.detect(&current);
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].severity, Severity::Critical);
+    }
+
+    #[test]
     fn test_empty_baseline() {
         let detector = RegressionDetector::new();
-        let current = {
-            let mut m = HashMap::new();
-            m.insert("qps".to_string(), 1000.0);
-            m
+        let current = vec![("qps", 1000.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        assert!(detector.detect(&current).is_empty());
+    }
+
+    #[test]
+    fn test_metric_not_in_baseline() {
+        let mut detector = RegressionDetector::new();
+        detector.load_baseline(make_baseline(vec![("qps", 1000.0)]));
+        let current = vec![("new_metric", 500.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        assert!(detector.detect(&current).is_empty());
+    }
+
+    #[test]
+    fn test_zero_baseline_ignored() {
+        let mut detector = RegressionDetector::new();
+        detector.load_baseline(make_baseline(vec![("qps", 0.0)]));
+        let current = vec![("qps", 100.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        assert!(detector.detect(&current).is_empty());
+    }
+
+    #[test]
+    fn test_alert_report() {
+        let alert = RegressionAlert {
+            metric: "throughput".to_string(),
+            baseline_value: 1000.0,
+            current_value: 800.0,
+            change_ratio: 0.2,
+            severity: Severity::Critical,
         };
+        let report = alert.to_report();
+        assert!(report.contains("throughput"));
+        assert!(report.contains("Critical"));
+    }
+
+    #[test]
+    fn test_multiple_metrics() {
+        let mut detector = RegressionDetector::new();
+        detector.load_baseline(make_baseline(vec![
+            ("qps", 1000.0),
+            ("latency_p99", 50.0),
+            ("memory_mb", 100.0),
+        ]));
+        let current = vec![("qps", 950.0), ("latency_p99", 100.0), ("memory_mb", 101.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+        let alerts = detector.detect(&current);
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].metric, "latency_p99");
+    }
+
+    #[test]
+    fn test_baseline_evolution() {
+        let mut detector = RegressionDetector::new();
+        detector.load_baseline(make_baseline(vec![("qps", 1000.0)]));
+        detector.load_baseline(make_baseline(vec![("qps", 1050.0)]));
+        assert_eq!(detector.baseline_count(), 2);
+        let current = vec![("qps", 1040.0)]
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
         assert!(detector.detect(&current).is_empty());
     }
 }
