@@ -206,7 +206,7 @@ fn bench_dictionary_insert(c: &mut Criterion) {
             b.iter(|| {
                 let mut dict = Dictionary::new();
                 for i in 0..size {
-                    dict.insert(&format!("key_{}", i));
+                    dict.insert(&format!("key_{}", i)).unwrap();
                 }
                 black_box(dict)
             });
@@ -222,7 +222,7 @@ fn bench_dictionary_lookup(c: &mut Criterion) {
             let mut dict = Dictionary::new();
             let keys: Vec<String> = (0..size).map(|i| format!("key_{}", i)).collect();
             for key in &keys {
-                dict.insert(key);
+                dict.insert(key).unwrap();
             }
             b.iter(|| {
                 for key in &keys {
@@ -240,11 +240,11 @@ fn bench_dictionary_insert_existing(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
             let mut dict = Dictionary::new();
             for i in 0..size {
-                dict.insert(&format!("key_{}", i));
+                dict.insert(&format!("key_{}", i)).unwrap();
             }
             b.iter(|| {
                 for i in 0..size {
-                    black_box(dict.insert(&format!("key_{}", i)));
+                    black_box(dict.insert(&format!("key_{}", i)).unwrap());
                 }
             });
         });
@@ -721,7 +721,7 @@ fn bench_memory_metrics(c: &mut Criterion) {
         b.iter(|| {
             let mut dict = Dictionary::new();
             for i in 0..100_000 {
-                dict.insert(&format!("key_{}", i));
+                dict.insert(&format!("key_{}", i)).unwrap();
             }
             black_box(dict.len())
         });

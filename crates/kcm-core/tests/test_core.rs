@@ -47,9 +47,9 @@ fn test_bitmap() {
 fn test_dictionary() {
     let mut dict = Dictionary::new();
 
-    let id1 = dict.insert("hello");
-    let id2 = dict.insert("world");
-    let id1_again = dict.insert("hello");
+    let id1 = dict.insert("hello").unwrap();
+    let id2 = dict.insert("world").unwrap();
+    let id1_again = dict.insert("hello").unwrap();
 
     assert_eq!(id1, id1_again);
     assert_ne!(id1, id2);

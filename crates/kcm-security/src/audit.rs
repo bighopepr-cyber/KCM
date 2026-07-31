@@ -38,16 +38,7 @@ impl AuditLog {
         let mut events = self.events.lock();
         let mut chained = event;
         if let Some(prev) = events.back() {
-            chained.prev_hash = blake3::Hasher::new()
-                .update(
-                    format!(
-                        "{:?}|{}|{}|{}",
-                        prev.event_type, prev.user_id, prev.context, prev.timestamp
-                    )
-                    .as_bytes(),
-                )
-                .finalize()
-                .into();
+            chained.prev_hash = Self::hash_event(prev);
         } else {
             chained.prev_hash = [0u8; 32];
         }
@@ -114,22 +105,29 @@ impl AuditLog {
         if events.is_empty() {
             return true;
         }
-        for event in events.iter() {
-            let expected: [u8; 32] = blake3::Hasher::new()
-                .update(
-                    format!(
-                        "{:?}|{}|{}|{}",
-                        event.event_type, event.user_id, event.context, event.timestamp
-                    )
-                    .as_bytes(),
-                )
-                .finalize()
-                .into();
-            if event.prev_hash != [0u8; 32] && event.prev_hash != expected {
+        if events[0].prev_hash != [0u8; 32] {
+            return false;
+        }
+        for i in 1..events.len() {
+            let expected = Self::hash_event(&events[i - 1]);
+            if events[i].prev_hash != expected {
                 return false;
             }
         }
         true
+    }
+
+    fn hash_event(event: &AuditEvent) -> [u8; 32] {
+        blake3::Hasher::new()
+            .update(
+                format!(
+                    "{:?}|{}|{}|{}|{}",
+                    event.event_type, event.user_id, event.context, event.timestamp, event.details
+                )
+                .as_bytes(),
+            )
+            .finalize()
+            .into()
     }
 
     fn now() -> i64 {

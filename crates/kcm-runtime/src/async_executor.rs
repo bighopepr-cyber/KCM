@@ -22,7 +22,7 @@ impl AsyncExecutor {
 
 impl Default for AsyncExecutor {
     fn default() -> Self {
-        Self::new().expect("Failed to create default AsyncExecutor")
+        Self::new().expect("AsyncExecutor::new() should not fail with valid system config")
     }
 }
 

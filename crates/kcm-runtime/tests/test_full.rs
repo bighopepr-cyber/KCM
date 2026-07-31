@@ -145,9 +145,9 @@ fn test_database_get_fact_invalid() {
 fn test_database_dictionary() {
     let kb = KnowledgeDatabase::new().unwrap();
 
-    let id1 = kb.dict_insert_subject("Alice");
-    let id2 = kb.dict_insert_subject("Bob");
-    let id1_again = kb.dict_insert_subject("Alice");
+    let id1 = kb.dict_insert_subject("Alice").unwrap();
+    let id2 = kb.dict_insert_subject("Bob").unwrap();
+    let id1_again = kb.dict_insert_subject("Alice").unwrap();
 
     assert_eq!(id1, id1_again);
     assert_ne!(id1, id2);

@@ -117,12 +117,16 @@ impl EvidenceID {
 pub struct Confidence(pub f64);
 
 impl Confidence {
-    pub fn new(value: f64) -> Result<Self, String> {
+    pub fn new(value: f64) -> Result<Self, KcmError> {
         if value.is_nan() || value.is_infinite() {
-            return Err("Confidence must be finite".to_string());
+            return Err(KcmError::InvalidArgument(
+                "Confidence must be finite".to_string(),
+            ));
         }
         if !(0.0..=1.0).contains(&value) {
-            return Err("Confidence must be in [0.0, 1.0]".to_string());
+            return Err(KcmError::InvalidArgument(
+                "Confidence must be in [0.0, 1.0]".to_string(),
+            ));
         }
         Ok(Confidence(value))
     }
@@ -152,6 +156,7 @@ impl Confidence {
     derive(serde::Serialize, serde::Deserialize)
 )]
 /// A knowledge fact (triple with metadata) stored in the columnar schema.
+/// Note: `Eq` is not derived because `confidence: f64` does not implement `Eq`.
 pub struct Fact {
     pub subject: SubjectID,
     pub predicate: PredicateID,
@@ -171,8 +176,14 @@ impl Fact {
         predicate: PredicateID,
         object: ObjectID,
         confidence: f64,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, KcmError> {
         Confidence::new(confidence)?;
+
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+            .min(i64::MAX as u128) as i64;
 
         Ok(Fact {
             subject,
@@ -180,10 +191,7 @@ impl Fact {
             object,
             confidence,
             evidence: EvidenceID::UNKNOWN,
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos() as i64,
+            timestamp,
             context: ContextID::NULL,
             version: 1,
             priority: 0,

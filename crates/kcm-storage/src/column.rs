@@ -47,7 +47,7 @@ impl<T: Copy> Column<T> {
         encoding: ColumnEncoding,
         compression: CompressionCodec,
     ) -> Result<Self, KcmError> {
-        let data = DenseVec::new(capacity).map_err(KcmError::Io)?;
+        let data = DenseVec::new(capacity)?;
         Ok(Column {
             data,
             encoding,
@@ -59,7 +59,7 @@ impl<T: Copy> Column<T> {
     }
 
     pub fn append(&mut self, value: T) -> Result<(), KcmError> {
-        self.data.push(value).map_err(KcmError::Io)?;
+        self.data.push(value)?;
         self.row_count += 1;
         Ok(())
     }

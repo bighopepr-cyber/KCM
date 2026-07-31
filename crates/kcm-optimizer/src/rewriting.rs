@@ -123,8 +123,10 @@ impl JoinOrderingOptimizer {
     }
 
     pub fn reorder(left: &PlanNode, right: &PlanNode) -> (PlanNode, PlanNode) {
-        let left_cost = Self::estimate_join_cost(left.estimated_cost_rows(), 1);
-        let right_cost = Self::estimate_join_cost(right.estimated_cost_rows(), 1);
+        let left_cost =
+            Self::estimate_join_cost(left.estimated_cost_rows(), right.estimated_cost_rows());
+        let right_cost =
+            Self::estimate_join_cost(right.estimated_cost_rows(), left.estimated_cost_rows());
         if left_cost <= right_cost {
             (left.clone(), right.clone())
         } else {

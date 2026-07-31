@@ -3,6 +3,8 @@ use std::marker::PhantomData;
 use std::ops::{Index, IndexMut};
 use std::ptr::NonNull;
 
+use crate::types::KcmError;
+
 pub struct DenseVec<T: Copy> {
     ptr: NonNull<T>,
     capacity: usize,
@@ -20,11 +22,11 @@ unsafe impl<T: Copy + Send + Sync> Sync for DenseVec<T> {}
 impl<T: Copy> DenseVec<T> {
     const MIN_ALIGNMENT: usize = 64;
 
-    pub fn new(capacity: usize) -> Result<Self, String> {
+    pub fn new(capacity: usize) -> Result<Self, KcmError> {
         Self::with_alignment(capacity, Self::MIN_ALIGNMENT)
     }
 
-    pub fn with_alignment(capacity: usize, alignment: usize) -> Result<Self, String> {
+    pub fn with_alignment(capacity: usize, alignment: usize) -> Result<Self, KcmError> {
         if capacity == 0 {
             return Ok(DenseVec {
                 ptr: NonNull::dangling(),
@@ -35,14 +37,21 @@ impl<T: Copy> DenseVec<T> {
             });
         }
 
-        let layout = Layout::from_size_align(
-            capacity * std::mem::size_of::<T>(),
-            alignment.max(std::mem::align_of::<T>()),
-        )
-        .map_err(|e| format!("Layout error: {}", e))?;
+        let byte_size = capacity
+            .checked_mul(std::mem::size_of::<T>())
+            .ok_or_else(|| {
+                KcmError::InvalidArgument(format!(
+                    "Capacity overflow: {} * {} exceeds usize::MAX",
+                    capacity,
+                    std::mem::size_of::<T>()
+                ))
+            })?;
+
+        let layout = Layout::from_size_align(byte_size, alignment.max(std::mem::align_of::<T>()))
+            .map_err(|e| KcmError::InvalidArgument(format!("Layout error: {}", e)))?;
 
         let ptr = unsafe { alloc(layout) } as *mut T;
-        let ptr = NonNull::new(ptr).ok_or_else(|| "Allocation failed".to_string())?;
+        let ptr = NonNull::new(ptr).ok_or(KcmError::OutOfMemory)?;
 
         Ok(DenseVec {
             ptr,
@@ -53,9 +62,9 @@ impl<T: Copy> DenseVec<T> {
         })
     }
 
-    pub fn push(&mut self, value: T) -> Result<(), String> {
+    pub fn push(&mut self, value: T) -> Result<(), KcmError> {
         if self.len >= self.capacity {
-            return Err("Vector full".to_string());
+            return Err(KcmError::OutOfMemory);
         }
 
         unsafe {
@@ -109,50 +118,32 @@ impl<T: Copy> IndexMut<usize> for DenseVec<T> {
 impl<T: Copy> Drop for DenseVec<T> {
     fn drop(&mut self) {
         if self.capacity > 0 {
-            let layout = Layout::from_size_align(
-                self.capacity * std::mem::size_of::<T>(),
-                self.alignment.max(std::mem::align_of::<T>()),
-            )
-            .unwrap_or_else(|_| std::process::abort());
-
-            unsafe {
-                // SAFETY: Layout is reconstructed from the same values used during allocation.
-                // The ptr was allocated by the same allocator that will deallocate it.
-                dealloc(self.ptr.as_ptr() as *mut u8, layout);
+            // SAFETY: The layout is reconstructed from the same values used during allocation.
+            // capacity and size_of::<T>() are the same as when allocated. The multiplication
+            // cannot overflow because it succeeded during construction with the same values.
+            let byte_size = self.capacity * std::mem::size_of::<T>();
+            let layout =
+                Layout::from_size_align(byte_size, self.alignment.max(std::mem::align_of::<T>()));
+            // SAFETY: Layout::from_size_align can only fail if align is not a power of two
+            // or if byte_size overflows. Both are invariant: alignment is stored from a
+            // valid construction, and byte_size is the same multiplication that succeeded before.
+            if let Ok(layout) = layout {
+                unsafe {
+                    dealloc(self.ptr.as_ptr() as *mut u8, layout);
+                }
             }
+            // If layout reconstruction somehow fails, we leak the memory rather than abort.
+            // This is the safest behavior: no crash, no UB, just a leak on impossible invariant violation.
         }
     }
 }
 
 impl<T: Copy> Clone for DenseVec<T> {
     fn clone(&self) -> Self {
-        // SAFETY: DenseVec was created with valid layout from with_alignment.
-        // Allocation uses the same allocator and alignment as the original.
         let mut new_vec = Self::with_alignment(self.capacity, self.alignment)
-            .unwrap_or_else(|_| std::process::abort());
+            .expect("DenseVec::clone: allocation must succeed with same parameters as original");
         new_vec.len = self.len;
         new_vec.as_mut_slice().copy_from_slice(self.as_slice());
         new_vec
-    }
-}
-
-#[repr(C, align(64))]
-pub struct CacheAlignedData {
-    pub data: u64,
-    pub padding: [u64; 7],
-}
-
-impl CacheAlignedData {
-    pub fn new(value: u64) -> Self {
-        CacheAlignedData {
-            data: value,
-            padding: [0u64; 7],
-        }
-    }
-}
-
-impl<T: Copy> DenseVec<T> {
-    pub fn new_cache_aligned(capacity: usize) -> Result<Self, String> {
-        Self::with_alignment(capacity, 64)
     }
 }

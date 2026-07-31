@@ -201,6 +201,8 @@ pub enum Condition {
     NotEqual(String, Value),
     GreaterThan(String, f64),
     LessThan(String, f64),
+    GreaterThanOrEqual(String, f64),
+    LessThanOrEqual(String, f64),
     And(Box<Condition>, Box<Condition>),
     Or(Box<Condition>, Box<Condition>),
 }
@@ -307,13 +309,27 @@ impl Parser {
                 Token::StringLit(s) => Ok(Condition::Equal(left, Value::String(s))),
                 t => Err(format!("Expected value after '=', got {:?}", t)),
             },
+            Token::NotEquals => match self.advance() {
+                Token::Number(n) => Ok(Condition::NotEqual(left, Value::Number(n))),
+                Token::Identifier(s) => Ok(Condition::NotEqual(left, Value::String(s))),
+                Token::StringLit(s) => Ok(Condition::NotEqual(left, Value::String(s))),
+                t => Err(format!("Expected value after '!=' got {:?}", t)),
+            },
             Token::GreaterThan => {
                 let n = self.parse_number()?;
                 Ok(Condition::GreaterThan(left, n))
             }
+            Token::GreaterThanOrEqual => {
+                let n = self.parse_number()?;
+                Ok(Condition::GreaterThanOrEqual(left, n))
+            }
             Token::LessThan => {
                 let n = self.parse_number()?;
                 Ok(Condition::LessThan(left, n))
+            }
+            Token::LessThanOrEqual => {
+                let n = self.parse_number()?;
+                Ok(Condition::LessThanOrEqual(left, n))
             }
             _ => Err(format!("Expected operator, got {:?}", op)),
         }

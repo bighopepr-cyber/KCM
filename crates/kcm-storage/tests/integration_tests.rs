@@ -119,9 +119,9 @@ fn test_dictionary_with_schema() {
     let dict = SharedDictionary::new();
     for i in 0..50u32 {
         let fact = Fact::new(
-            SubjectID(dict.insert(&format!("s_{}", i))),
+            SubjectID(dict.insert(&format!("s_{}", i)).unwrap()),
             PredicateID((i % 10) as u8),
-            ObjectID(dict.insert(&format!("o_{}", i))),
+            ObjectID(dict.insert(&format!("o_{}", i)).unwrap()),
             0.5,
         )
         .unwrap();

@@ -52,6 +52,7 @@ impl Executor {
 
 impl Default for Executor {
     fn default() -> Self {
-        Self::with_num_cpus().expect("Failed to create default Executor")
+        Self::with_num_cpus()
+            .expect("Executor::with_num_cpus() should not fail with valid system config")
     }
 }

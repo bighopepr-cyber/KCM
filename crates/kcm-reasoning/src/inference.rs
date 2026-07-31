@@ -108,11 +108,12 @@ impl InferenceEngine {
         }
 
         let duration_ms = start.elapsed().as_millis() as u64;
+        let facts_derived = all_derived.len();
         Ok((
-            all_derived.clone(),
+            all_derived,
             InferenceStats {
                 iterations,
-                facts_derived: all_derived.len(),
+                facts_derived,
                 rules_applied: total_rules,
                 duration_ms,
             },
@@ -202,10 +203,8 @@ impl InferenceEngine {
 
             RulePattern::Not(inner) => {
                 let inner_matches = self.find_pattern_matches(inner, schema)?;
-                let inner_subjects: std::collections::HashSet<u32> =
-                    inner_matches.iter().map(|(s, _, _)| s.0).collect();
-                let inner_objects: std::collections::HashSet<u32> =
-                    inner_matches.iter().map(|(_, o, _)| o.0).collect();
+                let inner_pairs: std::collections::HashSet<(u32, u32)> =
+                    inner_matches.iter().map(|(s, o, _)| (s.0, o.0)).collect();
 
                 let mut result = Vec::new();
                 for idx in 0..schema.len() {
@@ -216,7 +215,7 @@ impl InferenceEngine {
                         if let Some(_p) = schema.predicate_col.get(idx) {
                             if let Some(o) = schema.object_col.get(idx) {
                                 if let Some(c) = schema.confidence_col.get(idx) {
-                                    if !inner_subjects.contains(&s) || !inner_objects.contains(&o) {
+                                    if !inner_pairs.contains(&(s, o)) {
                                         let s_id = SubjectID(s);
                                         let o_id = ObjectID(o);
                                         result.push((s_id, o_id, vec![c]));

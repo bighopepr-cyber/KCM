@@ -158,7 +158,7 @@ fn test_join_op() {
     let mut schema = Schema::new(100).unwrap();
     for i in 0..10u32 {
         Fact::new(SubjectID(i), PredicateID(0), ObjectID(i + 100), 0.9)
-            .and_then(|f| schema.append_fact(&f).map_err(|e| format!("{}", e)))
+            .and_then(|f| schema.append_fact(&f))
             .ok();
     }
     let left: Vec<usize> = (0..5).collect();

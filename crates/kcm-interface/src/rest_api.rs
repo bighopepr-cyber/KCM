@@ -71,7 +71,7 @@ pub fn handle_insert(
         confidence,
     ) {
         Ok(f) => f,
-        Err(e) => return ApiResponse::bad_request(&e),
+        Err(e) => return ApiResponse::bad_request(&e.to_string()),
     };
 
     match state.db.insert(&fact) {
@@ -160,7 +160,7 @@ pub fn handle_update(
         confidence,
     ) {
         Ok(f) => f,
-        Err(e) => return ApiResponse::bad_request(&e),
+        Err(e) => return ApiResponse::bad_request(&e.to_string()),
     };
 
     match state.db.update(RowID(row_id), &fact) {

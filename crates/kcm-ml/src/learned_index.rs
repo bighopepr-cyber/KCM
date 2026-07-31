@@ -58,6 +58,9 @@ impl LearnedIndex {
     }
 
     pub fn train(&mut self, values: &[u32], positions: &[usize]) {
+        if self.model_count == 0 || values.is_empty() {
+            return;
+        }
         let chunk_size = values.len().div_ceil(self.model_count);
         self.ranges.clear();
         for (i, model) in self.models.iter_mut().enumerate() {

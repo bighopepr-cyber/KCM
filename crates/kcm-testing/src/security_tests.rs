@@ -18,7 +18,7 @@ fn test_injection_prevention() {
         "\x00\x00\x00",
     ];
     for input in &malicious_inputs {
-        let id = kb.dict_insert_subject(input);
+        let id = kb.dict_insert_subject(input).unwrap();
         assert_eq!(kb.dict_get_subject(id), Some(input.to_string()));
     }
     assert_eq!(kb.fact_count(), 0);
@@ -104,7 +104,7 @@ fn test_context_isolation() {
 fn test_timing_attack_mitigation() {
     let mut dict = Dictionary::new();
     for i in 0..100 {
-        dict.insert(&format!("key_{}", i));
+        dict.insert(&format!("key_{}", i)).unwrap();
     }
 
     let warmup = 10;
@@ -205,7 +205,7 @@ fn test_dictionary_concurrent_access() {
         let dict = dict.clone();
         handles.push(std::thread::spawn(move || {
             for i in 0..250 {
-                let id = dict.insert(&format!("t{}_v{}", t, i));
+                let id = dict.insert(&format!("t{}_v{}", t, i)).unwrap();
                 let val = dict.get(id).unwrap();
                 assert!(!val.is_empty());
             }
@@ -254,7 +254,7 @@ fn test_error_handling_consistency() {
 fn test_dictionary_capacity_stress() {
     let mut dict = Dictionary::new();
     for i in 0..50_000 {
-        let id = dict.insert(&format!("entry_{}", i));
+        let id = dict.insert(&format!("entry_{}", i)).unwrap();
         assert_eq!(
             dict.get(id).map(|s| s.to_string()),
             Some(format!("entry_{}", i))

@@ -90,7 +90,7 @@ impl KnowledgeDatabase {
         Ok(schema.get_fact(row_id.as_usize()))
     }
 
-    pub fn dict_insert_subject(&self, name: &str) -> DictID {
+    pub fn dict_insert_subject(&self, name: &str) -> Result<DictID, KcmError> {
         self.dictionaries.subjects.insert(name)
     }
 
@@ -113,7 +113,8 @@ impl KnowledgeDatabase {
 
 impl Default for KnowledgeDatabase {
     fn default() -> Self {
-        Self::new().expect("Failed to create default KnowledgeDatabase")
+        Self::new()
+            .expect("KnowledgeDatabase::new uses infallible defaults; this should never fail")
     }
 }
 

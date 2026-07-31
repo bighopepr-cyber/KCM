@@ -159,7 +159,7 @@ fn test_concurrent_dictionary_access() {
         let dict = dict.clone();
         handles.push(thread::spawn(move || {
             for i in 0..500 {
-                let id = dict.insert(&format!("t{}_v{}", t, i));
+                let id = dict.insert(&format!("t{}_v{}", t, i)).unwrap();
                 let val = dict.get(id).unwrap();
                 assert!(val.starts_with(&format!("t{}_v{}", t, i)));
             }

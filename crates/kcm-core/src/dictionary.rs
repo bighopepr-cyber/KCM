@@ -2,6 +2,8 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::types::KcmError;
+
 pub type DictID = u32;
 
 pub struct Dictionary {
@@ -21,18 +23,19 @@ impl Dictionary {
         }
     }
 
-    pub fn insert(&mut self, value: &str) -> DictID {
+    pub fn insert(&mut self, value: &str) -> Result<DictID, KcmError> {
         if let Some(&id) = self.reverse_map.get(value) {
-            return id;
+            return Ok(id);
         }
 
         let id = self.entries.len() as DictID;
         if id == u32::MAX {
-            panic!("Dictionary overflow: exceeded u32::MAX entries");
+            return Err(KcmError::OutOfMemory);
         }
-        self.entries.push(value.to_string());
-        self.reverse_map.insert(value.to_string(), id);
-        id
+        let owned = value.to_string();
+        self.reverse_map.insert(owned.clone(), id);
+        self.entries.push(owned);
+        Ok(id)
     }
 
     pub fn get(&self, id: DictID) -> Option<&str> {
@@ -69,7 +72,7 @@ impl SharedDictionary {
         SharedDictionary(Arc::new(RwLock::new(Dictionary::new())))
     }
 
-    pub fn insert(&self, value: &str) -> DictID {
+    pub fn insert(&self, value: &str) -> Result<DictID, KcmError> {
         self.0.write().insert(value)
     }
 

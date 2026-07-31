@@ -26,7 +26,7 @@ impl KnowledgeService for KcmGrpcService {
             ObjectID(req.object),
             req.confidence,
         )
-        .map_err(tonic::Status::invalid_argument)?;
+        .map_err(|e| tonic::Status::invalid_argument(e.to_string()))?;
 
         match self.db.insert(&fact) {
             Ok(row_id) => Ok(tonic::Response::new(InsertFactResponse {

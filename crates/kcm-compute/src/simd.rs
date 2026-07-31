@@ -94,9 +94,7 @@ impl SimdOps<u32> for [u32] {
 
 impl SimdOps<f64> for [f64] {
     fn simd_filter_eq(&self, value: f64) -> Vec<bool> {
-        self.iter()
-            .map(|&v| (v - value).abs() < f64::EPSILON)
-            .collect()
+        self.iter().map(|&v| v == value).collect()
     }
 
     fn simd_filter_ge(&self, value: f64) -> Vec<bool> {

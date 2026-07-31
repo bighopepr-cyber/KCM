@@ -189,12 +189,6 @@ fn test_dense_vec_empty_capacity() {
 }
 
 #[test]
-fn test_dense_vec_cache_aligned() {
-    let vec: DenseVec<u64> = DenseVec::new_cache_aligned(100).unwrap();
-    assert_eq!(vec.capacity(), 100);
-}
-
-#[test]
 fn test_bitmap_set_get() {
     let mut bitmap = Bitmap::new(256);
     bitmap.set(0);
@@ -312,9 +306,9 @@ fn test_bitmap_is_empty() {
 #[test]
 fn test_dictionary_insert_lookup() {
     let mut dict = Dictionary::new();
-    let id1 = dict.insert("hello");
-    let id2 = dict.insert("world");
-    let id1_again = dict.insert("hello");
+    let id1 = dict.insert("hello").unwrap();
+    let id2 = dict.insert("world").unwrap();
+    let id1_again = dict.insert("hello").unwrap();
     assert_eq!(id1, id1_again);
     assert_ne!(id1, id2);
     assert_eq!(dict.len(), 3);
@@ -323,7 +317,7 @@ fn test_dictionary_insert_lookup() {
 #[test]
 fn test_dictionary_get() {
     let mut dict = Dictionary::new();
-    let id = dict.insert("test");
+    let id = dict.insert("test").unwrap();
     assert_eq!(dict.get(id), Some("test"));
 }
 
@@ -336,7 +330,7 @@ fn test_dictionary_null_id() {
 #[test]
 fn test_dictionary_lookup() {
     let mut dict = Dictionary::new();
-    let id = dict.insert("foo");
+    let id = dict.insert("foo").unwrap();
     assert_eq!(dict.lookup("foo"), Some(id));
     assert_eq!(dict.lookup("bar"), None);
 }
@@ -352,7 +346,7 @@ fn test_dictionary_empty() {
 fn test_dictionary_many_entries() {
     let mut dict = Dictionary::new();
     for i in 0..1000 {
-        dict.insert(&format!("entry_{}", i));
+        dict.insert(&format!("entry_{}", i)).unwrap();
     }
     assert_eq!(dict.len(), 1001);
     assert_eq!(dict.get(500), Some("entry_499"));
@@ -361,8 +355,8 @@ fn test_dictionary_many_entries() {
 #[test]
 fn test_shared_dictionary() {
     let dict = SharedDictionary::new();
-    let id1 = dict.insert("foo");
-    let id2 = dict.insert("bar");
+    let id1 = dict.insert("foo").unwrap();
+    let id2 = dict.insert("bar").unwrap();
     assert_eq!(dict.get(id1), Some("foo".to_string()));
     assert_eq!(dict.get(id2), Some("bar".to_string()));
     assert_eq!(dict.lookup("foo"), Some(id1));
@@ -372,7 +366,7 @@ fn test_shared_dictionary() {
 #[test]
 fn test_shared_dictionary_clone() {
     let dict = SharedDictionary::new();
-    let id = dict.insert("test");
+    let id = dict.insert("test").unwrap();
     let dict2 = dict.clone();
     assert_eq!(dict2.get(id), Some("test".to_string()));
 }
