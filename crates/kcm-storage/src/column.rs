@@ -1,0 +1,262 @@
+use kcm_core::bitmap::Bitmap;
+use kcm_core::types::*;
+use kcm_core::vec::DenseVec;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum ColumnEncoding {
+    Identity,
+    Dictionary,
+    Delta,
+    FrameOfReference,
+    Rle,
+    Gorilla,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CompressionCodec {
+    None,
+    Zstd,
+    Lz4,
+}
+
+#[derive(Clone)]
+pub struct Column<T: Copy> {
+    data: DenseVec<T>,
+    #[allow(dead_code)]
+    encoding: ColumnEncoding,
+    #[allow(dead_code)]
+    compression: CompressionCodec,
+    row_count: u64,
+}
+
+impl<T: Copy> Column<T> {
+    pub fn new(
+        capacity: usize,
+        encoding: ColumnEncoding,
+        compression: CompressionCodec,
+    ) -> Result<Self, KcmError> {
+        let data = DenseVec::new(capacity).map_err(KcmError::Io)?;
+
+        Ok(Column {
+            data,
+            encoding,
+            compression,
+            row_count: 0,
+        })
+    }
+
+    pub fn append(&mut self, value: T) -> Result<(), KcmError> {
+        self.data.push(value).map_err(KcmError::Io)?;
+        self.row_count += 1;
+        Ok(())
+    }
+
+    pub fn get(&self, idx: usize) -> Option<T> {
+        if idx >= self.row_count as usize {
+            return None;
+        }
+        Some(self.data[idx])
+    }
+
+    pub fn set(&mut self, idx: usize, value: T) -> Result<(), KcmError> {
+        if idx >= self.row_count as usize {
+            return Err(KcmError::InvalidArgument(format!(
+                "Index {} out of bounds (len {})",
+                idx, self.row_count
+            )));
+        }
+        self.data[idx] = value;
+        Ok(())
+    }
+
+    pub fn len(&self) -> usize {
+        self.row_count as usize
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.row_count == 0
+    }
+
+    pub fn as_slice(&self) -> &[T] {
+        self.data.as_slice()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.data.iter()
+    }
+}
+
+pub type SubjectColumn = Column<u32>;
+pub type ObjectColumn = Column<u32>;
+pub type PredicateColumn = Column<u8>;
+pub type ContextColumn = Column<u8>;
+pub type EvidenceColumn = Column<u8>;
+pub type ConfidenceColumn = Column<f64>;
+pub type TimestampColumn = Column<i64>;
+pub type VersionColumn = Column<i32>;
+pub type PriorityColumn = Column<i8>;
+pub type OwnerColumn = Column<u16>;
+
+#[derive(Clone)]
+pub struct Schema {
+    pub subject_col: SubjectColumn,
+    pub predicate_col: PredicateColumn,
+    pub object_col: ObjectColumn,
+    pub confidence_col: ConfidenceColumn,
+    pub evidence_col: EvidenceColumn,
+    pub timestamp_col: TimestampColumn,
+    pub context_col: ContextColumn,
+    pub version_col: VersionColumn,
+    pub priority_col: PriorityColumn,
+    pub owner_col: OwnerColumn,
+    tombstones: Bitmap,
+}
+
+impl Schema {
+    pub fn new(capacity: usize) -> Result<Self, KcmError> {
+        Ok(Schema {
+            subject_col: SubjectColumn::new(
+                capacity,
+                ColumnEncoding::Dictionary,
+                CompressionCodec::Zstd,
+            )?,
+            predicate_col: PredicateColumn::new(
+                capacity,
+                ColumnEncoding::Dictionary,
+                CompressionCodec::None,
+            )?,
+            object_col: ObjectColumn::new(
+                capacity,
+                ColumnEncoding::Dictionary,
+                CompressionCodec::Zstd,
+            )?,
+            confidence_col: ConfidenceColumn::new(
+                capacity,
+                ColumnEncoding::Gorilla,
+                CompressionCodec::Zstd,
+            )?,
+            evidence_col: EvidenceColumn::new(
+                capacity,
+                ColumnEncoding::Dictionary,
+                CompressionCodec::None,
+            )?,
+            timestamp_col: TimestampColumn::new(
+                capacity,
+                ColumnEncoding::Delta,
+                CompressionCodec::Zstd,
+            )?,
+            context_col: ContextColumn::new(
+                capacity,
+                ColumnEncoding::Dictionary,
+                CompressionCodec::None,
+            )?,
+            version_col: VersionColumn::new(
+                capacity,
+                ColumnEncoding::Delta,
+                CompressionCodec::Lz4,
+            )?,
+            priority_col: PriorityColumn::new(
+                capacity,
+                ColumnEncoding::Identity,
+                CompressionCodec::None,
+            )?,
+            owner_col: OwnerColumn::new(
+                capacity,
+                ColumnEncoding::Dictionary,
+                CompressionCodec::Zstd,
+            )?,
+            tombstones: Bitmap::new(capacity),
+        })
+    }
+
+    pub fn append_fact(&mut self, fact: &Fact) -> Result<(), KcmError> {
+        self.subject_col.append(fact.subject.0)?;
+        self.predicate_col.append(fact.predicate.0)?;
+        self.object_col.append(fact.object.0)?;
+        self.confidence_col.append(fact.confidence)?;
+        self.evidence_col.append(fact.evidence.0)?;
+        self.timestamp_col.append(fact.timestamp)?;
+        self.context_col.append(fact.context.0)?;
+        self.version_col.append(fact.version)?;
+        self.priority_col.append(fact.priority)?;
+        self.owner_col.append(fact.owner)?;
+        Ok(())
+    }
+
+    pub fn len(&self) -> usize {
+        self.subject_col.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.subject_col.is_empty()
+    }
+
+    pub fn active_count(&self) -> usize {
+        self.len() - self.tombstones.count_ones()
+    }
+
+    pub fn get_fact(&self, idx: usize) -> Option<Fact> {
+        if self.tombstones.get(idx) {
+            return None;
+        }
+        Some(Fact {
+            subject: SubjectID(self.subject_col.get(idx)?),
+            predicate: PredicateID(self.predicate_col.get(idx)?),
+            object: ObjectID(self.object_col.get(idx)?),
+            confidence: self.confidence_col.get(idx)?,
+            evidence: EvidenceID(self.evidence_col.get(idx)?),
+            timestamp: self.timestamp_col.get(idx)?,
+            context: ContextID(self.context_col.get(idx)?),
+            version: self.version_col.get(idx)?,
+            priority: self.priority_col.get(idx)?,
+            owner: self.owner_col.get(idx)?,
+        })
+    }
+
+    pub fn delete_fact(&mut self, idx: usize) -> Result<(), KcmError> {
+        if idx >= self.len() {
+            return Err(KcmError::InvalidArgument(format!(
+                "Index {} out of bounds (len {})",
+                idx,
+                self.len()
+            )));
+        }
+        self.tombstones.set(idx);
+        Ok(())
+    }
+
+    pub fn update_fact(&mut self, idx: usize, fact: &Fact) -> Result<(), KcmError> {
+        if idx >= self.len() {
+            return Err(KcmError::InvalidArgument(format!(
+                "Index {} out of bounds (len {})",
+                idx,
+                self.len()
+            )));
+        }
+        self.subject_col.set(idx, fact.subject.0)?;
+        self.predicate_col.set(idx, fact.predicate.0)?;
+        self.object_col.set(idx, fact.object.0)?;
+        self.confidence_col.set(idx, fact.confidence)?;
+        self.evidence_col.set(idx, fact.evidence.0)?;
+        self.timestamp_col.set(idx, fact.timestamp)?;
+        self.context_col.set(idx, fact.context.0)?;
+        self.version_col.set(idx, fact.version)?;
+        self.priority_col.set(idx, fact.priority)?;
+        self.owner_col.set(idx, fact.owner)?;
+        Ok(())
+    }
+
+    pub fn is_deleted(&self, idx: usize) -> bool {
+        self.tombstones.get(idx)
+    }
+
+    pub fn iter_active(&self) -> impl Iterator<Item = (usize, Fact)> + '_ {
+        (0..self.len()).filter_map(move |idx| {
+            if self.tombstones.get(idx) {
+                None
+            } else {
+                self.get_fact(idx).map(|f| (idx, f))
+            }
+        })
+    }
+}

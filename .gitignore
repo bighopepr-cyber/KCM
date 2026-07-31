@@ -1,0 +1,37 @@
+# Rust / Cargo
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Build artifacts
+*.d
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Benchmark results
+criterion/
+reports/
+
+# Coverage
+coverage/
+*.profraw
+*.profdata
+tarpaulin-report.html
+
+# OS files
+.DS_Store
+Desktop.ini
+ehthumbs.db

@@ -1,0 +1,31 @@
+[workspace]
+members = [
+    "crates/kcm-core",
+    "crates/kcm-storage",
+    "crates/kcm-compute",
+    "crates/kcm-reasoning",
+    "crates/kcm-optimizer",
+    "crates/kcm-runtime",
+    "crates/kcm-interface",
+]
+
+resolver = "2"
+
+[workspace.dependencies]
+kcm-core = { path = "crates/kcm-core" }
+kcm-storage = { path = "crates/kcm-storage" }
+kcm-compute = { path = "crates/kcm-compute" }
+kcm-reasoning = { path = "crates/kcm-reasoning" }
+kcm-optimizer = { path = "crates/kcm-optimizer" }
+kcm-runtime = { path = "crates/kcm-runtime" }
+kcm-interface = { path = "crates/kcm-interface" }
+criterion = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.bench]
+inherits = "release"

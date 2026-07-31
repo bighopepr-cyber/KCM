@@ -1,0 +1,23 @@
+[package]
+name = "kcm-runtime"
+version = "0.1.0"
+edition = "2021"
+description = "Runtime and transaction layer for KCM"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+kcm-storage = { path = "../kcm-storage" }
+kcm-compute = { path = "../kcm-compute" }
+kcm-reasoning = { path = "../kcm-reasoning" }
+kcm-optimizer = { path = "../kcm-optimizer" }
+parking_lot = "0.12"
+rayon = "1.7"
+crossbeam = "0.8"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "micro"
+harness = false

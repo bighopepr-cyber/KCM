@@ -1,0 +1,10 @@
+[package]
+name = "kcm-optimizer"
+version = "0.1.0"
+edition = "2021"
+description = "Query optimizer for KCM"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+kcm-storage = { path = "../kcm-storage" }
+kcm-compute = { path = "../kcm-compute" }
