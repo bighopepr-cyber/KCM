@@ -18,6 +18,7 @@ pub struct AuditEvent {
     pub context: String,
     pub timestamp: i64,
     pub details: String,
+    pub prev_hash: [u8; 32],
 }
 
 pub struct AuditLog {
@@ -35,7 +36,22 @@ impl AuditLog {
 
     pub fn log(&self, event: AuditEvent) {
         let mut events = self.events.lock();
-        events.push_back(event);
+        let mut chained = event;
+        if let Some(prev) = events.back() {
+            chained.prev_hash = blake3::Hasher::new()
+                .update(
+                    format!(
+                        "{:?}|{}|{}|{}",
+                        prev.event_type, prev.user_id, prev.context, prev.timestamp
+                    )
+                    .as_bytes(),
+                )
+                .finalize()
+                .into();
+        } else {
+            chained.prev_hash = [0u8; 32];
+        }
+        events.push_back(chained);
         if events.len() > self.max_events {
             events.pop_front();
         }
@@ -48,6 +64,7 @@ impl AuditLog {
             context: query.to_string(),
             timestamp: Self::now(),
             details: "Query executed".to_string(),
+            prev_hash: [0u8; 32],
         });
     }
 
@@ -58,6 +75,7 @@ impl AuditLog {
             context: format!("row_id={}", row_id),
             timestamp: Self::now(),
             details: "Fact inserted".to_string(),
+            prev_hash: [0u8; 32],
         });
     }
 
@@ -68,6 +86,7 @@ impl AuditLog {
             context: format!("row_id={}", row_id),
             timestamp: Self::now(),
             details: "Fact deleted".to_string(),
+            prev_hash: [0u8; 32],
         });
     }
 
@@ -78,6 +97,7 @@ impl AuditLog {
             context: resource.to_string(),
             timestamp: Self::now(),
             details: "Permission denied".to_string(),
+            prev_hash: [0u8; 32],
         });
     }
 
@@ -87,6 +107,29 @@ impl AuditLog {
 
     pub fn event_count(&self) -> usize {
         self.events.lock().len()
+    }
+
+    pub fn verify_integrity(&self) -> bool {
+        let events = self.events.lock();
+        if events.is_empty() {
+            return true;
+        }
+        for event in events.iter() {
+            let expected: [u8; 32] = blake3::Hasher::new()
+                .update(
+                    format!(
+                        "{:?}|{}|{}|{}",
+                        event.event_type, event.user_id, event.context, event.timestamp
+                    )
+                    .as_bytes(),
+                )
+                .finalize()
+                .into();
+            if event.prev_hash != [0u8; 32] && event.prev_hash != expected {
+                return false;
+            }
+        }
+        true
     }
 
     fn now() -> i64 {

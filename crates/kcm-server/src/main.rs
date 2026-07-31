@@ -184,11 +184,12 @@ async fn main() -> std::io::Result<()> {
     });
 
     let bind_addr = std::env::var("KCM_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
-    log::info!("Starting KCM server on {}", bind_addr);
+    log::info!("Starting KCM HTTP server on {}", bind_addr);
 
-    HttpServer::new(move || {
+    let state_clone = state.clone();
+    let server = HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(state.clone()))
+            .app_data(web::Data::new(state_clone.clone()))
             .route("/health", web::get().to(health_handler))
             .route("/facts", web::post().to(insert_handler))
             .route("/facts", web::get().to(query_handler))
@@ -198,7 +199,24 @@ async fn main() -> std::io::Result<()> {
             .route("/stats", web::get().to(stats_handler))
             .route("/metrics", web::get().to(metrics_handler))
     })
-    .bind(&bind_addr)?
-    .run()
-    .await
+    .bind(&bind_addr)?;
+
+    let server_handle = server.run();
+
+    // Graceful shutdown: run until signal received, then stop accepting new connections
+    let server_handle_clone = server_handle.handle();
+    tokio::spawn(async move {
+        match tokio::signal::ctrl_c().await {
+            Ok(()) => {
+                log::info!("Received shutdown signal, initiating graceful shutdown...");
+                server_handle_clone.stop(true).await;
+                log::info!("Server gracefully stopped.");
+            }
+            Err(e) => {
+                log::error!("Signal handler error: {}", e);
+            }
+        }
+    });
+
+    server_handle.await
 }

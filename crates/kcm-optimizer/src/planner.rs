@@ -271,3 +271,51 @@ impl Planner {
         }
     }
 }
+
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+pub struct PlanCache {
+    cache: std::collections::HashMap<u64, QueryPlan>,
+    max_size: usize,
+}
+
+impl PlanCache {
+    pub fn new(max_size: usize) -> Self {
+        PlanCache {
+            cache: std::collections::HashMap::new(),
+            max_size,
+        }
+    }
+
+    pub fn lookup(&self, hash: u64) -> Option<&QueryPlan> {
+        self.cache.get(&hash)
+    }
+
+    pub fn insert(&mut self, hash: u64, plan: QueryPlan) {
+        if self.cache.len() >= self.max_size {
+            self.cache.clear();
+        }
+        self.cache.insert(hash, plan);
+    }
+
+    pub fn compute_hash(
+        subject: &Option<SubjectID>,
+        predicate: &Option<PredicateID>,
+        object: &Option<ObjectID>,
+        confidence: &Option<f64>,
+    ) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        subject.hash(&mut hasher);
+        predicate.hash(&mut hasher);
+        object.hash(&mut hasher);
+        confidence.map(|c| c.to_bits()).hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
+impl Default for PlanCache {
+    fn default() -> Self {
+        Self::new(1000)
+    }
+}
