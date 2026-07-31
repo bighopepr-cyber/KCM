@@ -2,17 +2,22 @@
 
 **Document ID:** KCM-ARCH-001  
 **Version:** 1.0.0  
-**Depends on:** KCM-SPEC-001
+**Depends on:** KCM-SPEC-001  
+**Authoritative Sources:** PRD.md §2 (Design Principles), AGENTS.md §System Architecture, AGENTS.md §Crate Map
+
+> **Authority Notice:** The canonical crate map, dependency flow, and dependency policy are defined in AGENTS.md §Crate Map and §Dependency Flow. Design principles are defined in PRD.md §2. This document provides operational detail and component specifications beyond the authoritative definitions.
 
 ---
 
 ## 1. Purpose
 
-Defines the system architecture, component boundaries, dependency graph, and data flow for KCM.
+Defines the system architecture, component boundaries, dependency graph, and data flow for KCM. Derived from PRD.md §2 and AGENTS.md §System Architecture.
 
 ---
 
 ## 2. Architecture Overview
+
+> Full crate map: AGENTS.md §Crate Map. Dependency flow: AGENTS.md §Dependency Flow.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -58,6 +63,8 @@ Defines the system architecture, component boundaries, dependency graph, and dat
 
 ## 3. Crate Dependency Graph
 
+> Canonical dependency flow: AGENTS.md §Dependency Flow.
+
 ```
 kcm-core (foundation, zero internal dependencies)
     ↑
@@ -82,6 +89,8 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 ---
 
 ## 4. Component Specifications
+
+> Full crate responsibilities: AGENTS.md §Crate Map. Dependency policy: AGENTS.md §Dependency Policy.
 
 ### 4.1 kcm-core
 
@@ -306,31 +315,38 @@ InferenceEngine::infer_forward_chaining(&mut schema)
 
 ## 6. Concurrency Model
 
-| Component | Mechanism | Protection |
-|-----------|-----------|------------|
-| KnowledgeDatabase | Arc<RwLock<Schema>> | Write lock for insert/update/delete; read lock for query snapshot |
-| SharedDictionary | Arc<RwLock<Dictionary>> | Write lock for insert; read lock for lookup |
-| WriteAheadLog | Mutex<File> + Mutex<Vec<u8>> | Sequential writes with buffered flush |
-| AuditLog | Mutex<VecDeque<AuditEvent>> | Append-only with front eviction |
-| Metrics | AtomicU64 counters | Lock-free atomic operations |
-| TransactionCoordinator | Mutex<HashMap> | Serial transaction management |
+> Canonical concurrency model: AGENTS.md §Concurrency Model.
+
+| Component | Mechanism | Protection | AGENTS.md Reference |
+|-----------|-----------|------------|---------------------|
+| KnowledgeDatabase | Arc<RwLock<Schema>> | Write lock for insert/update/delete; read lock for query snapshot | Schema — Arc<RwLock<Schema>> |
+| SharedDictionary | Arc<RwLock<Dictionary>> | Write lock for insert; read lock for lookup | Dictionaries — Arc<RwLock<Dictionary>> |
+| WriteAheadLog | Mutex<File> | Serialized writes | WAL — Mutex<File> |
+| AuditLog | Mutex<Vec<AuditEvent>> | Serialized append | Audit Log — Mutex<Vec<AuditEvent>> |
+| Metrics | AtomicU64 counters | Lock-free atomic operations | Metrics — AtomicU64 (10 counters) |
+| TransactionCoordinator | Mutex<HashMap> | Serial transaction management | — |
 
 ---
 
 ## 7. Constraints
 
-| Constraint | Rationale |
-|------------|-----------|
-| Single-process, single-writer | Simplifies concurrency; distributed mode is optional |
-| Schema capacity pre-allocated | Avoids reallocation in hot path |
-| WAL fsync on flush | Ensures crash recovery correctness |
-| No circular crate dependencies | Enforces clean module boundaries |
-| Foundation crate (kcm-core) has zero internal dependencies | Enables maximum reuse and testability |
+> Non-negotiable rules: AGENTS.md §Non-Negotiable Rules.
+
+| Constraint | Rationale | AGENTS.md Reference |
+|------------|-----------|---------------------|
+| Single-process, single-writer | Simplifies concurrency; distributed mode is optional | — |
+| Schema capacity pre-allocated | Avoids reallocation in hot path | — |
+| WAL fsync on flush | Ensures crash recovery correctness | — |
+| No circular crate dependencies | Enforces clean module boundaries | AGENTS.md §Dependency Policy |
+| Foundation crate (kcm-core) has zero internal dependencies | Enables maximum reuse and testability | AGENTS.md §Crate Map |
+| No panic!() in production code | System stability | AGENTS.md §Non-Negotiable Rules #3 |
+| No TODO/FIXME/HACK in production code | Code completeness | AGENTS.md §Non-Negotiable Rules #4 |
 
 ---
 
 ## 8. References
 
-- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION)
-- **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
-- **Related:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_RUNTIME_SPEC (KCM_RUNTIME_SPEC), KCM_API_SPEC (KCM_API_SPEC)
+- **Authoritative sources:** PRD.md §2 (Design Principles), PRD.md §4 (Data Structures), PRD.md §5 (Compute Engine), PRD.md §6 (Reasoning Engine), AGENTS.md §Crate Map, AGENTS.md §Dependency Flow, AGENTS.md §Concurrency Model
+- **Depends on:** PRD.md (P4 authority), AGENTS.md (Engineering Constitution)
+- **Parent specs:** KCM_SPECIFICATION
+- **Related:** KCM_DATA_MODEL_SPEC, KCM_RUNTIME_SPEC, KCM_API_SPEC

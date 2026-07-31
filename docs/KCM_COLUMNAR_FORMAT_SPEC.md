@@ -2,17 +2,22 @@
 
 **Document ID:** KCM-FORMAT-001  
 **Version:** 1.0.0  
-**Depends on:** KCM-DATA-001
+**Depends on:** KCM-DATA-001  
+**Authoritative Source:** PRD2.md §4 (Binary File Format)
+
+> **Authority Notice:** The canonical binary file layout, column block format, and tombstone bitmap format are defined in PRD2.md §4. This document provides the detailed field-level binary specification beyond the authoritative definition. Where conflicts exist, PRD2.md §4 wins.
 
 ---
 
 ## 1. Purpose
 
-Defines the physical binary storage format for KCM database files.
+Defines the physical binary storage format for KCM database files. Derived from PRD2.md §4.
 
 ---
 
 ## 2. File Layout
+
+> Canonical layout: PRD2.md §4.1. Column encoding/compression: PRD2.md §2.1, §2.4.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -38,6 +43,8 @@ Defines the physical binary storage format for KCM database files.
 
 ### 2.1 File Header
 
+> Invariants: PRD2.md §4.2 (Magic bytes always "KCMDB", Version byte determines compatibility).
+
 | Offset | Size | Type | Description |
 |--------|------|------|-------------|
 | 0 | 5 | [u8; 5] | Magic bytes: `b"KCMDB"` |
@@ -50,6 +57,8 @@ Defines the physical binary storage format for KCM database files.
 Total header size: 31 bytes.
 
 ### 2.2 Column Block
+
+> Column order and encoding: PRD2.md §2.1, §2.4. Column blocks written in fixed order (Subject→Owner).
 
 | Field | Size | Description |
 |-------|------|-------------|
@@ -74,6 +83,8 @@ Column order (fixed):
 
 ### 2.4 Tombstone Bitmap Block
 
+> Tombstone bitmap layout: PRD2.md §4.1.
+
 After all 10 column blocks:
 
 | Field | Size | Description |
@@ -90,6 +101,8 @@ Blake3 hash computed over entire file content excluding the checksum itself (byt
 ---
 
 ## 3. WAL Format
+
+> Canonical WAL entry format: PRD2.md §3.1, §3.2. WAL properties: PRD2.md §3.2.
 
 ```
 ┌────────────────────────────────────┐
@@ -126,6 +139,8 @@ Blake3 hash computed over entire file content excluding the checksum itself (byt
 ---
 
 ## 4. Compression
+
+> Compression codecs: PRD2.md §2.2. Compressor trait: PRD2.md §2.2.
 
 ### 4.1 Column-Level Compression
 
@@ -166,17 +181,20 @@ Load → Read from disk → Decompress → Populate DenseVec
 
 ## 6. Constraints
 
-| Constraint | Rationale |
-|------------|-----------|
-| Fixed column count (10) | Enables zero-parse column access |
-| Little-endian encoding | x86_64 native, avoids byte-swap overhead |
-| Blake3 checksum (not CRC32) | Cryptographic integrity verification |
-| WAL entries are variable-length | Insert (34 bytes) vs Delete (9 bytes) |
+> File invariants: PRD2.md §4.2.
+
+| Constraint | Rationale | PRD2.md Reference |
+|------------|-----------|-------------------|
+| Fixed column count (10) | Enables zero-parse column access | PRD2.md §4.1 |
+| Little-endian encoding | x86_64 native, avoids byte-swap overhead | PRD2.md §4.1 |
+| Blake3 checksum (not CRC32) | Cryptographic integrity verification | PRD2.md §4.1 |
+| WAL entries are variable-length | Insert (34 bytes) vs Delete (9 bytes) | PRD2.md §3.1 |
 
 ---
 
 ## 7. References
 
-- **Depends on:** KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC)
+- **Authoritative sources:** PRD2.md §4 (Binary File Format), PRD2.md §3 (WAL), PRD2.md §2.2 (Compression Codecs)
+- **Depends on:** PRD2.md (P3 authority), KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC)
 - **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
-- **Related:** KCM_VERSIONING_SPEC (KCM_VERSIONING_SPEC), KCM_COMPRESSION_SPEC (KCM_COMPRESSION_SPEC)
+- **Related:** KCM_VERSIONING_SPEC, KCM_COMPRESSION_SPEC

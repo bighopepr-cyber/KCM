@@ -3,7 +3,10 @@
 **Document ID:** KCM-SPEC-001  
 **Version:** 1.0.0  
 **Status:** Active  
-**Classification:** Technical Constitution / Single Source of Truth
+**Classification:** Technical Constitution / Single Source of Truth  
+**Authoritative Sources:** PRD.md (P4, Core), PRD2.md (P3, Storage/Runtime), PRD3.md (P2, Distributed/Security), AGENTS.md (Engineering Constitution)
+
+> **Authority Notice:** This document is the derived specification for KCM. The authoritative definitions for types, storage, and architecture live in the PRD documents (see PRD.md §3, PRD2.md §4, PRD3.md §27–32) and AGENTS.md. Where this document duplicates definitions from those sources, the PRD/AGENTS.md definitions take precedence. See **§5 Conflict Resolution** and **§7 References**.
 
 ---
 
@@ -80,20 +83,22 @@ Traditional knowledge graphs use adjacency-list representations that:
 
 ### 4.1 Mandatory Requirements
 
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| TR-001 | All column data stored as DenseVec with ≥64-byte alignment | Critical |
-| TR-002 | Dictionary encoding maps all string references to u32 IDs | Critical |
-| TR-003 | Confidence values stored as f64, validated in [0.0, 1.0] | Critical |
-| TR-004 | Tombstone-based soft delete with active_count tracking | High |
-| TR-005 | WAL-based crash recovery with blake3 checksums | Critical |
-| TR-006 | AES-256-GCM encryption for at-rest data protection | Critical |
-| TR-007 | RBAC with Role/User/Permission/Context ACL model | High |
-| TR-008 | Forward-chaining inference with max iteration limit | High |
-| TR-009 | All public APIs return Result<T, KcmError> | Critical |
-| TR-010 | No unwrap() in production code paths (test-only) | High |
-| TR-011 | Send + Sync bounds on all shared types | Critical |
-| TR-012 | Zero runtime overhead from Rust (no GC, no reflection) | High |
+> **Note:** Core requirements TR-009 through TR-012 are defined authoritatively in AGENTS.md §Non-Negotiable Rules.
+
+| ID | Requirement | Priority | Authority |
+|----|-------------|----------|-----------|
+| TR-001 | All column data stored as DenseVec with ≥64-byte alignment | Critical | PRD.md §4.1 |
+| TR-002 | Dictionary encoding maps all string references to u32 IDs | Critical | PRD.md §4.3 |
+| TR-003 | Confidence values stored as f64, validated in [0.0, 1.0] | Critical | PRD.md §3.2 |
+| TR-004 | Tombstone-based soft delete with active_count tracking | High | PRD2.md §2 |
+| TR-005 | WAL-based crash recovery with blake3 checksums | Critical | PRD2.md §3 |
+| TR-006 | AES-256-GCM encryption for at-rest data protection | Critical | PRD3.md §10 |
+| TR-007 | RBAC with Role/User/Permission/Context ACL model | High | PRD3.md §10 |
+| TR-008 | Forward-chaining inference with max iteration limit | High | PRD.md §6 |
+| TR-009 | All public APIs return Result<T, KcmError> | Critical | AGENTS.md §Non-Negotiable Rules |
+| TR-010 | No unwrap() in production code paths (test-only) | High | AGENTS.md §Non-Negotiable Rules |
+| TR-011 | Send + Sync bounds on all shared types | Critical | AGENTS.md §Concurrency Model |
+| TR-012 | Zero runtime overhead from Rust (no GC, no reflection) | High | AGENTS.md §Engineering Philosophy |
 
 ### 4.2 Quality Requirements
 
@@ -109,12 +114,15 @@ Traditional knowledge graphs use adjacency-list representations that:
 
 ## 5. Conflict Resolution
 
-When specifications conflict between source PRD documents:
+When specifications conflict between documents, follow this hierarchy (derived from AGENTS.md §Document Hierarchy):
 
-1. PRD-TESTING&BENCHMARK.md takes precedence for performance targets and validation methodology
-2. PRD3.md takes precedence for architectural decisions (distributed, ML, security)
-3. PRD2.md takes precedence for persistence and optimizer design
-4. PRD.md takes precedence for core data model and type definitions
+| Priority | Document | Authority |
+|----------|----------|-----------|
+| P1 | PRD-TESTING&BRACHMARCK.md | Performance targets, validation methodology, testing strategy |
+| P2 | PRD3.md | Distributed architecture, ML integration, security, compliance |
+| P3 | PRD2.md | Persistence layer, optimizer, monitoring, interfaces |
+| P4 | PRD.md | Core types, storage engine, compute engine, reasoning engine |
+| P5 | AGENTS.md | Engineering constitution, non-negotiable rules, crate map |
 
 Undocumented conflicts are recorded in change history rather than resolved by assumption.
 
@@ -145,6 +153,8 @@ Undocumented conflicts are recorded in change history rather than resolved by as
 
 ## 7. References
 
-- **Depends on:** PRD.md, PRD2.md, PRD3.md, PRD-TESTING&BRACHMARCK.md
-- **Parent specs:** None (this is the root specification)
-- **Related:** All KCM specification documents
+- **Authoritative sources:** PRD.md (§3 Type System, §5 Compute, §6 Reasoning), PRD2.md (§2 Storage, §4 File Format, §7 Optimizer, §8 Runtime), PRD3.md (§2 Distributed, §10 Security, §12 Compliance), AGENTS.md (Non-Negotiable Rules, Crate Map, Error Model, Concurrency Model)
+- **Depends on:** PRD.md, PRD2.md, PRD3.md, PRD-TESTING&BRACHMARCK.md, AGENTS.md
+- **Parent specs:** AGENTS.md (Engineering Constitution)
+- **Derived specs:** All KCM specification documents in this directory
+- **Note:** Duplicated definitions (types, error model, concurrency model) are maintained in AGENTS.md as the Single Source of Truth

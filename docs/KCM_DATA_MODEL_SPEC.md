@@ -2,48 +2,55 @@
 
 **Document ID:** KCM-DATA-001  
 **Version:** 1.0.0  
-**Depends on:** KCM-SPEC-001, KCM_ARCHITECTURE-001
+**Depends on:** KCM-SPEC-001, KCM_ARCHITECTURE-001  
+**Authoritative Source:** PRD.md §3 (Type System), PRD.md §4 (Data Structures)
+
+> **Authority Notice:** The canonical definitions for Fact, type system, KcmError, Dictionary, and DenseVec are defined in PRD.md §3–4. This document provides the detailed derivation and operational semantics. Where conflicts exist, PRD.md §3 definitions win. See AGENTS.md §Error Model for the authoritative error hierarchy.
 
 ---
 
 ## 1. Purpose
 
-Defines the knowledge representation model, type system, validation rules, and schema design for KCM. **This document is the SINGLE SOURCE OF TRUTH for Fact, Schema, Column types, and KcmError definitions.**
+Defines the knowledge representation model, type system, validation rules, and schema design for KCM. **This document provides operational detail; PRD.md §3 is the authoritative type system.**
 
 ---
 
 ## 2. Knowledge Object (Fact)
 
-A Knowledge Object in KCM is called a **Fact**. It represents a single assertion in the knowledge base.
+A Knowledge Object in KCM is called a **Fact**. It represents a single assertion in the knowledge base. Authoritative definition: PRD.md §3.3.
 
 ### 2.1 Fact Structure
 
-```
-Fact {
-    subject:    SubjectID(u32)      — Entity performing or described by the relation
-    predicate:  PredicateID(u8)     — Type of relation (max 256 types)
-    object:     ObjectID(u32)       — Entity or value being related to
-    confidence: f64                  — Confidence score [0.0, 1.0]
-    evidence:   EvidenceID(u8)      — Evidence source identifier
-    timestamp:  i64                  — Nanosecond-precision creation time
-    context:    ContextID(u8)       — Domain/scope identifier
-    version:    i32                  — Fact version (incremented on update)
-    priority:   i8                   — Priority level
-    owner:      u16                  — Owner identifier
+> Canonical definition: PRD.md §3.3. Size: 34 bytes uncompressed.
+
+```rust
+pub struct Fact {
+    pub subject: SubjectID,      // u32 — dictionary-encoded (PRD.md §3.1)
+    pub predicate: PredicateID,  // u8  — dictionary-encoded
+    pub object: ObjectID,        // u32 — dictionary-encoded
+    pub confidence: f64,         // validated [0.0, 1.0] (PRD.md §3.2)
+    pub evidence: EvidenceID,    // u8
+    pub timestamp: i64,          // nanoseconds since epoch
+    pub context: ContextID,      // u8
+    pub version: i32,            // monotonic on update
+    pub priority: i8,            // -128..127
+    pub owner: u16,              // dictionary-encoded
 }
 ```
 
 ### 2.2 Type Definitions
 
-| Type | Underlying | Range | Semantics |
-|------|-----------|-------|-----------|
-| RowID | u64 | [0, u64::MAX] | Sequential row identifier, 0-indexed |
-| SubjectID | u32 | [0, u32::MAX] | Subject entity reference (dictionary-encoded) |
-| PredicateID | u8 | [0, 255] | Relation type (max 256 distinct predicates) |
-| ObjectID | u32 | [0, u32::MAX] | Object entity reference (dictionary-encoded) |
-| ContextID | u8 | [0, 255] | Domain/scope (max 256 contexts) |
-| EvidenceID | u8 | [0, 255] | Evidence source (max 256 sources) |
-| Confidence | f64 | [0.0, 1.0] | Probabilistic confidence score |
+> Canonical definitions: PRD.md §3.1 (Identity Types).
+
+| Type | Underlying | Range | Semantics | PRD Reference |
+|------|-----------|-------|-----------|---------------|
+| RowID | u64 | [0, u64::MAX] | Sequential row identifier, 0-indexed | PRD.md §3.1 |
+| SubjectID | u32 | [0, u32::MAX] | Subject entity reference (dictionary-encoded) | PRD.md §3.1 |
+| PredicateID | u8 | [0, 255] | Relation type (max 256 distinct predicates) | PRD.md §3.1 |
+| ObjectID | u32 | [0, u32::MAX] | Object entity reference (dictionary-encoded) | PRD.md §3.1 |
+| ContextID | u8 | [0, 255] | Domain/scope (max 256 contexts) | PRD.md §3.1 |
+| EvidenceID | u8 | [0, 255] | Evidence source (max 256 sources) | PRD.md §3.1 |
+| Confidence | f64 | [0.0, 1.0] | Probabilistic confidence score | PRD.md §3.2 |
 
 ### 2.3 Validation Rules
 
@@ -58,6 +65,8 @@ Fact {
 ---
 
 ## 3. Schema
+
+> Column encoding/compression assignments: PRD2.md §2.1. Schema operations: PRD2.md §2.
 
 ### 3.1 Column Layout
 
@@ -120,6 +129,8 @@ After save/load round-trip:
 
 ## 4. Dictionary
 
+> Canonical definition: PRD.md §4.3.
+
 ### 4.1 Structure
 
 ```
@@ -150,6 +161,8 @@ Dictionary {
 ---
 
 ## 5. Column Type
+
+> DenseVec alignment: PRD.md §4.1. Encoding types: PRD2.md §2.4.
 
 ### 5.1 Generic Structure
 
@@ -194,8 +207,10 @@ Column<T: Copy> {
 
 ## 6. Error Types
 
-```
-enum KcmError {
+> Canonical definition: PRD.md §3.4, AGENTS.md §Error Model.
+
+```rust
+pub enum KcmError {
     NotFound(String),
     OutOfMemory,
     InvalidArgument(String),
@@ -206,7 +221,7 @@ enum KcmError {
 }
 ```
 
-All public API methods return `Result<T, KcmError>`.
+All public API methods return `Result<T, KcmError>`. `StorageError` converts via `From` impl (PRD.md §3.4).
 
 ---
 
@@ -224,6 +239,7 @@ All public API methods return `Result<T, KcmError>`.
 
 ## 8. References
 
-- **Depends on:** KCM_SPECIFICATION (KCM_SPECIFICATION), KCM_ARCHITECTURE (KCM_ARCHITECTURE)
+- **Authoritative sources:** PRD.md §3 (Type System), PRD.md §4 (Data Structures), PRD2.md §2 (Storage Engine), AGENTS.md §Error Model
+- **Depends on:** PRD.md (P4 authority), PRD2.md (P3 authority), KCM-SPEC-001, KCM_ARCHITECTURE-001
 - **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
-- **Related:** KCM_COLUMNAR_FORMAT_SPEC (KCM_COLUMNAR_FORMAT_SPEC), KCM_COMPRESSION_SPEC (KCM_COMPRESSION_SPEC), KCM_QUERY_EXECUTION_SPEC (KCM_QUERY_EXECUTION_SPEC), KCM_INDEXING_SPEC (KCM_INDEXING_SPEC)
+- **Related:** KCM_COLUMNAR_FORMAT_SPEC, KCM_COMPRESSION_SPEC, KCM_QUERY_EXECUTION_SPEC, KCM_INDEXING_SPEC
