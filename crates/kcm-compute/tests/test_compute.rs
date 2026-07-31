@@ -184,6 +184,8 @@ fn test_aggregate_sum() {
     let agg = AggregateOp::new(rowids, &schema, None, AggregateFunc::Sum);
     let result = agg.execute_aggregate().unwrap();
     assert!(result > 0.0);
+    let expected: f64 = (0..20).filter_map(|i| schema.confidence_col.get(i)).sum();
+    assert!((result - expected).abs() < 1e-10);
 }
 
 #[test]
@@ -201,7 +203,10 @@ fn test_aggregate_min() {
     let rowids: Vec<usize> = (0..20).collect();
     let agg = AggregateOp::new(rowids, &schema, None, AggregateFunc::Min);
     let result = agg.execute_aggregate().unwrap();
-    assert!(result > 0.0);
+    let expected = (0..20)
+        .filter_map(|i| schema.confidence_col.get(i))
+        .fold(f64::INFINITY, f64::min);
+    assert!((result - expected).abs() < 1e-10);
 }
 
 #[test]
@@ -210,15 +215,39 @@ fn test_aggregate_max() {
     let rowids: Vec<usize> = (0..20).collect();
     let agg = AggregateOp::new(rowids, &schema, None, AggregateFunc::Max);
     let result = agg.execute_aggregate().unwrap();
-    assert!(result > 0.0);
+    let expected = (0..20)
+        .filter_map(|i| schema.confidence_col.get(i))
+        .fold(f64::NEG_INFINITY, f64::max);
+    assert!((result - expected).abs() < 1e-10);
 }
 
 #[test]
 fn test_aggregate_empty() {
     let schema = setup_schema();
-    let agg = AggregateOp::new(vec![], &schema, None, AggregateFunc::Count);
-    let result = agg.execute_aggregate().unwrap();
-    assert_eq!(result, 0.0);
+    assert_eq!(
+        AggregateOp::new(vec![], &schema, None, AggregateFunc::Count)
+            .execute_aggregate()
+            .unwrap(),
+        0.0
+    );
+    assert_eq!(
+        AggregateOp::new(vec![], &schema, None, AggregateFunc::Sum)
+            .execute_aggregate()
+            .unwrap(),
+        0.0
+    );
+    assert_eq!(
+        AggregateOp::new(vec![], &schema, None, AggregateFunc::Min)
+            .execute_aggregate()
+            .unwrap(),
+        0.0
+    );
+    assert_eq!(
+        AggregateOp::new(vec![], &schema, None, AggregateFunc::Max)
+            .execute_aggregate()
+            .unwrap(),
+        0.0
+    );
 }
 
 #[test]

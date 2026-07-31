@@ -219,3 +219,21 @@ fn test_gdpr_concurrent_access() {
         h.join().unwrap();
     }
 }
+
+#[test]
+fn test_rbac_role_revocation() {
+    let acl = ACLManager::new();
+    acl.create_user("alice");
+    acl.create_role("admin");
+    acl.add_permission_to_role("admin", Permission::Read);
+    acl.add_permission_to_role("admin", Permission::Write);
+    acl.assign_role("alice", "admin");
+
+    assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
+    assert!(acl.check_permission("alice", ContextID(1), Permission::Write));
+
+    // Remove role
+    acl.remove_role("alice", "admin");
+    assert!(!acl.check_permission("alice", ContextID(1), Permission::Read));
+    assert!(!acl.check_permission("alice", ContextID(1), Permission::Write));
+}

@@ -161,6 +161,7 @@ fn test_inference_engine_simple() {
         assert_eq!(*rule_id, 1);
         assert_eq!(fact.predicate, PredicateID(1));
         assert!(fact.confidence >= 0.3);
+        assert!(fact.confidence <= 1.0);
     }
 }
 

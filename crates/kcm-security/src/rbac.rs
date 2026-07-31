@@ -87,6 +87,12 @@ impl ACLManager {
         }
     }
 
+    pub fn remove_role(&self, user_id: &str, role_name: &str) {
+        if let Some(user) = self.users.write().get_mut(user_id) {
+            user.roles.remove(role_name);
+        }
+    }
+
     pub fn grant_context_permission(&self, user_id: &str, context: ContextID, perm: Permission) {
         self.context_acl
             .write()
