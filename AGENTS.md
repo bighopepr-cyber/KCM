@@ -25,115 +25,124 @@ When documents conflict, the higher-priority document wins.
 
 ### Skill Priority Order
 
-Higher priority skills can block changes recommended by lower priority skills.
+The orchestrator (P1) is the single coordination authority. No skill may override orchestrator decisions.
 
 | Priority | Skill | Authority |
 |----------|-------|-----------|
-| 1 | kcm-engineering-orchestrator | Can override any skill, coordinates all |
-| 2 | kcm-task-planner | Can block implementation without plan |
-| 3 | kcm-change-impact-analysis | Can block changes with unassessed impact |
-| 4 | kcm-specification-lock | Can veto format/API/FFI changes |
-| 5 | kcm-architecture-guardian | Can block architecture violations |
-| 6 | kcm-database-engine-specialist | Can block storage/query changes |
-| 7 | kcm-security-engineer | Can block security violations |
-| 8 | kcm-performance-engineer | Can block performance regressions |
-| 9 | kcm-testing-verification | Can block changes without tests |
-| 10 | kcm-code-quality-guardian | Can reject code quality issues |
-| 11 | kcm-documentation-guardian | Can block undocumented changes |
-| 12 | kcm-release-readiness | Can block releases |
-| 13 | kcm-code-review-auditor | Provides review feedback |
-| 14 | kcm-debugging-root-cause | Provides diagnostic analysis |
-| 15 | kcm-engineering-decision-record | Documents decisions |
-| 16 | kcm-repository-intelligence | Provides codebase understanding |
+| P1 | kcm-engineering-orchestrator | Master coordinator — overrides all |
+| P2 | kcm-task-planner | Can block implementation without plan |
+| P3 | kcm-change-impact-analysis | Can block changes with unassessed impact |
+| P4 | kcm-specification-lock | Can veto format/API/FFI changes |
+| P5 | kcm-architecture-guardian | Can block architecture violations |
+| P6 | kcm-database-engine-specialist | Can block storage/query changes |
+| P7 | kcm-security-engineer | Can block security/compliance violations |
+| P8 | kcm-performance-engineer | Can block performance regressions |
+| P9 | kcm-testing-verification | Can block changes without tests |
+| P10 | kcm-code-quality-guardian | Can reject code quality issues |
+| P11 | kcm-documentation-guardian | Can block undocumented changes |
+| P12 | kcm-release-readiness | Can block releases |
+| P13 | kcm-code-review-auditor | Provides review feedback |
+| P14 | kcm-debugging-root-cause | Provides diagnostic analysis |
+| P15 | kcm-engineering-decision-record | Documents decisions |
+| P16 | kcm-repository-intelligence | Provides codebase understanding |
 
-### Conflict Resolution
+### Execution Flow
 
-When skills disagree:
-1. Higher priority skill wins
-2. If same priority, the skill with domain authority wins
-3. If still ambiguous, escalate to orchestrator
+Skill Priority ≠ Execution Order. Skills execute in this order:
 
-### Responsibility Boundaries
+```
+1. Repository Understanding    → kcm-repository-intelligence (P16)
+2. Specification Validation    → kcm-specification-lock (P4), kcm-architecture-guardian (P5)
+3. Planning                    → kcm-task-planner (P2), kcm-change-impact-analysis (P3)
+4. Implementation              → Domain skills (P6, P7, P8)
+5. Verification                → kcm-testing-verification (P9), kcm-code-quality-guardian (P10), kcm-code-review-auditor (P13)
+6. Release                     → kcm-release-readiness (P12)
+```
 
-Each skill has exclusive authority over its domain. No skill may override another skill's domain decision without escalation.
+### Authority Boundaries
+
+**Specification Lock (P4)** owns frozen contracts (formats, APIs, protocols). Can VETO.
+**Database Engine Specialist (P6)** owns implementation (algorithms, execution, indexes). Cannot change contracts.
+
+**Resolution:** spec-lock decides IF the change is allowed. db-specialist decides HOW to implement.
+
+**Task Planner (P2)** answers "What should be done?"
+**Change Impact Analysis (P3)** answers "What will break?"
+**Workflow:** Task Planner → Change Impact Analysis → Implementation
+
+**Code Quality Guardian (P10)** = automated prevention (Rust patterns, placeholders)
+**Code Review Auditor (P13)** = senior review (design quality, maintainability)
+**Workflow:** CQG runs first → CRA runs after
 
 ## Engineering Gates
 
-Every task must pass through 5 mandatory gates.
+Every task must pass through 6 mandatory gates.
 
-### Gate 1 — Understanding
+### Gate 1 — Repository Understanding
+- [ ] Crate structure understood
+- [ ] Affected modules identified
+- [ ] Dependencies mapped
+- [ ] Existing implementations located
 
-Before any code change:
-- [ ] Analyze user request completely
-- [ ] Identify affected components
-- [ ] Read related specifications
-- [ ] Identify risks
-- [ ] Activate kcm-task-planner skill
+### Gate 2 — Specification Validation
+- [ ] Frozen contracts identified
+- [ ] Format compatibility confirmed
+- [ ] Architecture alignment verified
+- [ ] Dependency boundaries respected
 
-### Gate 2 — Design Validation
+### Gate 3 — Implementation Planning
+- [ ] Implementation strategy defined
+- [ ] Affected files listed
+- [ ] Impact assessment complete
+- [ ] Risks identified
 
-Before implementation:
-- [ ] Architecture compatibility verified (kcm-architecture-guardian)
-- [ ] Dependency correctness verified (kcm-repository-intelligence)
-- [ ] Data format impact assessed (kcm-specification-lock)
-- [ ] API impact assessed (kcm-specification-lock)
-- [ ] Security impact assessed (kcm-security-engineer)
+### Gate 4 — Implementation Validation
+- [ ] No placeholders or stubs
+- [ ] Error handling complete
+- [ ] Tests written and passing
+- [ ] No unwrap in production code
 
-### Gate 3 — Implementation
+### Gate 5 — Domain Validation
+- [ ] Storage/query changes reviewed by db-specialist (if applicable)
+- [ ] Security changes reviewed by security-engineer (if applicable)
+- [ ] Performance changes benchmarked (if applicable)
 
-During implementation:
-- [ ] Production-ready code (no placeholders)
-- [ ] Complete logic (no stubs)
-- [ ] Error handling (Result<T, KcmError>)
-- [ ] Validation (input checks)
-- [ ] Tests (unit + integration)
+### Gate 6 — Production Readiness
+- [ ] `cargo build --release` passes
+- [ ] `cargo test --workspace` all pass
+- [ ] `cargo clippy --workspace -- -D warnings` clean
+- [ ] `cargo fmt --all -- --check` clean
 
-### Gate 4 — Verification
+## Unified Engineering Report
 
-After implementation:
-- [ ] `cargo build --release` — passes
-- [ ] `cargo test --workspace` — all pass
-- [ ] `cargo clippy --workspace -- -D warnings` — zero warnings
-- [ ] `cargo fmt --all -- --check` — clean
-
-### Gate 5 — Final Engineering Review
-
-Before completion:
-- [ ] Unified Engineering Report generated
-- [ ] All gates passed
-- [ ] No outstanding issues
-
-## Unified Engineering Report Format
-
-Every task must produce this report before completion:
+Every task must produce this report:
 
 ```
-## Engineering Report
+# KCM Engineering Report
 
-Task: [description]
+## Skill
+[name]
 
-Skills Activated: [list of skills used]
+## Analysis
+[summary]
 
-Specifications Reviewed: [list of spec documents read]
+## Findings
+[list]
 
-Architecture Impact: [none/minor/major + description]
+## Decision
+APPROVE / REJECT / REQUIRE CHANGE
 
-Files Changed:
-- [file path]: [change description]
+## Specification Impact
+[files]
 
-Implementation Status: COMPLETE / PARTIAL / BLOCKED
+## Code Impact
+[files]
 
-Tests Added: [count and description]
+## Validation Required
+[tests/benchmarks]
 
-Benchmark Impact: [none/improved/regressed + numbers]
-
-Security Impact: [none/positive/negative + description]
-
-Compatibility Impact: [backward compatible/breaking + description]
-
-Known Risks: [list or none]
-
-Final Decision: COMPLETE / BLOCKED / NEEDS REVIEW
+## Risks
+[list]
 ```
 
 ## Non-Negotiable Rules
@@ -141,18 +150,11 @@ Final Decision: COMPLETE / BLOCKED / NEEDS REVIEW
 - All public APIs return `Result<T, KcmError>`
 - No `unwrap()` in production code paths
 - No `panic!()` in production code
-- No TODO/FIXME/HACK comments in production code
+- No TODO/FIXME/HACK in production code
 - No placeholder implementations
 - No fake success responses
-- No incomplete modules
-- All tests must pass before any change is committed
-- All clippy warnings must be resolved (`-D warnings`)
-
-## Development Workflow
-
-```
-REQUEST → Gate 1 (Understanding) → Gate 2 (Design) → Gate 3 (Implementation) → Gate 4 (Verification) → Gate 5 (Report)
-```
+- All tests must pass before commit
+- All clippy warnings must be resolved
 
 ## Crate Architecture
 
@@ -166,14 +168,12 @@ kcm-runtime       → Database, Transactions, Metrics, Health, Executor
 kcm-interface     → C FFI, Python, REST, KQL parser
 kcm-distributed   → Sharding (Hash/Range/ConsistentHash), 2PC Coordinator
 kcm-ml            → Learned Index, Confidence Learner, Rule Discovery
-kcm-security      → RBAC, AES-256-GCM encryption, Audit Log
+kcm-security      → RBAC, AES-256-GCM encryption, Audit Log, Compliance
 kcm-compliance    → GDPR Manager, Data Classification
 kcm-testing       → Load/Stress/Security/Recovery test infrastructure
 ```
 
 Dependency flow: `core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface/testing`
-
-No circular dependencies. kcm-core has zero internal dependencies.
 
 ## Build and Test Commands
 

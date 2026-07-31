@@ -1,247 +1,306 @@
 ---
 name: kcm-engineering-orchestrator
-description: Coordinate all specialized engineering skills, decide which skill should activate for any given task, prevent conflicting recommendations, and enforce engineering priority order
+description: Master coordinator for all KCM engineering skills — enforces governance, authority hierarchy, engineering gates, and unified reporting
 ---
 
-# Skill: KCM Engineering Orchestrator
+# Purpose
 
-## Skill Identity
+The orchestrator is the single coordination authority for the KCM engineering skill system. It decides which skills activate, enforces priority order, resolves conflicts, and ensures every code change follows the engineering gate pipeline. No individual skill may override orchestrator decisions.
 
-**Purpose:** Coordinate all specialized engineering skills, decide which skill should activate for any given task, prevent conflicting recommendations, and enforce engineering priority order.
+# Responsibility
 
-**Role:** Principal Engineering Manager / Orchestrator
+- Register and coordinate all 16 engineering skills
+- Enforce skill priority order (P1-P16)
+- Enforce engineering priority order (Correctness > Speed)
+- Resolve conflicts between skills
+- Ensure engineering gates are followed
+- Aggregate per-skill reports into unified output
+- Block unsafe changes
 
-**Scope:** Skill coordination, priority enforcement, conflict resolution, multi-skill task management.
+# Activation Rules
 
-**Non-responsibility:** Does not implement code. Does not review code directly. Does not make technical decisions (delegates to specialized skills).
+The orchestrator activates for:
+- Any task requiring 2+ skills
+- Any task touching protected specifications
+- Any architecture-level change
+- Any cross-crate change
+- Any release preparation
+- Conflict resolution between skills
 
----
+The orchestrator does NOT activate for:
+- Single-file bug fixes within one module
+- Test-only changes
+- Documentation-only changes
+- Formatting-only changes
 
-## Skill Registry
+# Required Inputs
 
-| ID | Skill | Responsibility | Activation Trigger |
-|----|-------|---------------|-------------------|
-| 01 | Architecture Guardian | Architecture integrity, PRD alignment, dependency boundaries | New module, dependency change, API change |
-| 02 | Code Quality Guardian | Rust code quality, error handling, implementation completeness | Code changes, review requests |
-| 03 | Database Engine Specialist | Storage, query engine, transactions, indexes | Storage/query/transaction changes |
-| 04 | Performance Engineering | Benchmarks, SIMD, memory, cache, algorithms | Performance-critical code, benchmarks |
-| 05 | Testing Verification | Test coverage, test quality, recovery testing | New code, test gaps |
-| 06 | Security Engineering | Encryption, RBAC, audit, GDPR | Security-sensitive code |
-| 07 | Documentation Guardian | Spec consistency, PRD alignment, documentation quality | Documentation changes, spec questions |
-| 08 | Release Readiness | Build, tests, performance, security, quality gates | Release preparation |
-| 09 | Code Review Auditor | Code review, severity classification, risk assessment | Pull requests, review requests |
-| 10 | Change Impact Analysis | Impact analysis, affected modules, compatibility | Major changes planned |
-| 11 | Debugging Root Cause | Bug investigation, root cause, minimal fix | Bugs, failures, crashes |
-| 12 | Engineering Decision Record | Decision documentation for long-term impact | Architecture/format/protocol changes |
+- User request or task description
+- Affected file list
+- Relevant specification documents
+- Current codebase state
 
----
-
-## Engineering Priority Order
-
-Every decision and recommendation must follow this priority order:
-
-```
-1. Correctness        — Code must be correct
-2. Specification       — Must match PRD and specs
-3. Data Integrity      — No data loss or corruption
-4. Security            — No vulnerabilities
-5. Reliability         — No crashes or panics
-6. Performance         — Meets performance targets
-7. Maintainability     — Clean, readable code
-8. Development Speed   — Fast iteration
-```
-
-**Rule:** A higher priority item always overrides a lower priority item. For example, never sacrifice correctness for performance, never sacrifice security for development speed.
-
----
-
-## Activation Rules
-
-### Single-Skill Tasks
-
-For tasks that clearly fall within one skill's scope, activate only that skill:
-
-| Task Type | Skill |
-|-----------|-------|
-| "Review this code" | 02 Code Quality Guardian |
-| "Is this architecture correct?" | 01 Architecture Guardian |
-| "Add tests for this function" | 05 Testing Verification |
-| "Optimize this hot path" | 04 Performance Engineering |
-| "Review encryption implementation" | 06 Security Engineering |
-| "Is the spec consistent?" | 07 Documentation Guardian |
-| "Is this ready for release?" | 08 Release Readiness |
-| "Review this PR" | 09 Code Review Auditor |
-| "What's the impact of this change?" | 10 Change Impact Analysis |
-| "Debug this failure" | 11 Debugging Root Cause |
-| "Document this decision" | 12 Engineering Decision Record |
-
-### Multi-Skill Tasks
-
-For tasks that span multiple skills, activate skills in this order:
-
-**New Feature Implementation:**
-```
-1. 10 Change Impact Analysis — Identify impact
-2. 01 Architecture Guardian — Validate architecture
-3. 03 Database Engine Specialist — Validate storage/query design
-4. 06 Security Engineering — Validate security implications
-5. 02 Code Quality Guardian — Review implementation
-6. 05 Testing Verification — Verify test coverage
-7. 04 Performance Engineering — Verify performance
-8. 07 Documentation Guardian — Update documentation
-```
-
-**Bug Fix:**
-```
-1. 11 Debugging Root Cause — Find root cause
-2. 02 Code Quality Guardian — Review fix
-3. 05 Testing Verification — Verify regression test
-```
-
-**Release:**
-```
-1. 08 Release Readiness — Run all quality gates
-2. 04 Performance Engineering — Verify benchmarks
-3. 06 Security Engineering — Verify security
-4. 07 Documentation Guardian — Verify documentation
-```
-
-**Performance Issue:**
-```
-1. 04 Performance Engineering — Profile and identify bottleneck
-2. 03 Database Engine Specialist — Check storage/query efficiency
-3. 02 Code Quality Guardian — Review optimization code
-4. 05 Testing Verification — Verify no regressions
-```
-
----
-
-## Conflict Resolution
-
-When two skills give conflicting recommendations:
-
-1. **Check priority order** — Higher priority wins
-2. **Check scope** — Each skill stays in its lane
-3. **Escalate** — If conflict cannot be resolved, present both options with tradeoffs
-
-### Common Conflicts
-
-| Conflict | Resolution |
-|----------|------------|
-| Performance vs Correctness | Correctness wins (Priority 1 > 6) |
-| Security vs Performance | Security wins (Priority 4 > 6) |
-| Code Quality vs Speed | Code Quality wins (Priority 7 > 8) |
-| Testing vs Speed | Testing wins (Priority 3 > 8) |
-| Documentation vs Speed | Documentation wins (Priority 2 > 8) |
-
----
-
-## Engineering Workflow
-
-### For Any Task
+# Workflow
 
 ```
-1. Understand the task
-2. Determine which skill(s) should activate
-3. If single-skill: delegate to that skill
-4. If multi-skill: activate in priority order
-5. Collect reports from each skill
-6. Check for conflicts
-7. Resolve conflicts using priority order
-8. Present unified recommendation
+REQUEST
+  ↓
+Gate 1: Repository Understanding (kcm-repository-intelligence)
+  ↓
+Gate 2: Specification Validation (kcm-specification-lock, kcm-architecture-guardian)
+  ↓
+Gate 3: Planning (kcm-task-planner, kcm-change-impact-analysis)
+  ↓
+Gate 4: Implementation (domain skills: database, security, performance)
+  ↓
+Gate 5: Verification (kcm-testing-verification, kcm-code-quality-guardian, kcm-code-review-auditor)
+  ↓
+Gate 6: Release (kcm-release-readiness)
+  ↓
+UNIFIED REPORT
 ```
 
-### For Implementation Tasks
+# Skill Registry
+
+| Priority | Skill | Authority | Domain |
+|----------|-------|-----------|--------|
+| P1 | kcm-engineering-orchestrator | Master coordinator | All skills, all gates |
+| P2 | kcm-task-planner | Implementation planning | What should be done |
+| P3 | kcm-change-impact-analysis | Impact assessment | What will break |
+| P4 | kcm-specification-lock | Contract veto | Frozen formats, APIs, protocols |
+| P5 | kcm-architecture-guardian | Architecture veto | Dependencies, modules, crate structure |
+| P6 | kcm-database-engine-specialist | Storage/query authority | Columns, WAL, codecs, indexes, query engine |
+| P7 | kcm-security-engineer | Security authority | Encryption, RBAC, audit, GDPR, compliance |
+| P8 | kcm-performance-engineer | Performance authority | Benchmarks, SIMD, memory, algorithms |
+| P9 | kcm-testing-verification | Test authority | Coverage, correctness, regression |
+| P10 | kcm-code-quality-guardian | Quality authority | Rust patterns, unwrap, placeholders |
+| P11 | kcm-documentation-guardian | Documentation authority | Spec consistency, doc quality |
+| P12 | kcm-release-readiness | Release authority | Build, tests, performance gates |
+| P13 | kcm-code-review-auditor | Review authority | Maintainability, design quality |
+| P14 | kcm-debugging-root-cause | Diagnostic authority | Root cause analysis |
+| P15 | kcm-engineering-decision-record | Decision authority | Long-term decision capture |
+| P16 | kcm-repository-intelligence | Codebase authority | Structure, dependencies, ownership |
+
+# Authority Boundaries
+
+## Specification Lock (P4) vs Database Engine Specialist (P6)
+
+**Specification Lock owns:**
+- Binary file format (magic bytes, header layout, column block format)
+- WAL entry format (byte layout, field order, entry sizes)
+- Public API contracts (function signatures, return types)
+- C FFI interface definitions
+- Error code enum variants
+- Schema evolution rules
+- Backward compatibility requirements
+
+**Can:** BLOCK any implementation that violates frozen contracts.
+**Cannot:** Design internal algorithms. Cannot own implementation details.
+
+**Database Engine Specialist owns:**
+- Storage algorithms (how columns store data)
+- Query execution logic (how operators process data)
+- Indexing implementation (how indexes are built and queried)
+- Compression implementation (how codecs encode/decode)
+- Transaction logic (how ACID is maintained)
+- Recovery implementation (how crash recovery works)
+
+**Can:** Choose implementation strategies. Decide algorithmic approach.
+**Cannot:** Change public contracts without specification-lock approval.
+
+**Resolution:** spec-lock decides IF the change is allowed (contract compliance). db-specialist decides HOW the change is implemented (algorithmic correctness). If db-specialist needs a contract change, spec-lock must approve first.
+
+## Architecture Guardian (P5) vs Specification Lock (P4)
+
+**Specification Lock (P4) owns:** Frozen data/protocol specifications.
+**Architecture Guardian (P5) owns:** System architecture, dependency boundaries, module responsibilities.
+
+**Resolution:** spec-lock (P4) has higher priority. If architecture change requires format change, spec-lock must approve the format change first. Architecture guardian then validates the architectural implications.
+
+## Task Planner (P2) vs Change Impact Analysis (P3)
+
+**Task Planner (P2) answers:** "What should be done?"
+- Creates implementation strategy
+- Defines execution order
+- Identifies required skills
+
+**Change Impact Analysis (P3) answers:** "What will break?"
+- Analyzes dependencies
+- Assesses compatibility
+- Identifies affected modules
+- Evaluates risks
+
+**Workflow:** Task Planner → Change Impact Analysis → Implementation
+
+## Code Quality Guardian (P10) vs Code Review Auditor (P13)
+
+**Code Quality Guardian (P10):** Automated prevention.
+- Rust patterns, unsafe usage, complexity, placeholders, dead code
+- Runs FIRST — rejects obviously bad code
+
+**Code Review Auditor (P13):** Senior engineer review.
+- Maintainability, architecture quality, long-term impact, design decisions
+- Runs AFTER — evaluates deeper quality concerns
+
+# Engineering Gates
+
+Every task must pass through 6 mandatory gates. No task may be marked complete unless all required gates pass.
+
+## Gate 1 — Repository Understanding
+
+**Required skill:** kcm-repository-intelligence
+
+**Must verify:**
+- Understand crate structure
+- Identify affected modules
+- Map dependency relationships
+- Locate existing implementations
+
+## Gate 2 — Specification Validation
+
+**Required skills:** kcm-specification-lock, kcm-architecture-guardian
+
+**Must verify:**
+- Frozen contracts identified
+- Format compatibility confirmed
+- Architecture alignment verified
+- Dependency boundaries respected
+
+## Gate 3 — Implementation Planning
+
+**Required skills:** kcm-task-planner, kcm-change-impact-analysis
+
+**Must verify:**
+- Implementation strategy defined
+- Affected files listed
+- Impact assessment complete
+- Risks identified with mitigations
+
+## Gate 4 — Implementation Validation
+
+**Required skills:** kcm-code-quality-guardian, kcm-testing-verification
+
+**Must verify:**
+- No placeholders or stubs
+- Error handling complete
+- Tests written and passing
+- No unwrap in production code
+
+## Gate 5 — Domain Validation
+
+**Required skills:** (conditional based on change type)
+
+| Change Type | Required Skill |
+|-------------|---------------|
+| Storage/query | kcm-database-engine-specialist |
+| Security | kcm-security-engineer |
+| Performance | kcm-performance-engineer |
+| Documentation | kcm-documentation-guardian |
+
+## Gate 6 — Production Readiness
+
+**Required skill:** kcm-release-readiness
+
+**Must verify:**
+- `cargo build --release` passes
+- `cargo test --workspace` all pass
+- `cargo clippy --workspace -- -D warnings` clean
+- `cargo fmt --all -- --check` clean
+- No performance regression > 5%
+
+# Execution Flow
 
 ```
-1. 10 Change Impact Analysis
-   → What is affected?
+Step 1: Repository Understanding
+  kcm-repository-intelligence → Where does the change belong?
 
-2. 01 Architecture Guardian
-   → Is the architecture correct?
+Step 2: Specification Validation
+  kcm-specification-lock → Is the change contract-compliant?
+  kcm-architecture-guardian → Is the change architecturally sound?
 
-3. 03 Database Engine Specialist (if storage/query affected)
-   → Is the storage/query design correct?
+Step 3: Planning
+  kcm-task-planner → What is the implementation plan?
+  kcm-change-impact-analysis → What will break?
 
-4. 06 Security Engineering (if security affected)
-   → Are there security implications?
+Step 4: Implementation
+  Domain skills activate based on change type:
+  - kcm-database-engine-specialist (storage/query)
+  - kcm-security-engineer (security/compliance)
+  - kcm-performance-engineer (performance-critical)
 
-5. IMPLEMENTATION HAPPENS HERE
+Step 5: Verification
+  kcm-code-quality-guardian → Is the code production-ready?
+  kcm-testing-verification → Are tests adequate?
+  kcm-code-review-auditor → Is the design sound?
 
-6. 02 Code Quality Guardian
-   → Is the code quality acceptable?
-
-7. 05 Testing Verification
-   → Are tests adequate?
-
-8. 04 Performance Engineering (if performance critical)
-   → Are performance targets met?
-
-9. 07 Documentation Guardian
-   → Is documentation updated?
-
-10. 09 Code Review Auditor
-    → Final review approval
+Step 6: Release
+  kcm-release-readiness → Is it ready to ship?
 ```
 
----
+# Conflict Resolution
 
-## Validation Criteria
+When skills disagree:
+
+1. **Higher priority wins** — P4 (spec-lock) overrides P6 (db-specialist)
+2. **Domain authority wins** — Within same priority, the skill with domain expertise wins
+3. **Engineering priority wins** — Correctness > Specification > Data Integrity > Security > Reliability > Performance > Maintainability > Speed
+4. **Orchestrator is final** — If conflict cannot be resolved, orchestrator makes the final decision
+
+# Validation Criteria
 
 | Criterion | Pass Condition |
 |-----------|---------------|
-| Correct skill activated | Skill matches task type |
-| Priority order followed | Higher priority checked first |
-| Conflicts resolved | Using priority order |
-| All relevant skills consulted | No skill skipped for multi-skill tasks |
-| Unified recommendation | Single clear recommendation |
+| All 16 skills registered | Registry table complete |
+| Authority boundaries clear | No overlapping veto power |
+| Engineering gates enforced | Every task passes all gates |
+| Unified report produced | Every task generates report |
+| Conflict resolution works | No conflicting recommendations |
 
----
+# Forbidden Actions
 
-## Failure Prevention Rules
+- Never skip engineering gates
+- Never allow a skill to override orchestrator
+- Never allow performance to override correctness
+- Never allow speed to override testing
+- Never allow conflicting recommendations without resolution
+- Never activate irrelevant skills
 
-1. **Never skip Architecture Guardian for cross-crate changes**
-2. **Never skip Security Engineering for security-sensitive code**
-3. **Never skip Testing Verification for new code**
-4. **Never allow performance to override correctness**
-5. **Never allow development speed to override testing**
-6. **Never allow conflicting recommendations without resolution**
-7. **Never activate irrelevant skills (wastes context)**
+# Output Format
 
----
-
-## Final Report Format
+Every orchestrator decision produces this report:
 
 ```
-# Engineering Orchestration Report
+# KCM Engineering Report
 
-## Task
-[What task was performed]
+## Skill
+kcm-engineering-orchestrator
+
+## Analysis
+[What task was performed and which skills were activated]
+
+## Findings
+[Key findings from each activated skill]
+
+## Decision
+APPROVE / REJECT / REQUIRE CHANGE
+
+## Specification Impact
+[Files or specs affected]
+
+## Code Impact
+[Files changed or to be changed]
+
+## Validation Required
+[Tests, benchmarks, or checks needed]
+
+## Risks
+[Remaining risks]
 
 ## Skills Activated
-| Skill | Reason | Status |
-|-------|--------|--------|
-| ... | ... | Complete/Pending |
+| Skill | Gate | Decision |
+|-------|------|----------|
+| ... | ... | APPROVE/REJECT |
 
-## Priority Check
-- [ ] Correctness verified
-- [ ] Specification compliance verified
-- [ ] Data integrity verified
-- [ ] Security verified
-- [ ] Reliability verified
-- [ ] Performance verified
-- [ ] Maintainability verified
-
-## Conflicts Resolved
-| Conflict | Resolution | Rationale |
-|----------|------------|-----------|
-| ... | ... | ... |
-
-## Unified Recommendation
-[Single clear recommendation incorporating all skill inputs]
-
-## Action Items
-| # | Action | Owner | Priority |
-|---|--------|-------|----------|
-| 1 | ... | [skill] | Critical/High/Medium/Low |
+## Final Decision
+COMPLETE / BLOCKED / NEEDS REVIEW
 ```
