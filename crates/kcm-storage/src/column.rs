@@ -2,6 +2,8 @@ use kcm_core::bitmap::Bitmap;
 use kcm_core::types::*;
 use kcm_core::vec::DenseVec;
 
+use crate::compress::{Compressor, Lz4Compressor, NoopCompressor, ZstdCompressor};
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum ColumnEncoding {
     Identity,
@@ -19,14 +21,22 @@ pub enum CompressionCodec {
     Lz4,
 }
 
+fn make_compressor(codec: CompressionCodec) -> Box<dyn Compressor> {
+    match codec {
+        CompressionCodec::None => Box::new(NoopCompressor),
+        CompressionCodec::Zstd => Box::new(ZstdCompressor::default_level()),
+        CompressionCodec::Lz4 => Box::new(Lz4Compressor::default_level()),
+    }
+}
+
 #[derive(Clone)]
 pub struct Column<T: Copy> {
     data: DenseVec<T>,
-    #[allow(dead_code)]
     encoding: ColumnEncoding,
-    #[allow(dead_code)]
     compression: CompressionCodec,
     row_count: u64,
+    raw_bytes: Vec<u8>,
+    compressed: bool,
 }
 
 impl<T: Copy> Column<T> {
@@ -36,12 +46,13 @@ impl<T: Copy> Column<T> {
         compression: CompressionCodec,
     ) -> Result<Self, KcmError> {
         let data = DenseVec::new(capacity).map_err(KcmError::Io)?;
-
         Ok(Column {
             data,
             encoding,
             compression,
             row_count: 0,
+            raw_bytes: Vec::new(),
+            compressed: false,
         })
     }
 
@@ -72,17 +83,54 @@ impl<T: Copy> Column<T> {
     pub fn len(&self) -> usize {
         self.row_count as usize
     }
-
     pub fn is_empty(&self) -> bool {
         self.row_count == 0
     }
-
     pub fn as_slice(&self) -> &[T] {
         self.data.as_slice()
     }
-
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.data.iter()
+    }
+    pub fn encoding(&self) -> ColumnEncoding {
+        self.encoding
+    }
+    pub fn compression(&self) -> CompressionCodec {
+        self.compression
+    }
+
+    pub fn compress_data(&mut self) -> Result<(), KcmError> {
+        let slice = self.data.as_slice();
+        let byte_slice = unsafe {
+            std::slice::from_raw_parts(
+                slice.as_ptr() as *const u8,
+                std::mem::size_of_val(slice),
+            )
+        };
+        let compressor = make_compressor(self.compression);
+        self.raw_bytes = compressor.compress(byte_slice)?;
+        self.compressed = true;
+        Ok(())
+    }
+
+    pub fn decompress_data(&mut self) -> Result<(), KcmError> {
+        if !self.compressed || self.raw_bytes.is_empty() {
+            return Ok(());
+        }
+        let expected = self.row_count as usize * std::mem::size_of::<T>();
+        let compressor = make_compressor(self.compression);
+        let decompressed = compressor.decompress(&self.raw_bytes, expected)?;
+        let ptr = self.data.as_mut_slice().as_mut_ptr();
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                decompressed.as_ptr(),
+                ptr as *mut u8,
+                decompressed.len().min(expected),
+            );
+        }
+        self.compressed = false;
+        self.raw_bytes.clear();
+        Ok(())
     }
 }
 
@@ -123,7 +171,7 @@ impl Schema {
             predicate_col: PredicateColumn::new(
                 capacity,
                 ColumnEncoding::Dictionary,
-                CompressionCodec::None,
+                CompressionCodec::Lz4,
             )?,
             object_col: ObjectColumn::new(
                 capacity,
@@ -138,7 +186,7 @@ impl Schema {
             evidence_col: EvidenceColumn::new(
                 capacity,
                 ColumnEncoding::Dictionary,
-                CompressionCodec::None,
+                CompressionCodec::Lz4,
             )?,
             timestamp_col: TimestampColumn::new(
                 capacity,
@@ -148,7 +196,7 @@ impl Schema {
             context_col: ContextColumn::new(
                 capacity,
                 ColumnEncoding::Dictionary,
-                CompressionCodec::None,
+                CompressionCodec::Lz4,
             )?,
             version_col: VersionColumn::new(
                 capacity,
@@ -158,7 +206,7 @@ impl Schema {
             priority_col: PriorityColumn::new(
                 capacity,
                 ColumnEncoding::Identity,
-                CompressionCodec::None,
+                CompressionCodec::Lz4,
             )?,
             owner_col: OwnerColumn::new(
                 capacity,
@@ -186,11 +234,9 @@ impl Schema {
     pub fn len(&self) -> usize {
         self.subject_col.len()
     }
-
     pub fn is_empty(&self) -> bool {
         self.subject_col.is_empty()
     }
-
     pub fn active_count(&self) -> usize {
         self.len() - self.tombstones.count_ones()
     }
@@ -258,5 +304,33 @@ impl Schema {
                 self.get_fact(idx).map(|f| (idx, f))
             }
         })
+    }
+
+    pub fn compress_all_columns(&mut self) -> Result<(), KcmError> {
+        self.subject_col.compress_data()?;
+        self.predicate_col.compress_data()?;
+        self.object_col.compress_data()?;
+        self.confidence_col.compress_data()?;
+        self.evidence_col.compress_data()?;
+        self.timestamp_col.compress_data()?;
+        self.context_col.compress_data()?;
+        self.version_col.compress_data()?;
+        self.priority_col.compress_data()?;
+        self.owner_col.compress_data()?;
+        Ok(())
+    }
+
+    pub fn decompress_all_columns(&mut self) -> Result<(), KcmError> {
+        self.subject_col.decompress_data()?;
+        self.predicate_col.decompress_data()?;
+        self.object_col.decompress_data()?;
+        self.confidence_col.decompress_data()?;
+        self.evidence_col.decompress_data()?;
+        self.timestamp_col.decompress_data()?;
+        self.context_col.decompress_data()?;
+        self.version_col.decompress_data()?;
+        self.priority_col.decompress_data()?;
+        self.owner_col.decompress_data()?;
+        Ok(())
     }
 }

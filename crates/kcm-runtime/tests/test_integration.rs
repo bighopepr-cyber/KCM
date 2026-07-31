@@ -48,11 +48,11 @@ fn test_inference() {
 
     engine.register_rule(rule).unwrap();
 
-    let mut schema = Schema::new(100).unwrap();
+    let mut schema = Schema::new(10_000).unwrap();
     let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
     schema.append_fact(&fact).unwrap();
 
-    let derived = engine.infer_forward_chaining(&schema).unwrap();
+    let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(!derived.is_empty());
 }
 

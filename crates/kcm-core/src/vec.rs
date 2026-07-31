@@ -126,3 +126,24 @@ impl<T: Copy> Clone for DenseVec<T> {
         new_vec
     }
 }
+
+#[repr(C, align(64))]
+pub struct CacheAlignedData {
+    pub data: u64,
+    pub padding: [u64; 7],
+}
+
+impl CacheAlignedData {
+    pub fn new(value: u64) -> Self {
+        CacheAlignedData {
+            data: value,
+            padding: [0u64; 7],
+        }
+    }
+}
+
+impl<T: Copy> DenseVec<T> {
+    pub fn new_cache_aligned(capacity: usize) -> Result<Self, String> {
+        Self::with_alignment(capacity, 64)
+    }
+}

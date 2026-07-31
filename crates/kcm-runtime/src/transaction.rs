@@ -11,9 +11,23 @@ pub enum TransactionState {
     Aborted,
 }
 
+#[derive(Clone, Debug)]
+pub enum TransactionChange {
+    Insert(Fact),
+    Update {
+        row_idx: usize,
+        old_fact: Option<Fact>,
+        new_fact: Fact,
+    },
+    Delete {
+        row_idx: usize,
+        old_fact: Fact,
+    },
+}
+
 pub struct Transaction {
     state: TransactionState,
-    changes: Vec<(usize, Fact)>,
+    changes: Vec<TransactionChange>,
     #[allow(dead_code)]
     timestamp: i64,
 }
@@ -34,15 +48,75 @@ impl Transaction {
         if self.state != TransactionState::Active {
             return Err(KcmError::TransactionAborted);
         }
-        self.changes.push((usize::MAX, fact));
+        self.changes.push(TransactionChange::Insert(fact));
         Ok(())
     }
 
-    pub fn update(&mut self, row_idx: usize, fact: Fact) -> Result<(), KcmError> {
+    pub fn update(
+        &mut self,
+        row_idx: usize,
+        old_fact: Option<Fact>,
+        new_fact: Fact,
+    ) -> Result<(), KcmError> {
         if self.state != TransactionState::Active {
             return Err(KcmError::TransactionAborted);
         }
-        self.changes.push((row_idx, fact));
+        self.changes.push(TransactionChange::Update {
+            row_idx,
+            old_fact,
+            new_fact,
+        });
+        Ok(())
+    }
+
+    pub fn delete(&mut self, row_idx: usize, old_fact: Fact) -> Result<(), KcmError> {
+        if self.state != TransactionState::Active {
+            return Err(KcmError::TransactionAborted);
+        }
+        self.changes
+            .push(TransactionChange::Delete { row_idx, old_fact });
+        Ok(())
+    }
+
+    pub fn apply_to_schema(&self, schema: &mut Schema) -> Result<(), KcmError> {
+        for change in &self.changes {
+            match change {
+                TransactionChange::Insert(fact) => {
+                    schema.append_fact(fact)?;
+                }
+                TransactionChange::Update {
+                    row_idx, new_fact, ..
+                } => {
+                    schema.update_fact(*row_idx, new_fact)?;
+                }
+                TransactionChange::Delete { row_idx, .. } => {
+                    schema.delete_fact(*row_idx)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn rollback_changes(&self, schema: &mut Schema) -> Result<(), KcmError> {
+        for change in self.changes.iter().rev() {
+            match change {
+                TransactionChange::Insert(_) => {
+                    let last = schema.len() - 1;
+                    schema.delete_fact(last)?;
+                }
+                TransactionChange::Update {
+                    row_idx, old_fact, ..
+                } => {
+                    if let Some(old) = old_fact {
+                        schema.update_fact(*row_idx, old)?;
+                    }
+                }
+                TransactionChange::Delete { row_idx, old_fact } => {
+                    schema.update_fact(*row_idx, old_fact)?;
+                    schema.delete_fact(*row_idx).ok();
+                }
+            }
+        }
         Ok(())
     }
 
@@ -59,6 +133,10 @@ impl Transaction {
 
     pub fn state(&self) -> TransactionState {
         self.state
+    }
+
+    pub fn changes(&self) -> &[TransactionChange] {
+        &self.changes
     }
 }
 
@@ -87,10 +165,19 @@ impl VersionStore {
         self.versions[idx].clone()
     }
 
-    pub fn create_new_version(&mut self, schema: Schema) -> Result<(), KcmError> {
+    pub fn create_new_version(&mut self, schema: Schema) -> Result<usize, KcmError> {
         self.versions.push(Arc::new(schema));
-        *self.current_version.write() = self.versions.len() - 1;
-        Ok(())
+        let new_idx = self.versions.len() - 1;
+        *self.current_version.write() = new_idx;
+        Ok(new_idx)
+    }
+
+    pub fn version_count(&self) -> usize {
+        self.versions.len()
+    }
+
+    pub fn get_version(&self, idx: usize) -> Option<Arc<Schema>> {
+        self.versions.get(idx).cloned()
     }
 }
 

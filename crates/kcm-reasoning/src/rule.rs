@@ -28,7 +28,8 @@ impl RulePattern {
         RulePattern::Or(Box::new(left), Box::new(right))
     }
 
-    pub fn negate(pattern: RulePattern) -> Self {
+    #[allow(clippy::should_implement_trait)]
+    pub fn not(pattern: RulePattern) -> Self {
         RulePattern::Not(Box::new(pattern))
     }
 }
@@ -70,6 +71,16 @@ impl Rule {
         self.description = desc;
         self
     }
+
+    pub fn with_priority(mut self, priority: i32) -> Self {
+        self.priority = priority;
+        self
+    }
+
+    pub fn disabled(mut self) -> Self {
+        self.enabled = false;
+        self
+    }
 }
 
 pub struct RuleRegistry {
@@ -85,7 +96,10 @@ impl RuleRegistry {
 
     pub fn register(&mut self, rule: Rule) -> Result<(), KcmError> {
         if self.rules.contains_key(&rule.id) {
-            return Err(KcmError::Conflict("Rule already exists".to_string()));
+            return Err(KcmError::Conflict(format!(
+                "Rule with ID {} already exists",
+                rule.id
+            )));
         }
         self.rules.insert(rule.id, rule);
         Ok(())
@@ -97,6 +111,18 @@ impl RuleRegistry {
 
     pub fn all_enabled(&self) -> Vec<&Rule> {
         self.rules.values().filter(|r| r.enabled).collect()
+    }
+
+    pub fn all(&self) -> Vec<&Rule> {
+        self.rules.values().collect()
+    }
+
+    pub fn len(&self) -> usize {
+        self.rules.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.rules.is_empty()
     }
 }
 

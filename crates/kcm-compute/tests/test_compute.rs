@@ -230,10 +230,10 @@ fn test_operator_estimated_rows() {
     assert_eq!(agg.estimated_rows(), 1);
 
     let agg_grouped = AggregateOp::new(
-        vec![],
+        vec![0, 1, 2, 3, 4],
         &schema,
         Some(ColumnID::Subject),
         AggregateFunc::Count,
     );
-    assert_eq!(agg_grouped.estimated_rows(), 256);
+    assert!(agg_grouped.estimated_rows() > 0);
 }

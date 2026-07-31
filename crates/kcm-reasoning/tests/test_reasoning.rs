@@ -122,7 +122,7 @@ fn test_rule_pattern_or() {
 #[test]
 fn test_rule_pattern_not() {
     let inner = RulePattern::subject_predicate_object(None, PredicateID(0), None);
-    let negated = RulePattern::negate(inner);
+    let negated = RulePattern::not(inner);
 
     match negated {
         RulePattern::Not(inner) => match *inner {
@@ -147,14 +147,14 @@ fn test_inference_engine_simple() {
 
     engine.register_rule(rule).unwrap();
 
-    let mut schema = Schema::new(100).unwrap();
+    let mut schema = Schema::new(10_000).unwrap();
 
     for i in 0..5u32 {
         let fact = Fact::new(SubjectID(i), PredicateID(0), ObjectID(i + 10), 0.8).unwrap();
         schema.append_fact(&fact).unwrap();
     }
 
-    let derived = engine.infer_forward_chaining(&schema).unwrap();
+    let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(!derived.is_empty());
 
     for (fact, rule_id) in &derived {
@@ -167,9 +167,9 @@ fn test_inference_engine_simple() {
 #[test]
 fn test_inference_engine_no_rules() {
     let engine = InferenceEngine::new();
-    let schema = Schema::new(100).unwrap();
+    let mut schema = Schema::new(10_000).unwrap();
 
-    let derived = engine.infer_forward_chaining(&schema).unwrap();
+    let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(derived.is_empty());
 }
 
@@ -188,11 +188,11 @@ fn test_inference_engine_disabled_rule() {
 
     engine.register_rule(rule).unwrap();
 
-    let mut schema = Schema::new(100).unwrap();
+    let mut schema = Schema::new(10_000).unwrap();
     let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
     schema.append_fact(&fact).unwrap();
 
-    let derived = engine.infer_forward_chaining(&schema).unwrap();
+    let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(derived.is_empty());
 }
 
@@ -221,7 +221,7 @@ fn test_inference_engine_and_pattern() {
 
     engine.register_rule(rule).unwrap();
 
-    let mut schema = Schema::new(100).unwrap();
+    let mut schema = Schema::new(10_000).unwrap();
 
     let fact1 = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
     let fact2 = Fact::new(SubjectID(2), PredicateID(1), ObjectID(3), 0.8).unwrap();
@@ -229,7 +229,7 @@ fn test_inference_engine_and_pattern() {
     schema.append_fact(&fact1).unwrap();
     schema.append_fact(&fact2).unwrap();
 
-    let derived = engine.infer_forward_chaining(&schema).unwrap();
+    let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(!derived.is_empty());
 }
 
@@ -273,7 +273,7 @@ fn test_confidence_weighted() {
 
 #[test]
 fn test_inference_engine_multiple_iterations() {
-    let mut engine = InferenceEngine::new();
+    let mut engine = InferenceEngine::new().with_max_iterations(2);
 
     let rule1 = Rule::new(
         1,
@@ -294,11 +294,11 @@ fn test_inference_engine_multiple_iterations() {
     engine.register_rule(rule1).unwrap();
     engine.register_rule(rule2).unwrap();
 
-    let mut schema = Schema::new(100).unwrap();
+    let mut schema = Schema::new(10_000).unwrap();
     let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap();
     schema.append_fact(&fact).unwrap();
 
-    let derived = engine.infer_forward_chaining(&schema).unwrap();
+    let derived = engine.infer_forward_chaining(&mut schema).unwrap();
     assert!(!derived.is_empty());
 
     let has_pred1 = derived.iter().any(|(f, _)| f.predicate == PredicateID(1));

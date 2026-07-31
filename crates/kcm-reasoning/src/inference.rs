@@ -17,20 +17,27 @@ impl InferenceEngine {
         }
     }
 
+    pub fn with_max_iterations(mut self, max: usize) -> Self {
+        self.max_iterations = max;
+        self
+    }
+
+    pub fn with_confidence_threshold(mut self, threshold: f64) -> Self {
+        self.confidence_threshold = threshold;
+        self
+    }
+
     pub fn register_rule(&mut self, rule: Rule) -> Result<(), KcmError> {
         self.rule_registry.register(rule)
     }
 
-    pub fn infer_forward_chaining(&self, schema: &Schema) -> Result<Vec<(Fact, RuleID)>, KcmError> {
-        let mut derived_facts = Vec::new();
-        let mut iteration = 0;
+    pub fn infer_forward_chaining(
+        &self,
+        schema: &mut Schema,
+    ) -> Result<Vec<(Fact, RuleID)>, KcmError> {
+        let mut all_derived = Vec::new();
 
-        loop {
-            iteration += 1;
-            if iteration > self.max_iterations {
-                break;
-            }
-
+        for _iteration in 0..self.max_iterations {
             let mut new_facts = Vec::new();
 
             for rule in self.rule_registry.all_enabled() {
@@ -47,7 +54,6 @@ impl InferenceEngine {
                         let mut fact =
                             Fact::new(subject, rule.consequent_predicate, object, confidence)?;
                         fact.priority = rule.priority as i8;
-
                         new_facts.push((fact, rule.id));
                     }
                 }
@@ -57,10 +63,14 @@ impl InferenceEngine {
                 break;
             }
 
-            derived_facts.extend(new_facts);
+            for (fact, _rule_id) in &new_facts {
+                schema.append_fact(fact)?;
+            }
+
+            all_derived.extend(new_facts);
         }
 
-        Ok(derived_facts)
+        Ok(all_derived)
     }
 
     fn find_pattern_matches(
@@ -73,6 +83,9 @@ impl InferenceEngine {
                 let mut matches = Vec::new();
 
                 for idx in 0..schema.len() {
+                    if schema.is_deleted(idx) {
+                        continue;
+                    }
                     if let Some(s) = schema.subject_col.get(idx) {
                         if let Some(p) = schema.predicate_col.get(idx) {
                             if let Some(o) = schema.object_col.get(idx) {
@@ -86,17 +99,14 @@ impl InferenceEngine {
                                             continue;
                                         }
                                     }
-
                                     if *pred != p_id {
                                         continue;
                                     }
-
                                     if let Some(object_filter) = obj {
                                         if *object_filter != o_id {
                                             continue;
                                         }
                                     }
-
                                     matches.push((s_id, o_id, vec![c]));
                                 }
                             }
@@ -127,14 +137,39 @@ impl InferenceEngine {
             RulePattern::Or(left, right) => {
                 let mut left_matches = self.find_pattern_matches(left, schema)?;
                 let right_matches = self.find_pattern_matches(right, schema)?;
-
                 left_matches.extend(right_matches);
                 Ok(left_matches)
             }
 
-            RulePattern::Not(_) => Err(KcmError::InvalidArgument(
-                "Negation not fully implemented".to_string(),
-            )),
+            RulePattern::Not(inner) => {
+                let inner_matches = self.find_pattern_matches(inner, schema)?;
+                let inner_subjects: std::collections::HashSet<u32> =
+                    inner_matches.iter().map(|(s, _, _)| s.0).collect();
+                let inner_objects: std::collections::HashSet<u32> =
+                    inner_matches.iter().map(|(_, o, _)| o.0).collect();
+
+                let mut result = Vec::new();
+                for idx in 0..schema.len() {
+                    if schema.is_deleted(idx) {
+                        continue;
+                    }
+                    if let Some(s) = schema.subject_col.get(idx) {
+                        if let Some(_p) = schema.predicate_col.get(idx) {
+                            if let Some(o) = schema.object_col.get(idx) {
+                                if let Some(c) = schema.confidence_col.get(idx) {
+                                    if !inner_subjects.contains(&s) || !inner_objects.contains(&o) {
+                                        let s_id = SubjectID(s);
+                                        let o_id = ObjectID(o);
+                                        result.push((s_id, o_id, vec![c]));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Ok(result)
+            }
         }
     }
 }
