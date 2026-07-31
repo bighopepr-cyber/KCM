@@ -19,6 +19,7 @@ pub enum CompressionCodec {
     None,
     Zstd,
     Lz4,
+    Rle,
 }
 
 fn make_compressor(codec: CompressionCodec) -> Box<dyn Compressor> {
@@ -26,6 +27,7 @@ fn make_compressor(codec: CompressionCodec) -> Box<dyn Compressor> {
         CompressionCodec::None => Box::new(NoopCompressor),
         CompressionCodec::Zstd => Box::new(ZstdCompressor::default_level()),
         CompressionCodec::Lz4 => Box::new(Lz4Compressor::default_level()),
+        CompressionCodec::Rle => Box::new(crate::compress::RleCompressor),
     }
 }
 
@@ -102,10 +104,7 @@ impl<T: Copy> Column<T> {
     pub fn compress_data(&mut self) -> Result<(), KcmError> {
         let slice = self.data.as_slice();
         let byte_slice = unsafe {
-            std::slice::from_raw_parts(
-                slice.as_ptr() as *const u8,
-                std::mem::size_of_val(slice),
-            )
+            std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice))
         };
         let compressor = make_compressor(self.compression);
         self.raw_bytes = compressor.compress(byte_slice)?;
@@ -171,7 +170,7 @@ impl Schema {
             predicate_col: PredicateColumn::new(
                 capacity,
                 ColumnEncoding::Dictionary,
-                CompressionCodec::Lz4,
+                CompressionCodec::Rle,
             )?,
             object_col: ObjectColumn::new(
                 capacity,
@@ -186,7 +185,7 @@ impl Schema {
             evidence_col: EvidenceColumn::new(
                 capacity,
                 ColumnEncoding::Dictionary,
-                CompressionCodec::Lz4,
+                CompressionCodec::Rle,
             )?,
             timestamp_col: TimestampColumn::new(
                 capacity,
@@ -196,7 +195,7 @@ impl Schema {
             context_col: ContextColumn::new(
                 capacity,
                 ColumnEncoding::Dictionary,
-                CompressionCodec::Lz4,
+                CompressionCodec::Rle,
             )?,
             version_col: VersionColumn::new(
                 capacity,
@@ -206,7 +205,7 @@ impl Schema {
             priority_col: PriorityColumn::new(
                 capacity,
                 ColumnEncoding::Identity,
-                CompressionCodec::Lz4,
+                CompressionCodec::Rle,
             )?,
             owner_col: OwnerColumn::new(
                 capacity,

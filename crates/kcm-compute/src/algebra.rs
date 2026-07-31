@@ -35,35 +35,24 @@ impl<'a> ScanOp<'a> {
 impl<'a> Operator for ScanOp<'a> {
     fn execute(&self) -> Result<Vec<usize>, KcmError> {
         let mut result = Vec::new();
-
         for idx in 0..self.schema.len() {
             if self.schema.is_deleted(idx) {
                 continue;
             }
-
             if let Some(ctx_filter) = self.context_filter {
-                if let Some(ctx) = self.schema.context_col.get(idx) {
-                    if ctx != ctx_filter {
-                        continue;
-                    }
-                } else {
-                    continue;
+                match self.schema.context_col.get(idx) {
+                    Some(ctx) if ctx == ctx_filter => {}
+                    _ => continue,
                 }
             }
-
             if let Some(conf_filter) = self.confidence_filter {
-                if let Some(conf) = self.schema.confidence_col.get(idx) {
-                    if conf < conf_filter {
-                        continue;
-                    }
-                } else {
-                    continue;
+                match self.schema.confidence_col.get(idx) {
+                    Some(conf) if conf >= conf_filter => {}
+                    _ => continue,
                 }
             }
-
             result.push(idx);
         }
-
         Ok(result)
     }
 
@@ -100,7 +89,6 @@ impl<'a> FilterOp<'a> {
 impl<'a> Operator for FilterOp<'a> {
     fn execute(&self) -> Result<Vec<usize>, KcmError> {
         let mut result = Vec::new();
-
         for &idx in &self.rowids {
             let matches = match &self.predicate {
                 FilterPredicate::EqualSubject(val) => {
@@ -113,27 +101,21 @@ impl<'a> Operator for FilterOp<'a> {
                 FilterPredicate::EqualContext(val) => {
                     self.schema.context_col.get(idx) == Some(*val)
                 }
-                FilterPredicate::InSet(vals) => {
-                    if let Some(obj) = self.schema.object_col.get(idx) {
-                        vals.contains(&obj)
-                    } else {
-                        false
-                    }
-                }
-                FilterPredicate::RangeTimestamp(low, high) => {
-                    if let Some(ts) = self.schema.timestamp_col.get(idx) {
-                        ts >= *low && ts <= *high
-                    } else {
-                        false
-                    }
-                }
+                FilterPredicate::InSet(vals) => self
+                    .schema
+                    .object_col
+                    .get(idx)
+                    .is_some_and(|v| vals.contains(&v)),
+                FilterPredicate::RangeTimestamp(low, high) => self
+                    .schema
+                    .timestamp_col
+                    .get(idx)
+                    .is_some_and(|ts| ts >= *low && ts <= *high),
             };
-
             if matches {
                 result.push(idx);
             }
         }
-
         Ok(result)
     }
 
@@ -159,7 +141,6 @@ impl<'a> ProjectOp<'a> {
 
     pub fn execute_projection(&self) -> Result<Vec<Vec<u64>>, KcmError> {
         let mut result = Vec::new();
-
         for &idx in &self.rowids {
             let mut row = Vec::new();
             for col in &self.columns {
@@ -169,8 +150,7 @@ impl<'a> ProjectOp<'a> {
                     ColumnID::Predicate => self.schema.predicate_col.get(idx).unwrap_or(0) as u64,
                     ColumnID::Object => self.schema.object_col.get(idx).unwrap_or(0) as u64,
                     ColumnID::Confidence => {
-                        let v = self.schema.confidence_col.get(idx).unwrap_or(0.0);
-                        v.to_bits()
+                        self.schema.confidence_col.get(idx).unwrap_or(0.0).to_bits()
                     }
                     ColumnID::Evidence => self.schema.evidence_col.get(idx).unwrap_or(0) as u64,
                     ColumnID::Timestamp => self.schema.timestamp_col.get(idx).unwrap_or(0) as u64,
@@ -183,7 +163,6 @@ impl<'a> ProjectOp<'a> {
             }
             result.push(row);
         }
-
         Ok(result)
     }
 }
@@ -236,17 +215,13 @@ impl<'a> JoinOp<'a> {
 impl<'a> Operator for JoinOp<'a> {
     fn execute(&self) -> Result<Vec<usize>, KcmError> {
         use std::collections::HashMap;
-
         let mut hash_table: HashMap<u32, Vec<usize>> = HashMap::new();
-
         for &idx in &self.right_rowids {
             if let Some(key) = self.get_join_value(idx) {
                 hash_table.entry(key).or_default().push(idx);
             }
         }
-
         let mut result = Vec::new();
-
         for &idx in &self.left_rowids {
             if let Some(key) = self.get_join_value(idx) {
                 if let Some(matches) = hash_table.get(&key) {
@@ -257,17 +232,15 @@ impl<'a> Operator for JoinOp<'a> {
                 }
             }
         }
-
         Ok(result)
     }
 
     fn estimated_rows(&self) -> usize {
-        let selectivity = 0.1;
-        (self.left_rowids.len() as f64 * self.right_rowids.len() as f64 * selectivity) as usize
+        (self.left_rowids.len() as f64 * self.right_rowids.len() as f64 * 0.1) as usize
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AggregateFunc {
     Count,
     Sum,
@@ -304,11 +277,9 @@ impl<'a> AggregateOp<'a> {
             .iter()
             .filter_map(|&idx| self.schema.confidence_col.get(idx))
             .collect();
-
         if values.is_empty() {
             return Ok(0.0);
         }
-
         match self.agg_func {
             AggregateFunc::Count => Ok(values.len() as f64),
             AggregateFunc::Sum => Ok(values.iter().sum()),
@@ -319,19 +290,12 @@ impl<'a> AggregateOp<'a> {
     }
 
     pub fn execute_grouped(&self) -> Result<Vec<(u32, f64)>, KcmError> {
-        let group_col = match self.group_by {
-            Some(col) => col,
-            None => {
-                return Err(KcmError::InvalidArgument(
-                    "No group_by column specified".to_string(),
-                ))
-            }
-        };
-
+        let group_col = self
+            .group_by
+            .ok_or_else(|| KcmError::InvalidArgument("No group_by column".to_string()))?;
         let mut groups: std::collections::HashMap<u32, Vec<f64>> = std::collections::HashMap::new();
-
         for &idx in &self.rowids {
-            let group_key = match group_col {
+            let key = match group_col {
                 ColumnID::Subject => self.schema.subject_col.get(idx).unwrap_or(0),
                 ColumnID::Predicate => self.schema.predicate_col.get(idx).unwrap_or(0) as u32,
                 ColumnID::Object => self.schema.object_col.get(idx).unwrap_or(0),
@@ -340,24 +304,21 @@ impl<'a> AggregateOp<'a> {
                 ColumnID::Owner => self.schema.owner_col.get(idx).unwrap_or(0) as u32,
                 _ => self.schema.subject_col.get(idx).unwrap_or(0),
             };
-
             if let Some(conf) = self.schema.confidence_col.get(idx) {
-                groups.entry(group_key).or_default().push(conf);
+                groups.entry(key).or_default().push(conf);
             }
         }
-
         let mut result = Vec::new();
         for (key, values) in groups {
-            let agg_value = match self.agg_func {
+            let val = match self.agg_func {
                 AggregateFunc::Count => values.len() as f64,
                 AggregateFunc::Sum => values.iter().sum(),
                 AggregateFunc::Avg => values.iter().sum::<f64>() / values.len() as f64,
                 AggregateFunc::Min => values.iter().cloned().fold(f64::INFINITY, f64::min),
                 AggregateFunc::Max => values.iter().cloned().fold(f64::NEG_INFINITY, f64::max),
             };
-            result.push((key, agg_value));
+            result.push((key, val));
         }
-
         Ok(result)
     }
 }

@@ -60,6 +60,44 @@ impl Compressor for NoopCompressor {
     }
 }
 
+pub struct RleCompressor;
+
+impl Compressor for RleCompressor {
+    fn compress(&self, data: &[u8]) -> Result<Vec<u8>, KcmError> {
+        let mut result = Vec::new();
+        let mut i = 0;
+        while i < data.len() {
+            let value = data[i];
+            let mut count = 1u32;
+            while i + (count as usize) < data.len()
+                && data[i + count as usize] == value
+                && count < u32::MAX
+            {
+                count += 1;
+            }
+            result.push(value);
+            result.extend_from_slice(&count.to_le_bytes());
+            i += count as usize;
+        }
+        Ok(result)
+    }
+
+    fn decompress(&self, data: &[u8], _expected_size: usize) -> Result<Vec<u8>, KcmError> {
+        let mut result = Vec::new();
+        let mut i = 0;
+        while i + 5 <= data.len() {
+            let value = data[i];
+            i += 1;
+            let count = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
+            i += 4;
+            for _ in 0..count {
+                result.push(value);
+            }
+        }
+        Ok(result)
+    }
+}
+
 pub fn hash_blake3(data: &[u8]) -> [u8; 32] {
     blake3::hash(data).into()
 }
