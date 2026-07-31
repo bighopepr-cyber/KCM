@@ -14,6 +14,7 @@ pub struct Metrics {
     pub column_count: Arc<AtomicU64>,
     pub inferences_total: Arc<AtomicU64>,
     pub facts_inferred: Arc<AtomicU64>,
+    pub estimated_memory_bytes: Arc<AtomicU64>,
 }
 
 impl Metrics {
@@ -30,6 +31,7 @@ impl Metrics {
             column_count: Arc::new(AtomicU64::new(0)),
             inferences_total: Arc::new(AtomicU64::new(0)),
             facts_inferred: Arc::new(AtomicU64::new(0)),
+            estimated_memory_bytes: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -85,6 +87,14 @@ impl Metrics {
         }
     }
 
+    pub fn update_memory_estimate(&self, bytes: u64) {
+        self.estimated_memory_bytes.store(bytes, Ordering::Relaxed);
+    }
+
+    pub fn estimated_memory_mb(&self) -> f64 {
+        self.estimated_memory_bytes.load(Ordering::Relaxed) as f64 / (1024.0 * 1024.0)
+    }
+
     pub fn snapshot(&self) -> MetricsSnapshot {
         MetricsSnapshot {
             queries_total: self.queries_total.load(Ordering::Relaxed),
@@ -96,6 +106,7 @@ impl Metrics {
             memory_bytes: self.memory_bytes.load(Ordering::Relaxed),
             inferences_total: self.inferences_total.load(Ordering::Relaxed),
             facts_inferred: self.facts_inferred.load(Ordering::Relaxed),
+            estimated_memory_bytes: self.estimated_memory_bytes.load(Ordering::Relaxed),
         }
     }
 }
@@ -117,12 +128,13 @@ pub struct MetricsSnapshot {
     pub memory_bytes: u64,
     pub inferences_total: u64,
     pub facts_inferred: u64,
+    pub estimated_memory_bytes: u64,
 }
 
 impl MetricsSnapshot {
     pub fn to_json(&self) -> String {
         format!(
-            r#"{{"queries_total":{},"queries_failed":{},"avg_query_latency_ms":{:.2},"inserts_total":{},"inserts_failed":{},"cache_hit_ratio":{:.4},"memory_bytes":{},"inferences_total":{},"facts_inferred":{}}}"#,
+            r#"{{"queries_total":{},"queries_failed":{},"avg_query_latency_ms":{:.2},"inserts_total":{},"inserts_failed":{},"cache_hit_ratio":{:.4},"memory_bytes":{},"inferences_total":{},"facts_inferred":{},"estimated_memory_bytes":{}}}"#,
             self.queries_total,
             self.queries_failed,
             self.avg_query_latency_ms,
@@ -132,6 +144,7 @@ impl MetricsSnapshot {
             self.memory_bytes,
             self.inferences_total,
             self.facts_inferred,
+            self.estimated_memory_bytes,
         )
     }
 }

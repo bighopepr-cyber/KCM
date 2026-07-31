@@ -1,6 +1,25 @@
 use crate::rule::{Rule, RuleID, RulePattern, RuleRegistry};
 use kcm_core::types::*;
 use kcm_storage::column::Schema;
+use std::time::Instant;
+
+/// Provenance record for a derived fact.
+/// Tracks which rule was applied and which source facts led to the derivation.
+#[derive(Debug, Clone)]
+pub struct Derivation {
+    pub derived_fact: Fact,
+    pub rule_id: RuleID,
+    pub confidence_formula_result: f64,
+}
+
+/// Statistics about an inference run.
+#[derive(Debug, Clone)]
+pub struct InferenceStats {
+    pub iterations: usize,
+    pub facts_derived: usize,
+    pub rules_applied: usize,
+    pub duration_ms: u64,
+}
 
 pub struct InferenceEngine {
     rule_registry: RuleRegistry,
@@ -33,22 +52,25 @@ impl InferenceEngine {
         self.rule_registry.register(rule)
     }
 
-    pub fn infer_forward_chaining(
+    /// Run inference and return both derivations and statistics.
+    pub fn infer_with_stats(
         &self,
         schema: &mut Schema,
-    ) -> Result<Vec<(Fact, RuleID)>, KcmError> {
-        use std::time::Instant;
+    ) -> Result<(Vec<Derivation>, InferenceStats), KcmError> {
         let start = Instant::now();
         let max_duration = std::time::Duration::from_secs(60);
-        let mut all_derived = Vec::new();
+        let mut all_derived: Vec<Derivation> = Vec::new();
+        let mut iterations = 0;
+        let mut total_rules = 0;
 
-        for _iteration in 0..self.max_iterations {
+        for iteration in 0..self.max_iterations {
+            iterations = iteration + 1;
             if start.elapsed() > max_duration {
-                return Err(KcmError::InvalidArgument(
-                    "Inference exceeded time limit (60s)".to_string(),
-                ));
+                break;
             }
-            let mut new_facts = Vec::new();
+
+            let mut new_facts: Vec<Derivation> = Vec::new();
+            let mut rules_used = 0;
 
             for rule in self.rule_registry.all_enabled() {
                 if !rule.enabled {
@@ -56,6 +78,7 @@ impl InferenceEngine {
                 }
 
                 let matches = self.find_pattern_matches(&rule.pattern, schema)?;
+                rules_used += 1;
 
                 for (subject, object, confidences) in matches {
                     let confidence = (rule.confidence_formula)(&confidences);
@@ -64,23 +87,49 @@ impl InferenceEngine {
                         let mut fact =
                             Fact::new(subject, rule.consequent_predicate, object, confidence)?;
                         fact.priority = rule.priority as i8;
-                        new_facts.push((fact, rule.id));
+                        new_facts.push(Derivation {
+                            derived_fact: fact,
+                            rule_id: rule.id,
+                            confidence_formula_result: confidence,
+                        });
                     }
                 }
             }
 
+            total_rules += rules_used;
             if new_facts.is_empty() {
                 break;
             }
 
-            for (fact, _rule_id) in &new_facts {
-                schema.append_fact(fact)?;
+            for d in &new_facts {
+                schema.append_fact(&d.derived_fact)?;
             }
-
             all_derived.extend(new_facts);
         }
 
-        Ok(all_derived)
+        let duration_ms = start.elapsed().as_millis() as u64;
+        Ok((
+            all_derived.clone(),
+            InferenceStats {
+                iterations,
+                facts_derived: all_derived.len(),
+                rules_applied: total_rules,
+                duration_ms,
+            },
+        ))
+    }
+
+    /// Run forward-chaining inference.
+    /// Returns derived facts with their source rule IDs.
+    pub fn infer_forward_chaining(
+        &self,
+        schema: &mut Schema,
+    ) -> Result<Vec<(Fact, RuleID)>, KcmError> {
+        let (derivations, _stats) = self.infer_with_stats(schema)?;
+        Ok(derivations
+            .into_iter()
+            .map(|d| (d.derived_fact, d.rule_id))
+            .collect())
     }
 
     fn find_pattern_matches(
