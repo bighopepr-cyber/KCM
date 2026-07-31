@@ -2,12 +2,27 @@ use kcm_core::types::ColumnID;
 use kcm_storage::column::Schema;
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
+pub enum Histogram {
+    Uniform { buckets: Vec<u64> },
+    FrequencyBased { values: Vec<u64> },
+}
+
+impl Histogram {
+    pub fn uniform_from_range(_min: i64, _max: i64, num_buckets: usize) -> Self {
+        Histogram::Uniform {
+            buckets: vec![0; num_buckets],
+        }
+    }
+}
+
 pub struct ColumnStatistics {
     pub row_count: u64,
     pub null_count: u64,
     pub cardinality: u64,
     pub min_value: Option<i64>,
     pub max_value: Option<i64>,
+    pub histogram: Option<Histogram>,
 }
 
 pub struct Statistics {
@@ -73,6 +88,7 @@ impl Statistics {
                 cardinality: subject_cardinality.len() as u64,
                 min_value: None,
                 max_value: None,
+                histogram: None,
             },
         );
         self.column_stats.insert(
@@ -83,6 +99,7 @@ impl Statistics {
                 cardinality: predicate_cardinality.len() as u64,
                 min_value: None,
                 max_value: None,
+                histogram: None,
             },
         );
         self.column_stats.insert(
@@ -93,6 +110,7 @@ impl Statistics {
                 cardinality: object_cardinality.len() as u64,
                 min_value: None,
                 max_value: None,
+                histogram: None,
             },
         );
         self.column_stats.insert(
@@ -111,6 +129,7 @@ impl Statistics {
                 } else {
                     None
                 },
+                histogram: None,
             },
         );
         self.column_stats.insert(
@@ -129,6 +148,7 @@ impl Statistics {
                 } else {
                     None
                 },
+                histogram: None,
             },
         );
     }

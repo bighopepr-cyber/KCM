@@ -168,6 +168,8 @@ impl<'a> ProjectOp<'a> {
 }
 
 impl<'a> Operator for ProjectOp<'a> {
+    /// Execute projection: return rowids that pass through.
+    /// Actual column extraction is done via `execute_projection()`.
     fn execute(&self) -> Result<Vec<usize>, KcmError> {
         Ok(self.rowids.clone())
     }
@@ -324,6 +326,10 @@ impl<'a> AggregateOp<'a> {
 }
 
 impl<'a> Operator for AggregateOp<'a> {
+    /// Execute aggregate operator.
+    ///
+    /// The Operator trait returns row IDs for pipeline compatibility.
+    /// For actual aggregate values, call `execute_aggregate()` or `execute_grouped()`.
     fn execute(&self) -> Result<Vec<usize>, KcmError> {
         Ok(self.rowids.clone())
     }

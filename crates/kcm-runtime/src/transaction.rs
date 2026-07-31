@@ -120,8 +120,13 @@ impl Transaction {
         Ok(())
     }
 
+    /// Commit the transaction.
+    ///
+    /// The caller must call `apply_to_schema()` before commit to persist changes.
+    /// Commit marks the transaction as complete and clears the change buffer.
     pub fn commit(mut self) -> Result<(), KcmError> {
         self.state = TransactionState::Committed;
+        self.changes.clear();
         Ok(())
     }
 

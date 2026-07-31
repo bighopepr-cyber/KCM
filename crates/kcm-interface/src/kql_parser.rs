@@ -15,6 +15,7 @@ pub enum Token {
     Desc,
     Join,
     On,
+    Infer,
     Identifier(String),
     Number(f64),
     StringLit(String),
@@ -136,6 +137,7 @@ impl<'a> Lexer<'a> {
             "desc" => Token::Desc,
             "join" => Token::Join,
             "on" => Token::On,
+            "infer" => Token::Infer,
             _ => Token::Identifier(ident),
         })
     }

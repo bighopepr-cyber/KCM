@@ -69,17 +69,54 @@ impl TransactionCoordinator {
             .get_mut(txn_id)
             .ok_or_else(|| "Transaction not found".to_string())?;
 
-        for _shard in &txn.participants {
-            txn.record_vote(true);
+        if txn.participants.is_empty() {
+            txn.status = TransactionStatus::Committed;
+            return Ok(());
         }
 
-        if txn.all_voted() {
-            txn.status = TransactionStatus::Committed;
-            Ok(())
-        } else {
-            txn.status = TransactionStatus::Aborted;
-            Err("Not all shards voted to commit".to_string())
+        // Phase 1: PREPARE
+        for participant in &txn.participants {
+            let vote = self.prepare_participant(*participant, &txn.transaction_id);
+            if !vote {
+                txn.status = TransactionStatus::Aborted;
+                self.abort_all_participants(&txn.participants, &txn.transaction_id);
+                return Err(format!("Participant {} voted ABORT", participant));
+            }
         }
+
+        // Phase 2: COMMIT
+        for participant in &txn.participants {
+            self.commit_participant(*participant, &txn.transaction_id);
+        }
+
+        txn.status = TransactionStatus::Committed;
+        Ok(())
+    }
+
+    fn prepare_participant(&self, _participant_id: usize, _txn_id: &str) -> bool {
+        // In a real distributed system, this sends a PREPARE message
+        // via network to the shard at _participant_id and waits for a vote.
+        // Currently simulated: all participants vote yes.
+        // TODO: Replace with actual network calls when distributed transport is implemented.
+        true
+    }
+
+    fn commit_participant(&self, _participant_id: usize, _txn_id: &str) {
+        // In a real distributed system, this sends a COMMIT message
+        // via network to the shard at _participant_id.
+        // Currently simulated: no-op.
+        // TODO: Replace with actual network calls when distributed transport is implemented.
+    }
+
+    fn abort_all_participants(&self, participants: &[usize], txn_id: &str) {
+        for participant in participants {
+            self.abort_participant(*participant, txn_id);
+        }
+    }
+
+    fn abort_participant(&self, _participant_id: usize, _txn_id: &str) {
+        // In a real distributed system, this sends an ABORT message.
+        // Currently simulated: no-op.
     }
 
     pub fn abort(&self, txn_id: &str) -> Result<(), String> {
