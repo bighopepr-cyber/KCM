@@ -29,13 +29,13 @@ KCM rejects:
 ### Crate Map (13 crates, single responsibility each)
 
 ```
-kcm-core          → Types, DenseVec, Bitmap, Dictionary. Zero external runtime deps.
+kcm-core          → Types, DenseVec, Bitmap, Dictionary. Depends on parking_lot only.
 kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup, Recovery, DictCodec.
 kcm-compute       → Relational algebra operators, SIMD AVX2 acceleration.
 kcm-reasoning     → Rule definitions, forward-chaining inference engine.
 kcm-optimizer     → Cost model, query planner, statistics, plan rewriting, adaptive execution.
 kcm-runtime       → KnowledgeDatabase, Transactions, Metrics, Health, Executor, AsyncExecutor.
-kcm-interface     → C FFI (13 functions), Python bindings (PyO3), REST handlers, KQL parser.
+kcm-interface     → C FFI (15 functions), Python bindings (PyO3), REST handlers, KQL parser.
 kcm-distributed   → Sharding strategies (Hash/Range/ConsistentHash), 2PC coordinator.
 kcm-ml            → Learned index (regression), confidence learner, rule discovery.
 kcm-security      → RBAC (5 permission levels), AES-256-GCM encryption, audit log (hash-chained).

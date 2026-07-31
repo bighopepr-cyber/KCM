@@ -64,8 +64,10 @@ Six shared dictionaries in `KnowledgeDatabase`:
 
 | Entry | Size | Layout |
 |-------|------|--------|
-| Insert | 34 bytes | op(1) + subject(4) + predicate(1) + object(4) + confidence(8) + evidence(1) + timestamp(8) + context(1) + version(4) + priority(1) + owner(2) |
-| Delete | 9 bytes | op(1) + row_id(8) |
+| Insert | 38 bytes | op(1) + subject(4) + predicate(1) + object(4) + confidence(8) + timestamp(8) + context(1) + version(4) + priority(1) + owner(2) + crc32(4) |
+| Delete | 13 bytes | op(1) + row_id(8) + crc32(4) |
+
+Note: `evidence` is not stored in WAL entries. On replay, `evidence` defaults to `EvidenceID::UNKNOWN`.
 
 ### 3.2 WAL Properties
 
@@ -264,7 +266,7 @@ Tokio runtime bridge:
 
 ### 9.1 C FFI
 
-13 `extern "C"` functions:
+15 `extern "C"` functions:
 
 | Function | Purpose |
 |----------|---------|
@@ -279,6 +281,7 @@ Tokio runtime bridge:
 | `KCM_QueryNext` | Iterate results |
 | `KCM_QueryFree` | Free query |
 | `KCM_DatabaseBeginTransaction` | Start transaction |
+| `KCM_TransactionFree` | Free transaction |
 | `KCM_TransactionCommit` | Commit transaction |
 | `KCM_TransactionRollback` | Rollback transaction |
 | `KCM_ErrorMessage` | Get error string |

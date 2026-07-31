@@ -1,3 +1,4 @@
+use kcm_core::types::KcmError;
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -94,11 +95,11 @@ impl TransactionCoordinator {
         txn_id
     }
 
-    pub fn two_phase_commit(&self, txn_id: &str) -> Result<(), String> {
+    pub fn two_phase_commit(&self, txn_id: &str) -> Result<(), KcmError> {
         let mut txns = self.transactions.lock();
         let txn = txns
             .get_mut(txn_id)
-            .ok_or_else(|| "Transaction not found".to_string())?;
+            .ok_or_else(|| KcmError::NotFound(format!("Transaction not found: {}", txn_id)))?;
 
         if txn.participants.is_empty() {
             txn.status = TransactionStatus::Committed;
@@ -111,7 +112,7 @@ impl TransactionCoordinator {
             if !vote {
                 txn.status = TransactionStatus::Aborted;
                 self.transport.abort(*participant, &txn.transaction_id);
-                return Err(format!("Participant {} voted ABORT", participant));
+                return Err(KcmError::Conflict(format!("Participant {} voted ABORT", participant)));
             }
         }
 
@@ -124,13 +125,13 @@ impl TransactionCoordinator {
         Ok(())
     }
 
-    pub fn abort(&self, txn_id: &str) -> Result<(), String> {
+    pub fn abort(&self, txn_id: &str) -> Result<(), KcmError> {
         let mut txns = self.transactions.lock();
         if let Some(txn) = txns.get_mut(txn_id) {
             txn.status = TransactionStatus::Aborted;
             Ok(())
         } else {
-            Err("Transaction not found".to_string())
+            Err(KcmError::NotFound(format!("Transaction not found: {}", txn_id)))
         }
     }
 

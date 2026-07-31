@@ -2,6 +2,7 @@ use crate::column::Schema;
 use crate::file_format::DatabaseFile;
 use crate::wal::WriteAheadLog;
 use kcm_core::types::*;
+use log::warn;
 use std::path::Path;
 
 pub struct RecoveryManager;
@@ -24,7 +25,7 @@ impl RecoveryManager {
                     Ok(schema)
                 }
                 Err(e) => {
-                    eprintln!("DB load failed: {}, attempting backup recovery", e);
+                    warn!("DB load failed: {}, attempting backup recovery", e);
                     Self::recover_from_backup(db_path, wal_path)
                 }
             }

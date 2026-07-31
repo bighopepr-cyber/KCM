@@ -1,4 +1,5 @@
 use kcm_core::types::*;
+use log::info;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
@@ -329,7 +330,7 @@ impl WriteAheadLog {
             }
         }
 
-        eprintln!(
+        info!(
             "WAL verification passed: {} entries, {} bytes",
             entry_count,
             data.len()
