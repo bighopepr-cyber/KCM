@@ -27,6 +27,9 @@ impl Dictionary {
         }
 
         let id = self.entries.len() as DictID;
+        if id == u32::MAX {
+            panic!("Dictionary overflow: exceeded u32::MAX entries");
+        }
         self.entries.push(value.to_string());
         self.reverse_map.insert(value.to_string(), id);
         id

@@ -129,12 +129,20 @@ impl Confidence {
 
     pub fn multiply(&self, other: Confidence) -> Confidence {
         let product = (self.0 * other.0).clamp(0.0, 1.0);
-        Confidence(product)
+        if product.is_finite() {
+            Confidence(product)
+        } else {
+            Confidence(0.0)
+        }
     }
 
     pub fn combine_or(&self, other: Confidence) -> Confidence {
         let combined = (self.0 + other.0 - (self.0 * other.0)).clamp(0.0, 1.0);
-        Confidence(combined)
+        if combined.is_finite() {
+            Confidence(combined)
+        } else {
+            Confidence(0.0)
+        }
     }
 }
 

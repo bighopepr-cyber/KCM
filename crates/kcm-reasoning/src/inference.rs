@@ -37,9 +37,17 @@ impl InferenceEngine {
         &self,
         schema: &mut Schema,
     ) -> Result<Vec<(Fact, RuleID)>, KcmError> {
+        use std::time::Instant;
+        let start = Instant::now();
+        let max_duration = std::time::Duration::from_secs(60);
         let mut all_derived = Vec::new();
 
         for _iteration in 0..self.max_iterations {
+            if start.elapsed() > max_duration {
+                return Err(KcmError::InvalidArgument(
+                    "Inference exceeded time limit (60s)".to_string(),
+                ));
+            }
             let mut new_facts = Vec::new();
 
             for rule in self.rule_registry.all_enabled() {

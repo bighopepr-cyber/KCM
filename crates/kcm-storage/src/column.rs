@@ -123,15 +123,15 @@ impl<T: Copy> Column<T> {
         let compressor = make_compressor(self.compression);
         let decompressed = compressor.decompress(&self.raw_bytes, expected)?;
         let ptr = self.data.as_mut_slice().as_mut_ptr();
-        // SAFETY: decompressed bytes are valid T representation from column data.
-        // ptr points to DenseVec buffer with capacity >= expected bytes.
-        // copy_len is min(decompressed_len, expected) to prevent buffer overflow.
+        if decompressed.len() < expected {
+            return Err(KcmError::Corrupted(format!(
+                "Decompression size mismatch: got {} bytes, expected {} bytes",
+                decompressed.len(),
+                expected
+            )));
+        }
         unsafe {
-            std::ptr::copy_nonoverlapping(
-                decompressed.as_ptr(),
-                ptr as *mut u8,
-                decompressed.len().min(expected),
-            );
+            std::ptr::copy_nonoverlapping(decompressed.as_ptr(), ptr as *mut u8, expected);
         }
         self.compressed = false;
         self.raw_bytes.clear();

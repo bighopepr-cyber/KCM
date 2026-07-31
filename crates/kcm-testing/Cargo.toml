@@ -10,6 +10,7 @@ kcm-storage = { path = "../kcm-storage" }
 kcm-runtime = { path = "../kcm-runtime" }
 kcm-security = { path = "../kcm-security" }
 kcm-distributed = { path = "../kcm-distributed" }
+kcm-compliance = { path = "../kcm-compliance" }
 parking_lot = "0.12"
 
 [dev-dependencies]
