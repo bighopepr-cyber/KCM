@@ -1,0 +1,55 @@
+syntax = "proto3";
+package kcm;
+
+service KnowledgeService {
+  rpc InsertFact(InsertFactRequest) returns (InsertFactResponse);
+  rpc QueryFacts(QueryRequest) returns (QueryResponse);
+  rpc GetFact(GetFactRequest) returns (FactData);
+  rpc GetStats(GetStatsRequest) returns (StatsResponse);
+}
+
+message InsertFactRequest {
+  uint32 subject = 1;
+  uint32 predicate = 2;
+  uint32 object = 3;
+  double confidence = 4;
+}
+
+message InsertFactResponse {
+  uint64 row_id = 1;
+  string status = 2;
+}
+
+message QueryRequest {
+  optional uint32 subject = 1;
+  optional uint32 predicate = 2;
+  optional uint32 object = 3;
+  optional double confidence_min = 4;
+  optional uint32 limit = 5;
+}
+
+message QueryResponse {
+  repeated FactData facts = 1;
+  uint32 total_count = 2;
+}
+
+message FactData {
+  uint32 subject = 1;
+  uint32 predicate = 2;
+  uint32 object = 3;
+  double confidence = 4;
+  int64 timestamp = 5;
+  uint32 context = 6;
+}
+
+message GetFactRequest {
+  uint64 row_id = 1;
+}
+
+message GetStatsRequest {}
+
+message StatsResponse {
+  uint64 fact_count = 1;
+  uint64 memory_bytes = 2;
+  double avg_confidence = 3;
+}

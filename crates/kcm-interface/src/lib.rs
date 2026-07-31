@@ -1,7 +1,10 @@
 #![allow(non_camel_case_types)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
+pub mod examples;
+pub mod kql_parser;
 pub mod python;
+pub mod rest_api;
 
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;

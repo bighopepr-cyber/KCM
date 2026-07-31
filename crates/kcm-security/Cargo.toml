@@ -1,0 +1,10 @@
+[package]
+name = "kcm-security"
+version = "0.1.0"
+edition = "2021"
+description = "Security and access control for KCM"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+parking_lot = "0.12"
+blake3 = "1.5"

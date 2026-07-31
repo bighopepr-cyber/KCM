@@ -1,0 +1,9 @@
+[package]
+name = "kcm-compliance"
+version = "0.1.0"
+edition = "2021"
+description = "Compliance and standards for KCM"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+parking_lot = "0.12"

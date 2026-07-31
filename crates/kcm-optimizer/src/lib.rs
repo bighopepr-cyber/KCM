@@ -1,6 +1,17 @@
 use kcm_core::types::*;
 use kcm_storage::column::Schema;
 
+pub mod adaptive;
+pub mod cost_model;
+pub mod planner;
+pub mod rewriting;
+pub mod statistics;
+
+pub use cost_model::{CostModel, OperatorCost};
+pub use planner::PlanNode as PlannerPlanNode;
+pub use planner::{Planner, PlannerFilterPredicate, QueryPlan};
+pub use statistics::{ColumnStatistics, Statistics};
+
 #[derive(Debug, Clone)]
 pub enum PlanNode {
     Scan {

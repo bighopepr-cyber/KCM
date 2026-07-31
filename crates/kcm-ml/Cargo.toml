@@ -1,0 +1,9 @@
+[package]
+name = "kcm-ml"
+version = "0.1.0"
+edition = "2021"
+description = "Machine learning integration for KCM"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+kcm-reasoning = { path = "../kcm-reasoning" }

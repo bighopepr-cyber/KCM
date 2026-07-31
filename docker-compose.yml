@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  kcm:
+    build: .
+    volumes:
+      - kcm_data:/data
+    environment:
+      RUST_LOG: info
+      KCM_DATA_PATH: /data/kcm.db
+volumes:
+  kcm_data:

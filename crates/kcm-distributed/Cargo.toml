@@ -1,0 +1,9 @@
+[package]
+name = "kcm-distributed"
+version = "0.1.0"
+edition = "2021"
+description = "Distributed architecture for KCM"
+
+[dependencies]
+kcm-core = { path = "../kcm-core" }
+parking_lot = "0.12"

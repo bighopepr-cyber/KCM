@@ -7,6 +7,10 @@ members = [
     "crates/kcm-optimizer",
     "crates/kcm-runtime",
     "crates/kcm-interface",
+    "crates/kcm-distributed",
+    "crates/kcm-ml",
+    "crates/kcm-security",
+    "crates/kcm-compliance",
 ]
 
 resolver = "2"
