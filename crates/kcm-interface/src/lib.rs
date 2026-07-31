@@ -13,9 +13,9 @@ pub struct KCM_Database {
     inner: Arc<Mutex<KnowledgeDatabase>>,
 }
 
-#[allow(dead_code)]
 pub struct KCM_Transaction {
-    inner: Arc<Mutex<kcm_runtime::transaction::Transaction>>,
+    #[allow(dead_code)]
+    db: *mut KCM_Database,
 }
 
 pub struct KCM_Query {
@@ -24,6 +24,7 @@ pub struct KCM_Query {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub struct KCM_Fact {
     pub subject: u32,
     pub predicate: u8,
@@ -66,7 +67,7 @@ impl From<&KCM_Fact> for Fact {
 }
 
 #[repr(C)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KCM_Error {
     KCM_OK = 0,
     KCM_ERR_NOT_FOUND = 1,
@@ -97,7 +98,6 @@ pub extern "C" fn KCM_DatabaseNew(db_out: *mut *mut KCM_Database) -> KCM_Error {
     if db_out.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
-
     match KnowledgeDatabase::new() {
         Ok(kb) => {
             unsafe {
@@ -125,17 +125,65 @@ pub extern "C" fn KCM_DatabaseInsert(db: *mut KCM_Database, fact: *const KCM_Fac
     if db.is_null() || fact.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
-
     unsafe {
         let db = &*db;
         let fact_ref = &*fact;
         let kcm_fact = Fact::from(fact_ref);
-
         match db.inner.lock().insert(&kcm_fact) {
             Ok(_) => KCM_Error::KCM_OK,
             Err(e) => e.into(),
         }
     }
+}
+
+#[no_mangle]
+pub extern "C" fn KCM_DatabaseUpdate(
+    db: *mut KCM_Database,
+    row_id: u64,
+    fact: *const KCM_Fact,
+) -> KCM_Error {
+    if db.is_null() || fact.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let db = &*db;
+        let fact_ref = &*fact;
+        let kcm_fact = Fact::from(fact_ref);
+        match db.inner.lock().update(RowID(row_id), &kcm_fact) {
+            Ok(_) => KCM_Error::KCM_OK,
+            Err(e) => e.into(),
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn KCM_DatabaseDelete(db: *mut KCM_Database, row_id: u64) -> KCM_Error {
+    if db.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let db = &*db;
+        match db.inner.lock().delete(RowID(row_id)) {
+            Ok(_) => KCM_Error::KCM_OK,
+            Err(e) => e.into(),
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn KCM_DatabaseFactCount(db: *mut KCM_Database) -> u64 {
+    if db.is_null() {
+        return 0;
+    }
+    unsafe { (*db).inner.lock().fact_count() as u64 }
+}
+
+#[no_mangle]
+pub extern "C" fn KCM_DatabaseActiveCount(db: *mut KCM_Database) -> u64 {
+    if db.is_null() {
+        return 0;
+    }
+    unsafe { (*db).inner.lock().active_fact_count() as u64 }
 }
 
 #[no_mangle]
@@ -146,11 +194,9 @@ pub extern "C" fn KCM_DatabaseQuery(
     if db.is_null() || query_out.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
-
     unsafe {
         let db = &*db;
         let kb = db.inner.lock();
-
         match kb.query().execute() {
             Ok(facts) => {
                 *query_out = Box::into_raw(Box::new(KCM_Query {
@@ -173,10 +219,8 @@ pub extern "C" fn KCM_QueryNext(
     if query.is_null() || fact_out.is_null() || has_next.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
-
     unsafe {
         let query_ref = &mut *query;
-
         if query_ref.position < query_ref.inner.len() {
             let fact = &query_ref.inner[query_ref.position];
             *fact_out = KCM_Fact::from(fact);
@@ -200,6 +244,32 @@ pub extern "C" fn KCM_QueryFree(query: *mut KCM_Query) {
 }
 
 #[no_mangle]
+pub extern "C" fn KCM_DatabaseBeginTransaction(
+    db: *mut KCM_Database,
+    txn_out: *mut *mut KCM_Transaction,
+) -> KCM_Error {
+    if db.is_null() || txn_out.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let db_ref = &*db;
+        let txn = db_ref.inner.lock().begin_transaction();
+        *txn_out = Box::into_raw(Box::new(KCM_Transaction { db }));
+        let _ = txn;
+        KCM_Error::KCM_OK
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
+    if !txn.is_null() {
+        unsafe {
+            drop(Box::from_raw(txn));
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
     let msg = match err {
         KCM_Error::KCM_OK => "OK",
@@ -211,6 +281,5 @@ pub extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
         KCM_Error::KCM_ERR_CONFLICT => "Conflict",
         KCM_Error::KCM_ERR_TRANSACTION_ABORTED => "Transaction aborted",
     };
-
     msg.as_ptr() as *const c_char
 }
