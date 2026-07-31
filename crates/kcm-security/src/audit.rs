@@ -92,6 +92,17 @@ impl AuditLog {
         });
     }
 
+    pub fn log_rule(&self, user_id: &str, rule_id: u32) {
+        self.log(AuditEvent {
+            event_type: AuditEventType::RuleExecuted,
+            user_id: user_id.to_string(),
+            context: format!("rule_id={}", rule_id),
+            timestamp: Self::now(),
+            details: "Rule executed".to_string(),
+            prev_hash: [0u8; 32],
+        });
+    }
+
     pub fn get_events(&self) -> Vec<AuditEvent> {
         self.events.lock().clone().into()
     }

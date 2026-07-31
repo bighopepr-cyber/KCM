@@ -1,5 +1,6 @@
 use kcm_compliance::data_classification::*;
 use kcm_compliance::gdpr::*;
+use kcm_core::types::{ContextID, EvidenceID, Fact, ObjectID, PredicateID, SubjectID};
 
 #[test]
 fn test_gdpr_full_lifecycle() {
@@ -78,27 +79,24 @@ fn test_gdpr_concurrent_operations() {
 fn test_data_classification_enforcement() {
     assert!(!DataClassification::Public.requires_encryption());
     assert!(!DataClassification::Public.requires_audit_log());
-    assert_eq!(DataClassification::Public.max_retention_days(), Some(2555));
+    assert_eq!(DataClassification::Public.max_retention_days(), Some(365));
 
     assert!(!DataClassification::Internal.requires_encryption());
-    assert!(!DataClassification::Internal.requires_audit_log());
-    assert_eq!(
-        DataClassification::Internal.max_retention_days(),
-        Some(1095)
-    );
+    assert!(DataClassification::Internal.requires_audit_log());
+    assert_eq!(DataClassification::Internal.max_retention_days(), Some(730));
 
     assert!(DataClassification::Confidential.requires_encryption());
-    assert!(!DataClassification::Confidential.requires_audit_log());
+    assert!(DataClassification::Confidential.requires_audit_log());
     assert_eq!(
         DataClassification::Confidential.max_retention_days(),
-        Some(365)
+        Some(1825)
     );
 
     assert!(DataClassification::Restricted.requires_encryption());
     assert!(DataClassification::Restricted.requires_audit_log());
     assert_eq!(
         DataClassification::Restricted.max_retention_days(),
-        Some(180)
+        Some(2555)
     );
 }
 
@@ -106,19 +104,38 @@ fn test_data_classification_enforcement() {
 fn test_classified_fact_retention() {
     let now = 1_000_000_000i64;
     let fact_public = ClassifiedFact {
-        fact_id: 1,
+        fact: Fact {
+            subject: SubjectID(0),
+            predicate: PredicateID(0),
+            object: ObjectID(0),
+            confidence: 1.0,
+            evidence: EvidenceID::UNKNOWN,
+            timestamp: now,
+            context: ContextID::NULL,
+            version: 1,
+            priority: 0,
+            owner: 0,
+        },
         classification: DataClassification::Public,
-        owner: "admin".to_string(),
-        created_at: now,
     };
     assert!(fact_public.should_retain(now + 86400 * 365));
+    assert!(!fact_public.should_retain(now + 86400 * 366));
 
     let fact_restricted = ClassifiedFact {
-        fact_id: 2,
+        fact: Fact {
+            subject: SubjectID(0),
+            predicate: PredicateID(0),
+            object: ObjectID(0),
+            confidence: 1.0,
+            evidence: EvidenceID::UNKNOWN,
+            timestamp: now,
+            context: ContextID::NULL,
+            version: 1,
+            priority: 0,
+            owner: 0,
+        },
         classification: DataClassification::Restricted,
-        owner: "admin".to_string(),
-        created_at: now,
     };
-    assert!(fact_restricted.should_retain(now + 86400 * 100));
-    assert!(!fact_restricted.should_retain(now + 86400 * 200));
+    assert!(fact_restricted.should_retain(now + 86400 * 2554));
+    assert!(!fact_restricted.should_retain(now + 86400 * 2556));
 }

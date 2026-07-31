@@ -1,3 +1,5 @@
+use kcm_core::types::Fact;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum DataClassification {
     Public,
@@ -14,30 +16,37 @@ impl DataClassification {
         )
     }
     pub fn requires_audit_log(&self) -> bool {
-        matches!(self, DataClassification::Restricted)
+        matches!(
+            self,
+            DataClassification::Internal
+                | DataClassification::Confidential
+                | DataClassification::Restricted
+        )
     }
     pub fn max_retention_days(&self) -> Option<i32> {
         match self {
-            DataClassification::Public => Some(2555),
-            DataClassification::Internal => Some(1095),
-            DataClassification::Confidential => Some(365),
-            DataClassification::Restricted => Some(180),
+            DataClassification::Public => Some(365),
+            DataClassification::Internal => Some(730),
+            DataClassification::Confidential => Some(1825),
+            DataClassification::Restricted => Some(2555),
         }
     }
 }
 
 pub struct ClassifiedFact {
-    pub fact_id: u64,
+    pub fact: Fact,
     pub classification: DataClassification,
-    pub owner: String,
-    pub created_at: i64,
 }
 
 impl ClassifiedFact {
     pub fn should_retain(&self, now: i64) -> bool {
         match self.classification.max_retention_days() {
-            Some(days) => (now - self.created_at) <= (days as i64) * 86400,
+            Some(days) => (now - self.fact.timestamp) <= (days as i64) * 86400,
             None => true,
         }
+    }
+
+    pub fn is_expired(&self, now: i64) -> bool {
+        !self.should_retain(now)
     }
 }

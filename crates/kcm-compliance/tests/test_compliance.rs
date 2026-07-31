@@ -1,5 +1,6 @@
 use kcm_compliance::data_classification::*;
 use kcm_compliance::gdpr::*;
+use kcm_core::types::{ContextID, EvidenceID, Fact, ObjectID, PredicateID, SubjectID};
 
 #[test]
 fn test_gdpr_register_and_consent() {
@@ -72,6 +73,8 @@ fn test_data_classification() {
     assert!(DataClassification::Confidential.requires_encryption());
     assert!(DataClassification::Restricted.requires_encryption());
     assert!(!DataClassification::Public.requires_audit_log());
+    assert!(DataClassification::Internal.requires_audit_log());
+    assert!(DataClassification::Confidential.requires_audit_log());
     assert!(DataClassification::Restricted.requires_audit_log());
 }
 
@@ -86,11 +89,20 @@ fn test_data_classification_retention() {
 #[test]
 fn test_classified_fact_retention() {
     let fact = ClassifiedFact {
-        fact_id: 1,
+        fact: Fact {
+            subject: SubjectID(0),
+            predicate: PredicateID(0),
+            object: ObjectID(0),
+            confidence: 1.0,
+            evidence: EvidenceID::UNKNOWN,
+            timestamp: 1_000_000,
+            context: ContextID::NULL,
+            version: 1,
+            priority: 0,
+            owner: 0,
+        },
         classification: DataClassification::Confidential,
-        owner: "admin".to_string(),
-        created_at: 1_000_000,
     };
     assert!(fact.should_retain(1_000_000 + 86400 * 300));
-    assert!(!fact.should_retain(1_000_000 + 86400 * 400));
+    assert!(!fact.should_retain(1_000_000 + 86400 * 1826));
 }

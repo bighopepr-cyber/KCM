@@ -201,7 +201,7 @@ Storage-specific errors (`StorageError`) convert to `KcmError` via `From` impl.
 | Dictionaries | `Arc<RwLock<Dictionary>>` (parking_lot) | Same pattern as Schema |
 | WAL | `Mutex<File>` (parking_lot) | Serialized writes |
 | Audit Log | `Mutex<Vec<AuditEvent>>` (parking_lot) | Serialized append |
-| Metrics | `AtomicU64` (10 counters) | Lock-free counters |
+| Metrics | `AtomicU64` (11 counters) | Lock-free counters |
 | Thread Pool | rayon ThreadPool | Work-stealing parallelism |
 | Async | tokio Runtime | I/O-bound async operations |
 

@@ -320,7 +320,7 @@ fn bench_database_query_filtered(c: &mut Criterion) {
                         SubjectID((i % 100) as u32),
                         PredicateID((i % 10) as u8),
                         ObjectID((i % 200) as u32),
-                        0.1 + (i as f64 * 0.001),
+                        0.1 + (i % 900) as f64 / 1000.0,
                     )
                     .unwrap();
                     kb.insert(&fact).unwrap();
@@ -548,7 +548,7 @@ fn bench_file_format_save_load(c: &mut Criterion) {
                             SubjectID((i % 100) as u32),
                             PredicateID((i % 10) as u8),
                             ObjectID((i % 200) as u32),
-                            0.5 + (i as f64 * 0.001),
+                            0.5 + (i % 500) as f64 / 1000.0,
                         )
                         .unwrap(),
                     )
