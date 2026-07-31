@@ -35,6 +35,12 @@ pub struct PerformanceMetrics {
     pub metrics: HashMap<String, f64>,
 }
 
+impl Default for PerformanceMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PerformanceMetrics {
     pub fn new() -> Self {
         PerformanceMetrics {
@@ -53,7 +59,7 @@ impl PerformanceMetrics {
     pub fn to_report(&self) -> String {
         let mut lines = vec!["Performance Metrics:".to_string()];
         let mut sorted: Vec<_> = self.metrics.iter().collect();
-        sorted.sort_by_key(|(k, _)| k.clone());
+        sorted.sort_by_key(|(k, _)| k.to_owned());
         for (name, value) in sorted {
             lines.push(format!("  {}: {:.2}", name, value));
         }

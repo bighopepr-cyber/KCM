@@ -57,7 +57,7 @@ pub fn run_stress_test(scenario: &StressTestScenario) -> StressTestResults {
                 )
                 .unwrap();
 
-                let success = if count % 3 == 0 {
+                let success = if count.is_multiple_of(3) {
                     kb.insert(&fact).is_ok()
                 } else {
                     kb.query().with_predicate(PredicateID(5)).execute().is_ok()

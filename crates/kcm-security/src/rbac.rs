@@ -40,10 +40,13 @@ pub struct User {
     pub roles: HashSet<String>,
 }
 
+type AclEntry = Vec<(String, Permission)>;
+type AclMap = HashMap<ContextID, AclEntry>;
+
 pub struct ACLManager {
     users: Arc<RwLock<HashMap<String, User>>>,
     roles: Arc<RwLock<HashMap<String, Role>>>,
-    context_acl: Arc<RwLock<HashMap<ContextID, Vec<(String, Permission)>>>>,
+    context_acl: Arc<RwLock<AclMap>>,
 }
 
 impl ACLManager {

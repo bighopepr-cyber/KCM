@@ -109,7 +109,7 @@ impl Bitmap {
     }
 
     pub fn from_bytes(bytes: &[u8], len: usize) -> Self {
-        let num_words = (len + 63) / 64;
+        let num_words = len.div_ceil(64);
         let mut words = vec![0u64; num_words];
         let copy_len = bytes.len().min(num_words * 8);
         unsafe {

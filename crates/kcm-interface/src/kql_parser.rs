@@ -154,7 +154,7 @@ impl<'a> Lexer<'a> {
     fn read_string(&mut self) -> Result<Token, String> {
         self.input.next();
         let mut s = String::new();
-        while let Some(c) = self.input.next() {
+        for c in self.input.by_ref() {
             if c == '"' {
                 return Ok(Token::StringLit(s));
             }

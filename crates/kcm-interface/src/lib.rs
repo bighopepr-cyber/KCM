@@ -281,15 +281,13 @@ pub extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
 #[no_mangle]
 pub extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
     match err {
-        KCM_Error::KCM_OK => b"OK\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_NOT_FOUND => b"Not found\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_OUT_OF_MEMORY => b"Out of memory\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_INVALID_ARGUMENT => b"Invalid argument\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_IO => b"I/O error\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_CORRUPTED => b"Data corrupted\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_CONFLICT => b"Conflict\0".as_ptr() as *const c_char,
-        KCM_Error::KCM_ERR_TRANSACTION_ABORTED => {
-            b"Transaction aborted\0".as_ptr() as *const c_char
-        }
+        KCM_Error::KCM_OK => c"OK".as_ptr(),
+        KCM_Error::KCM_ERR_NOT_FOUND => c"Not found".as_ptr(),
+        KCM_Error::KCM_ERR_OUT_OF_MEMORY => c"Out of memory".as_ptr(),
+        KCM_Error::KCM_ERR_INVALID_ARGUMENT => c"Invalid argument".as_ptr(),
+        KCM_Error::KCM_ERR_IO => c"I/O error".as_ptr(),
+        KCM_Error::KCM_ERR_CORRUPTED => c"Data corrupted".as_ptr(),
+        KCM_Error::KCM_ERR_CONFLICT => c"Conflict".as_ptr(),
+        KCM_Error::KCM_ERR_TRANSACTION_ABORTED => c"Transaction aborted".as_ptr(),
     }
 }

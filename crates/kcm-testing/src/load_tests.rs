@@ -24,7 +24,7 @@ pub struct LoadTestResults {
 }
 
 impl LoadTestResults {
-    pub fn pass(&self, scenario: &LoadTestScenario) -> bool {
+    pub fn pass(&self, _scenario: &LoadTestScenario) -> bool {
         self.failed_operations <= self.total_operations / 1000
     }
 
@@ -67,7 +67,7 @@ pub fn run_load_test(scenario: &LoadTestScenario) -> LoadTestResults {
         handles.push(std::thread::spawn(move || {
             for i in 0..ops {
                 let op_start = Instant::now();
-                let success = if (user + i as usize) % 3 == 0 {
+                let success = if (user + i as usize).is_multiple_of(3) {
                     let fact = Fact::new(
                         SubjectID((user % 100) as u32),
                         PredicateID(5),

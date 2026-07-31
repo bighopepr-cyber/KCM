@@ -49,6 +49,7 @@ impl BitmapIndex {
 }
 
 pub struct ZoneMap {
+    #[allow(dead_code)]
     block_size: usize,
     min_values: Vec<i64>,
     max_values: Vec<i64>,
