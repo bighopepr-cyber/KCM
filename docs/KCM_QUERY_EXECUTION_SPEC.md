@@ -182,7 +182,35 @@ WHERE <condition> [AND|OR <condition>]*
 
 ---
 
-## 6. Constraints
+---
+
+## 6. KQL Error Taxonomy
+
+| Error Code | Type | Description | HTTP Status |
+|-----------|------|-------------|-------------|
+| KQL-001 | SyntaxError | Unexpected token in query | 400 |
+| KQL-002 | MissingKeyword | Required keyword missing (SELECT, FROM) | 400 |
+| KQL-003 | UnknownColumn | Column name not found in schema | 400 |
+| KQL-004 | TypeMismatch | Operand types incompatible | 400 |
+| KQL-005 | UnterminatedString | Missing closing quote | 400 |
+| KQL-006 | InvalidNumber | Number literal out of range | 400 |
+| KQL-007 | UnknownKeyword | Unrecognized reserved word | 400 |
+| KQL-008 | EmptyQuery | Query contains no statements | 400 |
+
+### 6.1 Error Response Format
+
+```json
+{
+    "error": "KQL-001",
+    "type": "SyntaxError",
+    "message": "Unexpected token '=' at position 15",
+    "position": 15
+}
+```
+
+---
+
+## 7. Constraints
 
 | Constraint | Rationale |
 |------------|-----------|

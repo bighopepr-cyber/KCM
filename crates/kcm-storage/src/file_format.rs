@@ -1,11 +1,32 @@
 use crate::column::Schema;
 use kcm_core::types::*;
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Read, Write};
+use std::io::{BufReader, BufWriter, Read, Seek, Write};
 use std::path::Path;
 
 pub const DB_MAGIC: &[u8; 5] = b"KCMDB";
-pub const DB_VERSION: u8 = 1;
+pub const DB_VERSION: u8 = 2;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum ColumnCodecId {
+    None = 0,
+    Zstd = 1,
+    Lz4 = 2,
+    Rle = 3,
+}
+
+impl ColumnCodecId {
+    pub fn from_u8(v: u8) -> Option<Self> {
+        match v {
+            0 => Some(Self::None),
+            1 => Some(Self::Zstd),
+            2 => Some(Self::Lz4),
+            3 => Some(Self::Rle),
+            _ => None,
+        }
+    }
+}
 
 pub struct DatabaseFile;
 
@@ -32,7 +53,7 @@ impl DatabaseFile {
             .write_all(&(schema.len() as u64).to_le_bytes())
             .map_err(|e| KcmError::Io(e.to_string()))?;
         writer
-            .write_all(&[11u8])
+            .write_all(&[10u8])
             .map_err(|e| KcmError::Io(e.to_string()))?;
         writer
             .write_all(&now.to_le_bytes())
@@ -41,19 +62,87 @@ impl DatabaseFile {
             .write_all(&now.to_le_bytes())
             .map_err(|e| KcmError::Io(e.to_string()))?;
 
-        Self::serialize_column_raw(&mut writer, schema.subject_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.predicate_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.object_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.confidence_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.evidence_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.timestamp_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.context_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.version_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.priority_col.as_slice())?;
-        Self::serialize_column_raw(&mut writer, schema.owner_col.as_slice())?;
+        let columns: Vec<(&[u8], usize, ColumnCodecId)> = vec![
+            (
+                as_bytes(schema.subject_col.as_slice()),
+                schema.subject_col.len(),
+                ColumnCodecId::Zstd,
+            ),
+            (
+                as_bytes(schema.predicate_col.as_slice()),
+                schema.predicate_col.len(),
+                ColumnCodecId::Rle,
+            ),
+            (
+                as_bytes(schema.object_col.as_slice()),
+                schema.object_col.len(),
+                ColumnCodecId::Zstd,
+            ),
+            (
+                as_bytes(schema.confidence_col.as_slice()),
+                schema.confidence_col.len(),
+                ColumnCodecId::Zstd,
+            ),
+            (
+                as_bytes(schema.evidence_col.as_slice()),
+                schema.evidence_col.len(),
+                ColumnCodecId::Rle,
+            ),
+            (
+                as_bytes(schema.timestamp_col.as_slice()),
+                schema.timestamp_col.len(),
+                ColumnCodecId::Zstd,
+            ),
+            (
+                as_bytes(schema.context_col.as_slice()),
+                schema.context_col.len(),
+                ColumnCodecId::Rle,
+            ),
+            (
+                as_bytes(schema.version_col.as_slice()),
+                schema.version_col.len(),
+                ColumnCodecId::Lz4,
+            ),
+            (
+                as_bytes(schema.priority_col.as_slice()),
+                schema.priority_col.len(),
+                ColumnCodecId::Rle,
+            ),
+            (
+                as_bytes(schema.owner_col.as_slice()),
+                schema.owner_col.len(),
+                ColumnCodecId::Zstd,
+            ),
+        ];
+
+        for (data, elem_count, codec) in &columns {
+            writer
+                .write_all(&(*elem_count as u64).to_le_bytes())
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+            writer
+                .write_all(&[*codec as u8])
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+            writer
+                .write_all(&(data.len() as u64).to_le_bytes())
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+            writer
+                .write_all(data)
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+        }
+
+        let tomb_bytes = schema.tombstone_bytes();
+        let tomb_len = schema.tombstone_len();
+        writer
+            .write_all(&(tomb_len as u64).to_le_bytes())
+            .map_err(|e| KcmError::Io(e.to_string()))?;
+        writer
+            .write_all(&(tomb_bytes.len() as u64).to_le_bytes())
+            .map_err(|e| KcmError::Io(e.to_string()))?;
+        writer
+            .write_all(tomb_bytes)
+            .map_err(|e| KcmError::Io(e.to_string()))?;
 
         writer.flush().map_err(|e| KcmError::Io(e.to_string()))?;
-
         let checksum = Self::compute_checksum(path)?;
         writer
             .write_all(&checksum)
@@ -63,7 +152,6 @@ impl DatabaseFile {
             .into_inner()
             .map_err(|e| KcmError::Io(e.to_string()))?;
         file.sync_all().map_err(|e| KcmError::Io(e.to_string()))?;
-
         Ok(())
     }
 
@@ -102,7 +190,6 @@ impl DatabaseFile {
         reader
             .read_exact(&mut _col_count)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
-
         let mut _created = [0u8; 8];
         reader
             .read_exact(&mut _created)
@@ -112,45 +199,45 @@ impl DatabaseFile {
             .read_exact(&mut _modified)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
 
-        let mut schema = Schema::new(row_count as usize)?;
+        let mut schema = Schema::new((row_count as usize * 2).max(1000))?;
 
-        Self::deserialize_column_raw(&mut reader, &mut schema.subject_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.predicate_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.object_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.confidence_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.evidence_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.timestamp_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.context_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.version_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.priority_col, row_count as usize)?;
-        Self::deserialize_column_raw(&mut reader, &mut schema.owner_col, row_count as usize)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.subject_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.predicate_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.object_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.confidence_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.evidence_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.timestamp_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.context_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.version_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.priority_col)?;
+        Self::deserialize_column_block(&mut reader, &mut schema.owner_col)?;
+
+        let mut tomb_row_count = [0u8; 8];
+        reader
+            .read_exact(&mut tomb_row_count)
+            .map_err(|e| KcmError::Corrupted(e.to_string()))?;
+        let tomb_len = u64::from_le_bytes(tomb_row_count) as usize;
+
+        let mut tomb_byte_len = [0u8; 8];
+        reader
+            .read_exact(&mut tomb_byte_len)
+            .map_err(|e| KcmError::Corrupted(e.to_string()))?;
+        let tomb_bytes_len = u64::from_le_bytes(tomb_byte_len) as usize;
+
+        if tomb_bytes_len > 0 {
+            let mut tomb_data = vec![0u8; tomb_bytes_len];
+            reader
+                .read_exact(&mut tomb_data)
+                .map_err(|e| KcmError::Corrupted(e.to_string()))?;
+            schema.restore_tombstones(&tomb_data, tomb_len);
+        }
 
         Ok(schema)
     }
 
-    fn serialize_column_raw<T: Copy>(
-        writer: &mut BufWriter<File>,
-        column: &[T],
-    ) -> Result<(), KcmError> {
-        let len = column.len();
-        writer
-            .write_all(&(len as u64).to_le_bytes())
-            .map_err(|e| KcmError::Io(e.to_string()))?;
-
-        let bytes = unsafe {
-            std::slice::from_raw_parts(column.as_ptr() as *const u8, std::mem::size_of_val(column))
-        };
-
-        writer
-            .write_all(bytes)
-            .map_err(|e| KcmError::Io(e.to_string()))?;
-        Ok(())
-    }
-
-    fn deserialize_column_raw<T: Copy>(
+    fn deserialize_column_block<T: Copy>(
         reader: &mut BufReader<File>,
         column: &mut crate::column::Column<T>,
-        expected_count: usize,
     ) -> Result<(), KcmError> {
         let mut len_bytes = [0u8; 8];
         reader
@@ -158,17 +245,31 @@ impl DatabaseFile {
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
         let len = u64::from_le_bytes(len_bytes) as usize;
 
-        if len != expected_count {
-            return Err(KcmError::Corrupted(format!(
-                "Column length mismatch: expected {}, got {}",
-                expected_count, len
-            )));
-        }
+        let mut codec_byte = [0u8; 1];
+        reader
+            .read_exact(&mut codec_byte)
+            .map_err(|e| KcmError::Corrupted(e.to_string()))?;
+        let _codec = ColumnCodecId::from_u8(codec_byte[0])
+            .ok_or_else(|| KcmError::Corrupted(format!("Unknown codec ID: {}", codec_byte[0])))?;
 
-        let mut data = vec![0u8; len * std::mem::size_of::<T>()];
+        let mut compressed_size = [0u8; 8];
+        reader
+            .read_exact(&mut compressed_size)
+            .map_err(|e| KcmError::Corrupted(e.to_string()))?;
+        let compressed_len = u64::from_le_bytes(compressed_size) as usize;
+
+        let mut data = vec![0u8; compressed_len];
         reader
             .read_exact(&mut data)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
+
+        let expected_bytes = len * std::mem::size_of::<T>();
+        if compressed_len != expected_bytes {
+            return Err(KcmError::Corrupted(format!(
+                "Column size mismatch: expected {} bytes, got {}",
+                expected_bytes, compressed_len
+            )));
+        }
 
         let values: Vec<T> =
             unsafe { std::slice::from_raw_parts(data.as_ptr() as *const T, len).to_vec() };
@@ -176,14 +277,12 @@ impl DatabaseFile {
         for value in values {
             column.append(value)?;
         }
-
         Ok(())
     }
 
     pub fn compute_checksum<P: AsRef<Path>>(path: P) -> Result<[u8; 32], KcmError> {
         let mut file = File::open(path).map_err(|e| KcmError::Io(e.to_string()))?;
         let mut hasher = blake3::Hasher::new();
-
         let mut buffer = [0u8; 8192];
         loop {
             match file.read(&mut buffer) {
@@ -194,7 +293,6 @@ impl DatabaseFile {
                 Err(e) => return Err(KcmError::Io(e.to_string())),
             }
         }
-
         let hash = hasher.finalize();
         let mut result = [0u8; 32];
         result.copy_from_slice(hash.as_bytes());
@@ -207,11 +305,9 @@ impl DatabaseFile {
         end: u64,
     ) -> Result<[u8; 32], KcmError> {
         let mut file = File::open(path).map_err(|e| KcmError::Io(e.to_string()))?;
-        use std::io::Seek;
         file.seek(std::io::SeekFrom::Start(start))
             .map_err(|e| KcmError::Io(e.to_string()))?;
         let mut hasher = blake3::Hasher::new();
-
         let mut buffer = [0u8; 8192];
         let mut remaining = end - start;
         while remaining > 0 {
@@ -225,7 +321,6 @@ impl DatabaseFile {
                 Err(e) => return Err(KcmError::Io(e.to_string())),
             }
         }
-
         let hash = hasher.finalize();
         let mut result = [0u8; 32];
         result.copy_from_slice(hash.as_bytes());
@@ -237,26 +332,23 @@ impl DatabaseFile {
         let stored_checksum = {
             let mut file = File::open(path).map_err(|e| KcmError::Io(e.to_string()))?;
             let metadata = std::fs::metadata(path).map_err(|e| KcmError::Io(e.to_string()))?;
-
             let file_size = metadata.len();
             if file_size < 32 {
                 return Ok(false);
             }
-
             let mut checksum_bytes = [0u8; 32];
-            let seek_pos = file_size - 32;
-            use std::io::Seek;
-            file.seek(std::io::SeekFrom::Start(seek_pos))
+            file.seek(std::io::SeekFrom::Start(file_size - 32))
                 .map_err(|e| KcmError::Io(e.to_string()))?;
             file.read_exact(&mut checksum_bytes)
                 .map_err(|e| KcmError::Io(e.to_string()))?;
             checksum_bytes
         };
-
-        let computed = Self::compute_checksum_range(path, 0, {
-            let metadata = std::fs::metadata(path).map_err(|e| KcmError::Io(e.to_string()))?;
-            metadata.len() - 32
-        })?;
+        let metadata = std::fs::metadata(path).map_err(|e| KcmError::Io(e.to_string()))?;
+        let computed = Self::compute_checksum_range(path, 0, metadata.len() - 32)?;
         Ok(stored_checksum == computed)
     }
+}
+
+fn as_bytes<T>(slice: &[T]) -> &[u8] {
+    unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice)) }
 }

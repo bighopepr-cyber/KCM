@@ -99,6 +99,23 @@ Schema {
 | Tombstone bitmap size equals column capacity | Bit-addressable delete markers |
 | Compress/decompress roundtrip must preserve data | Zero-loss compression requirement |
 
+### 3.4 Tombstone Serialization
+
+Tombstone bitmaps are persisted to disk as part of the file format:
+
+| Field | Size | Description |
+|-------|------|-------------|
+| Row Count | 8 bytes (u64 LE) | Number of bits in the bitmap |
+| Byte Length | 8 bytes (u64 LE) | Number of bytes in the packed bitmap |
+| Bitmap Data | variable | Packed bits, one bit per row, LSB-first |
+
+Serialization uses `Bitmap::as_bytes()` (raw words as bytes) and `Bitmap::from_bytes()` for reconstruction.
+
+After save/load round-trip:
+- Tombstoned rows are correctly marked as deleted
+- `active_count()` is accurate
+- `get_fact()` returns `None` for tombstoned rows
+
 ---
 
 ## 4. Dictionary

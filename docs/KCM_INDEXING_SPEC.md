@@ -65,6 +65,35 @@ For each block of block_size rows:
 - `insert(value)` — Set k bits
 - `contains(value) -> bool` — Check k bits (may false-positive)
 
+## 5. Composite Index
+
+### 5.1 Structure
+
+```rust
+struct CompositeIndex {
+    entries: HashMap<(u32, u8), Vec<usize>>,
+}
+```
+
+Key = (SubjectID, PredicateID), Value = Vec<row_index>
+
+### 5.2 Operations
+
+| Operation | Algorithm | Complexity |
+|-----------|-----------|------------|
+| build(subjects, predicates) | Single-pass hash table construction | O(n) |
+| lookup(subject, predicate) | HashMap get | O(1) amortized |
+
+### 5.3 Usage
+
+Accelerates queries that filter on both subject and predicate simultaneously:
+```rust
+let index = CompositeIndex::build(&subjects, &predicates, row_count);
+if let Some(rows) = index.lookup(SubjectID(1).0, PredicateID(0).0) {
+    // rows contains matching row indices
+}
+```
+
 ### 2.4 Dictionary Codec
 
 | Property | Value |

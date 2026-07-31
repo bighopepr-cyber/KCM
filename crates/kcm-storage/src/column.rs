@@ -295,6 +295,18 @@ impl Schema {
         self.tombstones.get(idx)
     }
 
+    pub fn tombstone_bytes(&self) -> &[u8] {
+        self.tombstones.as_bytes()
+    }
+
+    pub fn tombstone_len(&self) -> usize {
+        self.tombstones.len()
+    }
+
+    pub fn restore_tombstones(&mut self, bytes: &[u8], len: usize) {
+        self.tombstones = kcm_core::bitmap::Bitmap::from_bytes(bytes, len);
+    }
+
     pub fn iter_active(&self) -> impl Iterator<Item = (usize, Fact)> + '_ {
         (0..self.len()).filter_map(move |idx| {
             if self.tombstones.get(idx) {

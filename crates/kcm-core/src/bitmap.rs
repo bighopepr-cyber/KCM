@@ -101,6 +101,22 @@ impl Bitmap {
                 })
             })
     }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        unsafe {
+            std::slice::from_raw_parts(self.words.as_ptr() as *const u8, self.words.len() * 8)
+        }
+    }
+
+    pub fn from_bytes(bytes: &[u8], len: usize) -> Self {
+        let num_words = (len + 63) / 64;
+        let mut words = vec![0u64; num_words];
+        let copy_len = bytes.len().min(num_words * 8);
+        unsafe {
+            std::ptr::copy_nonoverlapping(bytes.as_ptr(), words.as_mut_ptr() as *mut u8, copy_len);
+        }
+        Bitmap { words, len }
+    }
 }
 
 #[cfg(test)]

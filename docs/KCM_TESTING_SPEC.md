@@ -116,6 +116,31 @@ Defines testing standards, coverage requirements, test categories, and validatio
 
 **Current: 9 regression tests**.
 
+### 3.8 Distributed Tests
+
+| Test | Description | Coverage |
+|------|-------------|----------|
+| hash_sharding_consistency | Same key → same shard | Sharding |
+| hash_sharding_distribution | Uniform distribution across shards | Sharding |
+| range_sharding_boundaries | Key falls in correct range | Sharding |
+| consistent_hash_stability | Same key → same shard across calls | Sharding |
+| shard_map_routing | Register and locate shards | Sharding |
+| 2pc_commit | Two-phase commit succeeds | Coordinator |
+| 2pc_abort | Transaction abort | Coordinator |
+| 2pc_not_found | Nonexistent transaction | Coordinator |
+| concurrent_inserts | Parallel inserts across threads | Concurrency |
+
+### 3.9 Disaster Recovery Tests
+
+| Test | Description | Coverage |
+|------|-------------|----------|
+| recovery_db_plus_wal | Load DB file, replay WAL | WAL replay |
+| recovery_wal_only | No DB, replay WAL only | WAL-only recovery |
+| recovery_fresh | No DB, no WAL | Fresh database |
+| file_format_save_load | Save/load with checksum verify | Persistence |
+| backup_and_restore | Full backup → restore | Backup system |
+| wal_fact_fields_preserved | WAL preserves version/priority/owner | Data fidelity |
+
 ---
 
 ## 4. Test Matrix

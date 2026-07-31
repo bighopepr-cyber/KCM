@@ -10,7 +10,6 @@ impl RecoveryManager {
     pub fn recover<P: AsRef<Path>>(db_path: P, wal_path: P) -> Result<Schema, KcmError> {
         let db_path = db_path.as_ref();
         let wal_path = wal_path.as_ref();
-
         if db_path.exists()
             && std::fs::metadata(db_path)
                 .map_err(|e| KcmError::Io(e.to_string()))?
@@ -39,7 +38,6 @@ impl RecoveryManager {
         let db_path = db_path.as_ref();
         let wal_path = wal_path.as_ref();
         let backup_path = format!("{}.backup", db_path.display());
-
         if std::path::Path::new(&backup_path).exists() {
             if let Ok(mut schema) = DatabaseFile::load(&backup_path) {
                 if wal_path.exists() {
@@ -49,7 +47,6 @@ impl RecoveryManager {
                 return Ok(schema);
             }
         }
-
         Err(KcmError::Corrupted(
             "Database and backup both corrupted".to_string(),
         ))
@@ -57,33 +54,15 @@ impl RecoveryManager {
 
     fn replay_wal(schema: &mut Schema, wal_path: impl AsRef<Path>) -> Result<(), KcmError> {
         let wal = WriteAheadLog::new(wal_path)?;
-
         wal.replay(|entry| match entry {
-            crate::wal::WALEntry::Insert {
-                subject,
-                predicate,
-                object,
-                confidence,
-                timestamp,
-                context,
-            } => {
-                let fact = Fact {
-                    subject,
-                    predicate,
-                    object,
-                    confidence,
-                    evidence: EvidenceID::UNKNOWN,
-                    timestamp,
-                    context,
-                    version: 1,
-                    priority: 0,
-                    owner: 0,
-                };
-                schema.append_fact(&fact)
+            crate::wal::WALEntry::Insert { .. } => {
+                if let Some(fact) = entry.to_fact() {
+                    schema.append_fact(&fact)?;
+                }
+                Ok(())
             }
             crate::wal::WALEntry::Delete { row_id } => schema.delete_fact(row_id as usize),
         })?;
-
         Ok(())
     }
 

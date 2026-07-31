@@ -80,8 +80,10 @@ Criterion.rs with `criterion_group!` and `criterion_main!`.
 | Parameter | Value |
 |-----------|-------|
 | Platform | Linux x86_64 |
-| CPU | Native (release profile with LTO) |
-| Profile | bench (inherits release) |
+| CPU | ≥ 8 cores, ≥ 3.0 GHz |
+| RAM | ≥ 16 GB |
+| Kernel | Linux 5.x+ |
+| Profile | bench (inherits release with LTO) |
 
 ### 4.4 Regression Detection
 
