@@ -82,7 +82,7 @@ impl KnowledgeDatabase {
     }
 
     pub fn query(&self) -> QueryBuilder {
-        QueryBuilder::new((*self.schema.read()).clone())
+        QueryBuilder::new(self.schema.clone())
     }
 
     pub fn get_fact(&self, row_id: RowID) -> Result<Option<Fact>, KcmError> {
@@ -118,7 +118,7 @@ impl Default for KnowledgeDatabase {
 }
 
 pub struct QueryBuilder {
-    schema: Schema,
+    schema: Arc<RwLock<Schema>>,
     subject_filter: Option<SubjectID>,
     predicate_filter: Option<PredicateID>,
     object_filter: Option<ObjectID>,
@@ -126,7 +126,7 @@ pub struct QueryBuilder {
 }
 
 impl QueryBuilder {
-    pub fn new(schema: Schema) -> Self {
+    pub fn new(schema: Arc<RwLock<Schema>>) -> Self {
         QueryBuilder {
             schema,
             subject_filter: None,
@@ -157,10 +157,11 @@ impl QueryBuilder {
     }
 
     pub fn execute(self) -> Result<Vec<Fact>, KcmError> {
+        let schema = self.schema.read();
         let mut result = Vec::new();
 
-        for idx in 0..self.schema.len() {
-            if let Some(fact) = self.schema.get_fact(idx) {
+        for idx in 0..schema.len() {
+            if let Some(fact) = schema.get_fact(idx) {
                 let mut matches = true;
 
                 if let Some(subj) = self.subject_filter {

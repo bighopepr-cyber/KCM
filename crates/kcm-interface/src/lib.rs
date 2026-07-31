@@ -340,6 +340,63 @@ pub unsafe extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
     }
 }
 
+/// Commit a transaction, applying all buffered changes to the database.
+///
+/// # Safety
+/// - `txn` must be a valid pointer previously returned by `KCM_DatabaseBeginTransaction`.
+/// - `txn` must not be used after this call (it is consumed).
+/// - `db` must be the same database pointer used to begin the transaction.
+#[no_mangle]
+pub unsafe extern "C" fn KCM_TransactionCommit(
+    txn: *mut KCM_Transaction,
+    db: *mut KCM_Database,
+) -> KCM_Error {
+    if txn.is_null() || db.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let txn_ref = &mut *txn;
+        if let Some(inner_txn) = txn_ref.inner.take() {
+            let db_guard = (*db).inner.lock();
+            let mut schema = db_guard.get_schema_mut();
+            if let Err(e) = inner_txn.apply_to_schema(&mut schema) {
+                return e.into();
+            }
+            drop(schema);
+            drop(db_guard);
+            match inner_txn.commit() {
+                Ok(()) => KCM_Error::KCM_OK,
+                Err(e) => e.into(),
+            }
+        } else {
+            KCM_Error::KCM_ERR_TRANSACTION_ABORTED
+        }
+    }
+}
+
+/// Rollback a transaction, discarding all buffered changes.
+///
+/// # Safety
+/// - `txn` must be a valid pointer previously returned by `KCM_DatabaseBeginTransaction`.
+/// - `txn` must not be used after this call (it is consumed).
+#[no_mangle]
+pub unsafe extern "C" fn KCM_TransactionRollback(txn: *mut KCM_Transaction) -> KCM_Error {
+    if txn.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let txn_ref = &mut *txn;
+        if let Some(inner_txn) = txn_ref.inner.take() {
+            match inner_txn.rollback() {
+                Ok(()) => KCM_Error::KCM_OK,
+                Err(e) => e.into(),
+            }
+        } else {
+            KCM_Error::KCM_ERR_TRANSACTION_ABORTED
+        }
+    }
+}
+
 /// Get error message string for an error code.
 ///
 /// # Safety

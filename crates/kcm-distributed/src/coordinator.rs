@@ -2,6 +2,27 @@ use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// Transport abstraction for distributed participant communication.
+pub trait ParticipantTransport: Send + Sync {
+    /// Send PREPARE message and collect vote.
+    fn prepare(&self, participant_id: usize, txn_id: &str) -> bool;
+    /// Send COMMIT message to participant.
+    fn commit(&self, participant_id: usize, txn_id: &str);
+    /// Send ABORT message to participant.
+    fn abort(&self, participant_id: usize, txn_id: &str);
+}
+
+/// Local transport that always votes YES (single-node mode).
+pub struct LocalTransport;
+
+impl ParticipantTransport for LocalTransport {
+    fn prepare(&self, _participant_id: usize, _txn_id: &str) -> bool {
+        true
+    }
+    fn commit(&self, _participant_id: usize, _txn_id: &str) {}
+    fn abort(&self, _participant_id: usize, _txn_id: &str) {}
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransactionStatus {
     Pending,
@@ -43,6 +64,7 @@ impl DistributedTransaction {
 pub struct TransactionCoordinator {
     transactions: Arc<Mutex<HashMap<String, DistributedTransaction>>>,
     next_id: std::sync::atomic::AtomicU64,
+    transport: Arc<dyn ParticipantTransport>,
 }
 
 impl TransactionCoordinator {
@@ -50,6 +72,15 @@ impl TransactionCoordinator {
         TransactionCoordinator {
             transactions: Arc::new(Mutex::new(HashMap::new())),
             next_id: std::sync::atomic::AtomicU64::new(1),
+            transport: Arc::new(LocalTransport),
+        }
+    }
+
+    pub fn with_transport(transport: Arc<dyn ParticipantTransport>) -> Self {
+        TransactionCoordinator {
+            transactions: Arc::new(Mutex::new(HashMap::new())),
+            next_id: std::sync::atomic::AtomicU64::new(1),
+            transport,
         }
     }
 
@@ -76,45 +107,21 @@ impl TransactionCoordinator {
 
         // Phase 1: PREPARE
         for participant in &txn.participants {
-            let vote = self.prepare_participant(*participant, &txn.transaction_id);
+            let vote = self.transport.prepare(*participant, &txn.transaction_id);
             if !vote {
                 txn.status = TransactionStatus::Aborted;
-                self.abort_all_participants(&txn.participants, &txn.transaction_id);
+                self.transport.abort(*participant, &txn.transaction_id);
                 return Err(format!("Participant {} voted ABORT", participant));
             }
         }
 
         // Phase 2: COMMIT
         for participant in &txn.participants {
-            self.commit_participant(*participant, &txn.transaction_id);
+            self.transport.commit(*participant, &txn.transaction_id);
         }
 
         txn.status = TransactionStatus::Committed;
         Ok(())
-    }
-
-    fn prepare_participant(&self, _participant_id: usize, _txn_id: &str) -> bool {
-        // In a real distributed system, this sends a PREPARE message
-        // via network to the shard at _participant_id and waits for a vote.
-        // Currently simulated: all participants vote yes.
-        true
-    }
-
-    fn commit_participant(&self, _participant_id: usize, _txn_id: &str) {
-        // In a real distributed system, this sends a COMMIT message
-        // via network to the shard at _participant_id.
-        // Network transport layer required for distributed deployment.
-        // Simulated for single-node operation.
-    }
-
-    fn abort_all_participants(&self, participants: &[usize], txn_id: &str) {
-        for participant in participants {
-            self.abort_participant(*participant, txn_id);
-        }
-    }
-
-    fn abort_participant(&self, _participant_id: usize, _txn_id: &str) {
-        // Sends ABORT via network transport in distributed deployment.
     }
 
     pub fn abort(&self, txn_id: &str) -> Result<(), String> {
