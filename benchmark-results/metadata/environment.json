@@ -1,0 +1,8 @@
+{
+  "os": "placeholder - populated at benchmark execution time",
+  "cpu": "placeholder",
+  "cores": 0,
+  "ram_mb": 0,
+  "rust_version": "placeholder",
+  "llvm_version": "placeholder"
+}

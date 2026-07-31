@@ -24,6 +24,12 @@ impl BackupManager {
         let name = format!("backup_full_{}.kcm", ts);
         let path = self.backup_dir.join(&name);
         DatabaseFile::save(schema, &path)?;
+        if !DatabaseFile::verify(&path).map_err(|e| KcmError::Io(e.to_string()))? {
+            std::fs::remove_file(&path).ok();
+            return Err(KcmError::Corrupted(
+                "Backup verification failed after save".to_string(),
+            ));
+        }
         self.write_manifest(&path, "full")?;
         Ok(path)
     }

@@ -257,7 +257,7 @@ impl DatabaseFile {
             .ok_or_else(|| KcmError::Corrupted(format!("Unknown codec ID: {}", codec_byte[0])))?;
         // Codec ID is stored for metadata. Raw column data is written uncompressed.
         // Compression is applied at the Schema level via compress_all_columns().
-        // TODO: Future — apply codec-specific decompression when compressed data is stored.
+
         let _codec = codec;
 
         let mut compressed_size = [0u8; 8];

@@ -16,6 +16,8 @@ tokio = { version = "1.35", features = ["full"] }
 
 [dev-dependencies]
 criterion = "0.5"
+tempfile = "3"
+kcm-distributed = { path = "../kcm-distributed" }
 
 [[bench]]
 name = "micro"

@@ -7,6 +7,16 @@ pub struct EncryptionKey {
     key: [u8; 32],
 }
 
+impl Drop for EncryptionKey {
+    fn drop(&mut self) {
+        for byte in self.key.iter_mut() {
+            unsafe {
+                std::ptr::write_volatile(byte, 0);
+            }
+        }
+    }
+}
+
 impl EncryptionKey {
     pub fn from_password(password: &str, salt: &[u8; 32]) -> Self {
         let material = [password.as_bytes(), salt.as_slice()].concat();

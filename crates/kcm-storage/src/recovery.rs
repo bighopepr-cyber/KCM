@@ -56,8 +56,9 @@ impl RecoveryManager {
     }
 
     fn replay_wal(schema: &mut Schema, wal_path: impl AsRef<Path>) -> Result<(), KcmError> {
-        let wal = WriteAheadLog::new(wal_path)?;
-        wal.replay(|entry| match entry {
+        let wal_path_buf = wal_path.as_ref().to_path_buf();
+        let wal = WriteAheadLog::new(&wal_path_buf)?;
+        let count = wal.replay(|entry| match entry {
             crate::wal::WALEntry::Insert { .. } => {
                 if let Some(fact) = entry.to_fact() {
                     schema.append_fact(&fact)?;
@@ -66,6 +67,20 @@ impl RecoveryManager {
             }
             crate::wal::WALEntry::Delete { row_id } => schema.delete_fact(row_id as usize),
         })?;
+        if count > 0 {
+            use std::io::Write;
+            let mut wal_file = std::fs::OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .open(&wal_path_buf)
+                .map_err(|e| {
+                    KcmError::Io(format!("Failed to truncate WAL after recovery: {}", e))
+                })?;
+            wal_file.flush().map_err(|e| KcmError::Io(e.to_string()))?;
+            wal_file
+                .sync_all()
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+        }
         Ok(())
     }
 
