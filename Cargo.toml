@@ -17,16 +17,6 @@ members = [
 
 resolver = "2"
 
-[workspace.dependencies]
-kcm-core = { path = "crates/kcm-core" }
-kcm-storage = { path = "crates/kcm-storage" }
-kcm-compute = { path = "crates/kcm-compute" }
-kcm-reasoning = { path = "crates/kcm-reasoning" }
-kcm-optimizer = { path = "crates/kcm-optimizer" }
-kcm-runtime = { path = "crates/kcm-runtime" }
-kcm-interface = { path = "crates/kcm-interface" }
-criterion = "0.5"
-
 [profile.release]
 opt-level = 3
 lto = true

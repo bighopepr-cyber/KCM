@@ -63,16 +63,16 @@ try:
         report_lines.append(f'- **Cores**: {env.get(\"cores\", \"unknown\")}')
         report_lines.append(f'- **RAM**: {env.get(\"ram_mb\", \"unknown\")} MB')
         report_lines.append(f'- **Rust**: {env.get(\"rust_version\", \"unknown\")}')
-except: pass
+except Exception: pass
 
 report_lines.append('')
 try:
     with open('${RESULTS_DIR}/metadata/git.json') as f:
         git = json.load(f)
-        report_lines.append(f'- **Commit**: {git.get(\"commit\", \"unknown\")}')
-        report_lines.append(f'- **Branch**: {git.get(\"branch\", \"unknown\")}')
-        report_lines.append(f'- **Timestamp**: {git.get(\"timestamp\", \"unknown\")}')
-except: pass
+        report_lines.append(f'- **Commit**: {git.get("commit", "unknown")}')
+        report_lines.append(f'- **Branch**: {git.get("branch", "unknown")}')
+        report_lines.append(f'- **Timestamp**: {git.get("timestamp", "unknown")}')
+except Exception: pass
 
 report_lines.extend(['', '## Performance Results', ''])
 report_lines.append('| Benchmark | Duration | Throughput |')
@@ -84,11 +84,11 @@ try:
         content = f.read()
         for match in re.finditer(r'(\S+)\s+(\d+\.\d+)\s+ns', content):
             name, ns = match.group(1), float(match.group(2))
-            dur = f'{ns/1e9:.2f} s' if ns > 1e9 else f'{ns/1e6:.2f} ms' if ns > 1e6 else f'{ns/1e3:.2f} us' if ns > 1e3 else f'{ns:.0} ns'
-            thr = f'{1e9/ns:.0} ops/s' if ns > 0 else 'N/A'
+            dur = f'{ns/1e9:.2f} s' if ns > 1e9 else f'{ns/1e6:.2f} ms' if ns > 1e6 else f'{ns/1e3:.2f} us' if ns > 1e3 else f'{ns:.0f} ns'
+            thr = f'{1e9/ns:.0f} ops/s' if ns > 0 else 'N/A'
             report_lines.append(f'| {name} | {dur} | {thr} |')
             summary_data.append({'name': name, 'duration_ns': ns, 'throughput_ops_sec': 1e9/ns if ns > 0 else 0})
-except: pass
+except Exception: pass
 
 report_lines.extend(['', f'## Summary', '', f'- **Total benchmarks**: {len(summary_data)}', ''])
 

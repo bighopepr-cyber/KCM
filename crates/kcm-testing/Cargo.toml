@@ -16,4 +16,3 @@ tempfile = "3"
 [dev-dependencies]
 kcm-distributed = { path = "../kcm-distributed" }
 kcm-compliance = { path = "../kcm-compliance" }
-tempfile = "3"

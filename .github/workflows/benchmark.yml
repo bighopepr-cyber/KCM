@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p benchmark-results/metadata benchmark-results/raw benchmark-results/reports
           
-          cat > benchmark-results/metadata/environment.json << 'ENVEOF'
+          cat > benchmark-results/metadata/environment.json << ENVEOF
           {
             "os": "ubuntu-latest",
             "cpu": "LINUX",
@@ -40,7 +40,7 @@ jobs:
           }
           ENVEOF
           
-          cat > benchmark-results/metadata/git.json << 'GITEOF'
+          cat > benchmark-results/metadata/git.json << GITEOF
           {
             "commit": "$(git rev-parse HEAD)",
             "branch": "$(git rev-parse --abbrev-ref HEAD)",

@@ -227,7 +227,7 @@ Buffering transaction system:
 
 ### 8.4 Metrics
 
-10 atomic counters (lock-free):
+11 atomic counters (lock-free):
 
 | Metric | Type | Purpose |
 |--------|------|---------|
@@ -239,8 +239,9 @@ Buffering transaction system:
 | cache_hits | AtomicU64 | Cache hits |
 | cache_misses | AtomicU64 | Cache misses |
 | memory_bytes | AtomicU64 | Memory usage |
-| column_count | AtomicU64 | Column count |
 | inferences_total | AtomicU64 | Inference operations |
+| facts_inferred | AtomicU64 | Facts derived from inference |
+| estimated_memory_bytes | AtomicU64 | Estimated memory footprint |
 
 ### 8.5 Health Check
 

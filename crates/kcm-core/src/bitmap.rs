@@ -25,7 +25,7 @@ impl Bitmap {
 
     /// Set a bit at the given index.
     ///
-    /// Returns `Ok(())` on success, or `Err(KcmError)` if `idx >= self.len`.
+    /// Returns `true` if successful, `false` if `idx >= self.len`.
     pub fn set(&mut self, idx: usize) -> bool {
         if idx >= self.len {
             return false;
@@ -38,7 +38,7 @@ impl Bitmap {
 
     /// Clear a bit at the given index.
     ///
-    /// Returns `Ok(())` on success, or `Err(KcmError)` if `idx >= self.len`.
+    /// Returns `true` if successful, `false` if `idx >= self.len`.
     pub fn clear(&mut self, idx: usize) -> bool {
         if idx >= self.len {
             return false;

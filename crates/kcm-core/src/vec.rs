@@ -140,8 +140,18 @@ impl<T: Copy> Drop for DenseVec<T> {
 
 impl<T: Copy> Clone for DenseVec<T> {
     fn clone(&self) -> Self {
-        let mut new_vec = Self::with_alignment(self.capacity, self.alignment)
-            .unwrap_or_else(|_| std::process::abort());
+        // DenseVec::clone must succeed: the source is already allocated, so
+        // the same capacity with the same alignment is guaranteed to succeed
+        // on the same allocator. If allocation fails, we abort — this is
+        // correct because there is no error recovery path that doesn't
+        // require the cloned data to exist (DenseVec is the fundamental
+        // storage primitive).
+        let mut new_vec = Self::with_alignment(self.capacity, self.alignment).unwrap_or_else(|e| {
+            panic!(
+                "DenseVec::clone: allocation of {} elements failed: {}",
+                self.capacity, e
+            )
+        });
         new_vec.len = self.len;
         new_vec.as_mut_slice().copy_from_slice(self.as_slice());
         new_vec

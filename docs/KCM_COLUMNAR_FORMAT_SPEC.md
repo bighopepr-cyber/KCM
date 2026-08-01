@@ -114,7 +114,7 @@ Blake3 hash computed over entire file content excluding the checksum itself (byt
 └────────────────────────────────────┘
 ```
 
-### 3.1 Insert Entry (34 bytes)
+### 3.1 Insert Entry (38 bytes)
 
 | Offset | Size | Type | Field |
 |--------|------|------|-------|
@@ -128,13 +128,15 @@ Blake3 hash computed over entire file content excluding the checksum itself (byt
 | 27 | 4 | i32 LE | Version |
 | 31 | 1 | i8 | Priority |
 | 32 | 2 | u16 LE | Owner |
+| 34 | 4 | u32 LE | CRC32 checksum |
 
-### 3.2 Delete Entry (9 bytes)
+### 3.2 Delete Entry (13 bytes)
 
 | Offset | Size | Type | Field |
 |--------|------|------|-------|
 | 0 | 1 | u8 | Op type: `0x02` |
 | 1 | 8 | u64 LE | Row ID |
+| 9 | 4 | u32 LE | CRC32 checksum |
 
 ---
 

@@ -1,11 +1,18 @@
-version: '3.8'
 services:
   kcm:
     build: .
+    ports:
+      - "8080:8080"
     volumes:
       - kcm_data:/data
     environment:
       RUST_LOG: info
       KCM_DATA_PATH: /data/kcm.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 volumes:
   kcm_data:
