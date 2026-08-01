@@ -452,19 +452,20 @@ fn bench_wal_append(c: &mut Criterion) {
     let mut group = c.benchmark_group("wal_append");
     for &batch in &[100, 1_000, 10_000] {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
-            let dir =
-                tempfile::tempdir().expect("Failed to create temp directory for WAL benchmark");
+            let dir = tempfile::tempdir()
+                .unwrap_or_else(|e| panic!("Failed to create temp dir for wal_append: {}", e));
             let wal = WriteAheadLog::new(dir.path().join("bench.wal"))
-                .expect("Failed to create WAL for benchmark");
+                .unwrap_or_else(|e| panic!("Failed to create WAL for wal_append: {}", e));
             let config = DatasetConfig::for_count(batch);
             b.iter(|| {
                 for i in 0..batch {
                     let fact = deterministic_fact(i, &config);
-                    wal.append_fact(&fact)
-                        .expect("Failed to append fact to WAL in wal_append benchmark");
+                    wal.append_fact(&fact).unwrap_or_else(|e| {
+                        panic!("Failed to append fact {} to WAL in wal_append: {}", i, e)
+                    });
                 }
                 wal.flush_buffer()
-                    .expect("Failed to flush WAL buffer in wal_append benchmark");
+                    .unwrap_or_else(|e| panic!("Failed to flush WAL buffer in wal_append: {}", e));
             });
         });
     }
@@ -477,18 +478,49 @@ fn bench_wal_replay(c: &mut Criterion) {
     for &count in WAL_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(count), &count, |b, &count| {
             let config = DatasetConfig::for_count(count);
-            let fixture = WALFixture::new(&config);
+            let fixture = WalBenchmarkFixture::new(&config);
+
+            // Pre-measurement validation: confirm fixture integrity.
+            let wal_path = fixture.path();
+            let metadata = std::fs::metadata(wal_path).unwrap_or_else(|e| {
+                panic!(
+                    "wal_replay setup: WAL file missing at {:?}: {}",
+                    wal_path, e
+                )
+            });
+            assert!(
+                metadata.len() > 0,
+                "wal_replay setup: WAL file is empty at {:?}",
+                wal_path
+            );
+
+            // Measurement: open WAL and replay. No filesystem preparation.
             b.iter(|| {
-                let wal_r = WriteAheadLog::new(&fixture.wal_path)
-                    .expect("Failed to open WAL for replay benchmark");
-                let mut count = 0u64;
+                let wal_r = WriteAheadLog::new(fixture.path()).unwrap_or_else(|e| {
+                    panic!(
+                        "wal_replay: failed to open WAL at {:?}: {}",
+                        fixture.path(),
+                        e
+                    )
+                });
+                let mut replayed = 0u64;
                 wal_r
                     .replay(|_| {
-                        count += 1;
+                        replayed += 1;
                         Ok(())
                     })
-                    .expect("Failed to replay WAL in wal_replay benchmark");
-                black_box(count)
+                    .unwrap_or_else(|e| {
+                        panic!("wal_replay: replay failed at {:?}: {}", fixture.path(), e)
+                    });
+                assert_eq!(
+                    replayed as usize,
+                    fixture.expected_count(),
+                    "wal_replay: entry count mismatch at {:?} — expected {}, got {}",
+                    fixture.path(),
+                    fixture.expected_count(),
+                    replayed,
+                );
+                black_box(replayed)
             });
         });
     }

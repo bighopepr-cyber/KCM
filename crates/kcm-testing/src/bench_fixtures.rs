@@ -262,34 +262,137 @@ impl CompressionFixture {
     }
 }
 
-/// Pre-computed WAL entries for replay benchmarks.
-pub struct WALFixture {
+/// Self-contained WAL benchmark fixture.
+///
+/// Owns the complete lifecycle of benchmark resources:
+/// - Temporary directory (auto-cleaned via `TempDir`)
+/// - WAL creation, population, flushing, and file-handle closure
+/// - Deterministic dataset generation
+/// - Pre-replay validation (file exists, size > 0, entry count)
+///
+/// The fixture is designed so that every WAL-related benchmark can use it
+/// without implementing its own setup logic. The `TempDir` is stored in
+/// the struct to keep the directory (and WAL file) alive for the lifetime
+/// of the benchmark.
+///
+/// # Lifecycle
+///
+/// ```text
+/// WalBenchmarkFixture::new(config)
+///   ├── create TempDir
+///   ├── create WAL file
+///   ├── populate with deterministic facts
+///   ├── flush + sync + close file handles
+///   ├── validate: file exists, size > 0, replayable
+///   └── return fixture (TempDir stays alive)
+///
+/// Drop(fixture)
+///   └── TempDir::drop → deletes temp directory + WAL file
+/// ```
+pub struct WalBenchmarkFixture {
+    _dir: tempfile::TempDir,
     pub wal_path: std::path::PathBuf,
     pub entry_count: usize,
 }
 
-impl WALFixture {
+impl WalBenchmarkFixture {
+    /// Create a fully populated and validated WAL fixture.
+    ///
+    /// All I/O happens here — inside the constructor, outside `b.iter()`.
+    /// Returns a descriptive panic on any failure.
     pub fn new(config: &DatasetConfig) -> Self {
-        config.validate().expect("Invalid dataset config");
-        let dir = tempfile::tempdir().unwrap();
+        config
+            .validate()
+            .unwrap_or_else(|e| panic!("WalBenchmarkFixture: invalid config: {}", e));
+
+        let dir = tempfile::tempdir()
+            .unwrap_or_else(|e| panic!("WalBenchmarkFixture: failed to create temp dir: {}", e));
         let wal_path = dir.path().join("bench.wal");
+
+        // --- Phase 1: Create and populate the WAL ---
         {
-            let wal = kcm_storage::wal::WriteAheadLog::new(&wal_path).unwrap();
+            let wal = kcm_storage::wal::WriteAheadLog::new(&wal_path).unwrap_or_else(|e| {
+                panic!(
+                    "WalBenchmarkFixture: failed to create WAL at {:?}: {}",
+                    wal_path, e
+                )
+            });
             for i in 0..config.fact_count {
                 let fact = deterministic_fact(i, config);
-                wal.append_fact(&fact).unwrap();
+                wal.append_fact(&fact).unwrap_or_else(|e| {
+                    panic!(
+                        "WalBenchmarkFixture: failed to append fact {} to WAL: {}",
+                        i, e
+                    )
+                });
             }
-            wal.flush_buffer().unwrap();
+            wal.flush_buffer().unwrap_or_else(|e| {
+                panic!("WalBenchmarkFixture: failed to flush WAL buffer: {}", e)
+            });
         }
-        WALFixture {
+        // WAL file handle is now closed — all data is on disk.
+
+        // --- Phase 2: Validate the WAL file ---
+        let metadata = std::fs::metadata(&wal_path).unwrap_or_else(|e| {
+            panic!(
+                "WalBenchmarkFixture: WAL file does not exist after flush at {:?}: {}",
+                wal_path, e
+            )
+        });
+        let file_size = metadata.len();
+        assert!(
+            file_size > 0,
+            "WalBenchmarkFixture: WAL file at {:?} is empty (0 bytes) after populating {} entries",
+            wal_path,
+            config.fact_count,
+        );
+
+        // --- Phase 3: Dry-run replay to verify entry count ---
+        let verify_wal = kcm_storage::wal::WriteAheadLog::new(&wal_path).unwrap_or_else(|e| {
+            panic!(
+                "WalBenchmarkFixture: failed to reopen WAL for verification at {:?}: {}",
+                wal_path, e
+            )
+        });
+        let mut replay_count: usize = 0;
+        verify_wal
+            .replay(|_| {
+                replay_count += 1;
+                Ok(())
+            })
+            .unwrap_or_else(|e| {
+                panic!(
+                    "WalBenchmarkFixture: WAL integrity check failed during replay at {:?}: {}",
+                    wal_path, e
+                )
+            });
+        assert_eq!(
+            replay_count, config.fact_count,
+            "WalBenchmarkFixture: WAL entry count mismatch — expected {}, got {} (file: {:?}, size: {} bytes)",
+            config.fact_count, replay_count, wal_path, file_size,
+        );
+
+        WalBenchmarkFixture {
+            _dir: dir,
             wal_path,
             entry_count: config.fact_count,
         }
+    }
+
+    /// Return the WAL file path for use by benchmarks.
+    pub fn path(&self) -> &std::path::Path {
+        &self.wal_path
+    }
+
+    /// Return the expected entry count for assertions in benchmarks.
+    pub fn expected_count(&self) -> usize {
+        self.entry_count
     }
 }
 
 /// Pre-computed file format save/load fixture.
 pub struct FileFormatFixture {
+    _dir: tempfile::TempDir,
     pub schema: Schema,
     pub path: std::path::PathBuf,
 }
@@ -305,7 +408,11 @@ impl FileFormatFixture {
             schema.append_fact(&fact).unwrap();
         }
         kcm_storage::file_format::DatabaseFile::save(&schema, &path).unwrap();
-        FileFormatFixture { schema, path }
+        FileFormatFixture {
+            _dir: dir,
+            schema,
+            path,
+        }
     }
 }
 

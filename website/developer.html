@@ -9,33 +9,24 @@
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
 </head>
 <body>
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <nav class="navbar">
         <div class="container">
-            <a href="index.html" class="logo" aria-label="KCM Home">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                    <rect width="32" height="32" rx="6" fill="#228be6"/>
-                    <rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/>
-                    <rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/>
-                    <rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/>
-                </svg>
+            <a href="index.html" class="logo">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="5" fill="#0066ff"/><rect x="4" y="4" width="5" height="20" rx="1" fill="#fff" opacity=".9"/><rect x="11.5" y="7" width="5" height="17" rx="1" fill="#fff" opacity=".7"/><rect x="19" y="5" width="5" height="19" rx="1" fill="#fff" opacity=".5"/></svg>
                 <span>KCM</span>
             </a>
             <div class="nav-links">
                 <a href="index.html">Home</a>
-                <a href="developer.html" class="active">Developer</a>
+                <a href="developer.html" class="active">Developers</a>
                 <a href="dashboard.html">Dashboard</a>
                 <a href="docs/KCM_SPECIFICATION.html">Docs</a>
-                <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">
-                    GitHub
-                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                </a>
+                <a href="https://github.com/knowledge-columnar/kcm" target="_blank">GitHub</a>
                 <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
-                    <svg class="icon icon-sm theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                    <svg class="icon icon-sm theme-icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                    <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
                 </button>
             </div>
             <button class="mobile-menu-btn" aria-label="Menu" aria-expanded="false">
-                <svg class="icon icon-lg" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
             </button>
         </div>
     </nav>
@@ -47,76 +38,60 @@
                 <p class="lead">Everything you need to build with, contribute to, or integrate KCM.</p>
 
                 <h2>Getting Started</h2>
-                <div class="quickstart-grid">
-                    <div class="quickstart-card card">
-                        <h3>
-                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                            Prerequisites
-                        </h3>
-                        <ul class="spec-list">
-                            <li>Rust 1.75+ (stable)</li>
-                            <li>Linux x86_64 (primary), macOS, Windows</li>
-                            <li>protobuf compiler (optional, vendored)</li>
+                <div class="grid-3">
+                    <div class="card">
+                        <h4>Prerequisites</h4>
+                        <ul style="list-style:none;padding:0;font-size:14px;color:var(--c-fg-1)">
+                            <li style="padding:4px 0">Rust 1.75+ (stable)</li>
+                            <li style="padding:4px 0">Linux x86_64 (primary target)</li>
+                            <li style="padding:4px 0">macOS / Windows (community supported)</li>
                         </ul>
                     </div>
-                    <div class="quickstart-card card">
-                        <h3>
-                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                            Install
-                        </h3>
+                    <div class="card">
+                        <h4>Install</h4>
                         <pre><code>git clone https://github.com/knowledge-columnar/kcm
 cd kcm
 cargo build --release</code></pre>
                     </div>
-                    <div class="quickstart-card card">
-                        <h3>
-                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            Run Tests
-                        </h3>
+                    <div class="card">
+                        <h4>Run Tests</h4>
                         <pre><code>cargo test --workspace</code></pre>
                     </div>
                 </div>
 
                 <h2>Project Structure</h2>
-                <pre class="arch-diagram"><code>KCM/
-├── crates/
-│   ├── kcm-core/          Foundation: types, DenseVec, Bitmap, Dictionary
-│   ├── kcm-storage/       Storage: columns, codecs, WAL, file format, indexes, backup
-│   ├── kcm-compute/       Compute: algebra operators, SIMD (AVX2)
-│   ├── kcm-reasoning/     Reasoning: rules, inference, confidence calculus
-│   ├── kcm-optimizer/     Optimizer: cost model, planner, statistics, adaptive
-│   ├── kcm-runtime/       Runtime: database, transactions, metrics, health
-│   ├── kcm-interface/     Interface: C FFI, Python, REST, KQL
-│   ├── kcm-distributed/   Distributed: sharding, 2PC coordinator
-│   ├── kcm-ml/            ML: learned index, confidence learner, rule discovery
-│   ├── kcm-security/      Security: RBAC, AES-256-GCM, audit
-│   ├── kcm-compliance/    Compliance: GDPR, data classification
-│   ├── kcm-testing/       Testing: load, stress, recovery, security tests
-│   └── kcm-server/        Server: HTTP (actix-web) + gRPC (tonic)
-├── docs/                   18 technical specification documents
-├── website/                This website
-└── skills/                 Engineering skill system (16 skills)</code></pre>
+                <pre class="diagram"><code>KCM/
++-- crates/
+|   +-- kcm-core/          Foundation: types, DenseVec, Bitmap, Dictionary
+|   +-- kcm-storage/       Storage: columns, codecs, WAL, file format, indexes, backup
+|   +-- kcm-compute/       Compute: algebra operators, SIMD (AVX2)
+|   +-- kcm-reasoning/     Reasoning: rules, inference, confidence calculus
+|   +-- kcm-optimizer/     Optimizer: cost model, planner, statistics, adaptive
+|   +-- kcm-runtime/       Runtime: database, transactions, metrics, health
+|   +-- kcm-interface/     Interface: C FFI, Python, REST, KQL
+|   +-- kcm-distributed/   Distributed: sharding, 2PC coordinator
+|   +-- kcm-ml/            ML: learned index, confidence learner, rule discovery
+|   +-- kcm-security/      Security: RBAC, AES-256-GCM, audit
+|   +-- kcm-compliance/    Compliance: GDPR, data classification
+|   +-- kcm-testing/       Testing: load, stress, recovery, security tests
++-- docs/                   18 technical specification documents
++-- website/                This website
++-- skills/                 Engineering skill system (16 skills)</code></pre>
 
                 <h2>API Quick Reference</h2>
-                <div class="quickstart-grid">
-                    <div class="quickstart-card card">
-                        <h3>
-                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-                            C FFI (13 functions)
-                        </h3>
-                        <pre><code>KCM_DatabaseNew / KCM_DatabaseFree
-KCM_DatabaseInsert / KCM_DatabaseUpdate / KCM_DatabaseDelete
-KCM_DatabaseFactCount / KCM_DatabaseActiveCount
-KCM_DatabaseQuery / KCM_QueryNext / KCM_QueryFree
+                <div class="grid-3">
+                    <div class="card">
+                        <h4>C FFI (13 functions)</h4>
+                        <pre><code>KCM_DatabaseNew / Free
+KCM_DatabaseInsert / Update / Delete
+KCM_DatabaseFactCount / ActiveCount
+KCM_DatabaseQuery / QueryNext / QueryFree
 KCM_DatabaseBeginTransaction
-KCM_TransactionCommit / KCM_TransactionRollback
+KCM_TransactionCommit / Rollback
 KCM_ErrorMessage</code></pre>
                     </div>
-                    <div class="quickstart-card card">
-                        <h3>
-                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                            Rust API
-                        </h3>
+                    <div class="card">
+                        <h4>Rust API</h4>
                         <pre><code>let kb = KnowledgeDatabase::new()?;
 kb.insert(&amp;fact)?;
 kb.query()
@@ -126,11 +101,8 @@ kb.query()
 kb.update(row_id, &amp;new_fact)?;
 kb.delete(row_id)?;</code></pre>
                     </div>
-                    <div class="quickstart-card card">
-                        <h3>
-                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                            REST API
-                        </h3>
+                    <div class="card">
+                        <h4>REST API</h4>
                         <pre><code>POST   /facts          Insert
 GET    /facts?subject=1 Query
 GET    /facts/{id}      Get
@@ -144,50 +116,45 @@ GET    /metrics         Prometheus</code></pre>
 
                 <h2>Engineering Commands</h2>
                 <div class="table-wrap">
-                    <table class="perf-table">
-                        <thead><tr><th>Command</th><th>Description</th></tr></thead>
-                        <tbody>
-                            <tr><td><code>cargo build --workspace</code></td><td>Build all crates (debug)</td></tr>
-                            <tr><td><code>cargo build --release --workspace</code></td><td>Build all crates (release with LTO)</td></tr>
-                            <tr><td><code>cargo test --workspace</code></td><td>Run all 372 tests</td></tr>
-                            <tr><td><code>cargo clippy --workspace --all-targets -- -D warnings</code></td><td>Lint check (zero warnings)</td></tr>
-                            <tr><td><code>cargo fmt --all -- --check</code></td><td>Format check</td></tr>
-                            <tr><td><code>cargo bench --workspace</code></td><td>Run benchmarks</td></tr>
-                            <tr><td><code>cargo bench --workspace --no-run</code></td><td>Compile benchmarks only</td></tr>
-                        </tbody>
-                    </table>
+                <table>
+                    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>cargo build --workspace</code></td><td>Build all crates (debug)</td></tr>
+                        <tr><td><code>cargo build --release --workspace</code></td><td>Build all crates (release with LTO)</td></tr>
+                        <tr><td><code>cargo test --workspace</code></td><td>Run all 530+ tests</td></tr>
+                        <tr><td><code>cargo clippy --workspace --all-targets -- -D warnings</code></td><td>Lint check (zero warnings enforced)</td></tr>
+                        <tr><td><code>cargo fmt --all -- --check</code></td><td>Format check</td></tr>
+                        <tr><td><code>cargo bench --workspace</code></td><td>Run benchmarks</td></tr>
+                        <tr><td><code>cargo bench --workspace --no-run</code></td><td>Compile benchmarks only</td></tr>
+                    </tbody>
+                </table>
                 </div>
 
                 <h2>Contribution Guide</h2>
                 <div class="card">
-                    <h3>
-                        <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                        Development Workflow
-                    </h3>
-                    <ol class="spec-list">
-                        <li>Fork the repository</li>
-                        <li>Create a feature branch: <code>git checkout -b feature/my-change</code></li>
-                        <li>Make changes following engineering rules in <a href="docs/KCM_ENGINEERING_RULES.html">KCM_ENGINEERING_RULES.md</a></li>
-                        <li>Add tests for all new functionality</li>
-                        <li>Run <code>cargo test --workspace</code> — all must pass</li>
-                        <li>Run <code>cargo clippy --workspace --all-targets -- -D warnings</code> — zero warnings</li>
-                        <li>Run <code>cargo fmt --all</code> — format must be clean</li>
-                        <li>Submit pull request with description of changes</li>
+                    <h4>Development Workflow</h4>
+                    <ol style="padding-left:20px;font-size:14px;color:var(--c-fg-1)">
+                        <li style="padding:4px 0">Fork the repository</li>
+                        <li style="padding:4px 0">Create a feature branch: <code>git checkout -b feature/my-change</code></li>
+                        <li style="padding:4px 0">Make changes following rules in <a href="docs/KCM_ENGINEERING_RULES.html">Engineering Rules</a></li>
+                        <li style="padding:4px 0">Add tests for all new functionality</li>
+                        <li style="padding:4px 0">Run <code>cargo test --workspace</code> -- all must pass</li>
+                        <li style="padding:4px 0">Run <code>cargo clippy --workspace --all-targets -- -D warnings</code></li>
+                        <li style="padding:4px 0">Run <code>cargo fmt --all</code></li>
+                        <li style="padding:4px 0">Submit pull request</li>
                     </ol>
                 </div>
-                <div class="card" style="margin-top:1rem">
-                    <h3>
-                        <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        Code Standards
-                    </h3>
-                    <ul class="spec-list">
-                        <li>All public APIs return <code>Result&lt;T, KcmError&gt;</code></li>
-                        <li>No <code>unwrap()</code> in production code paths</li>
-                        <li>No <code>panic!()</code> in production code</li>
-                        <li>No TODO/FIXME/HACK comments</li>
-                        <li>No placeholder implementations</li>
-                        <li>Every unsafe block must have SAFETY comment</li>
-                        <li>Run <code>cargo clippy --workspace --all-targets -- -D warnings</code></li>
+
+                <h2>Code Standards</h2>
+                <div class="card">
+                    <ul style="list-style:none;padding:0;font-size:14px;color:var(--c-fg-1)">
+                        <li style="padding:4px 0">All public APIs return <code>Result&lt;T, KcmError&gt;</code></li>
+                        <li style="padding:4px 0">No <code>unwrap()</code> in production code paths</li>
+                        <li style="padding:4px 0">No <code>panic!()</code> in production code</li>
+                        <li style="padding:4px 0">No TODO/FIXME/HACK comments</li>
+                        <li style="padding:4px 0">No placeholder implementations</li>
+                        <li style="padding:4px 0">Every unsafe block must have SAFETY comment</li>
+                        <li style="padding:4px 0">Zero clippy warnings enforced</li>
                     </ul>
                 </div>
             </div>
@@ -196,7 +163,7 @@ GET    /metrics         Prometheus</code></pre>
 
     <footer class="footer">
         <div class="container">
-            <div class="footer-bottom"><p>&copy; 2026 KCM Contributors. Built with Rust.</p></div>
+            <div class="footer-bottom"><p>&copy; 2026 KCM Contributors</p></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
