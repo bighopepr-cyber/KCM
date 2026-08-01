@@ -12,17 +12,31 @@
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="container">
             <a href="index.html" class="logo" aria-label="KCM Home">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                    <rect width="32" height="32" rx="6" fill="#228be6"/>
+                    <rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/>
+                    <rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/>
+                    <rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/>
+                </svg>
                 <span>KCM</span>
             </a>
             <div class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="docs/KCM_SPECIFICATION.html">Docs</a>
                 <a href="dashboard.html" class="active">Dashboard</a>
-                <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">GitHub</a>
-                <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">☀</button>
+                <a href="developer.html">Developers</a>
+                <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">
+                    GitHub
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
+                    <svg class="icon icon-sm theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon icon-sm theme-icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                </button>
             </div>
-            <button class="mobile-menu-btn" aria-label="Menu" aria-expanded="false">☰</button>
+            <button class="mobile-menu-btn" aria-label="Menu" aria-expanded="false">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </div>
     </nav>
 
@@ -30,37 +44,55 @@
         <section class="section">
             <div class="container">
                 <h1>Engineering Dashboard</h1>
-                <p class="section-lead">Real-time metrics derived from the KCM repository.</p>
+                <p class="lead">Real-time metrics derived from the KCM repository.</p>
 
                 <div class="dashboard-grid">
                     <div class="dash-card">
-                        <h3>Build Status</h3>
-                        <div class="dash-metric"><span class="dash-value status-green">●</span> Passing</div>
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle;color:var(--kcm-success)"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            Build Status
+                        </h3>
+                        <div class="dash-metric"><span class="dash-value status-green"><span class="status-dot status-dot-green"></span></span> <span class="dash-value">Passing</span></div>
                         <p>Build: clean | Clippy: 0 warnings | Format: clean</p>
                     </div>
                     <div class="dash-card">
-                        <h3>Test Suite</h3>
-                        <div class="dash-metric"><span class="dash-value">372</span> tests</div>
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            Test Suite
+                        </h3>
+                        <div class="dash-metric"><span class="dash-value">372</span> <span style="color:var(--kcm-fg-2);font-size:var(--text-sm)">tests</span></div>
                         <p>All passing across 12 crates</p>
                     </div>
                     <div class="dash-card">
-                        <h3>Codebase</h3>
-                        <div class="dash-metric"><span class="dash-value">85</span> source files</div>
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            Codebase
+                        </h3>
+                        <div class="dash-metric"><span class="dash-value">85</span> <span style="color:var(--kcm-fg-2);font-size:var(--text-sm)">source files</span></div>
                         <p>~16,000 lines of Rust</p>
                     </div>
                     <div class="dash-card">
-                        <h3>Crate Count</h3>
-                        <div class="dash-metric"><span class="dash-value">12</span> crates</div>
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            Crate Count
+                        </h3>
+                        <div class="dash-metric"><span class="dash-value">13</span> <span style="color:var(--kcm-fg-2);font-size:var(--text-sm)">crates</span></div>
                         <p>Zero circular dependencies</p>
                     </div>
                     <div class="dash-card">
-                        <h3>Specifications</h3>
-                        <div class="dash-metric"><span class="dash-value">18</span> documents</div>
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Specifications
+                        </h3>
+                        <div class="dash-metric"><span class="dash-value">18</span> <span style="color:var(--kcm-fg-2);font-size:var(--text-sm)">documents</span></div>
                         <p>4 PRDs + 14 technical specs</p>
                     </div>
                     <div class="dash-card">
-                        <h3>Security</h3>
-                        <div class="dash-metric"><span class="dash-value status-green">●</span> Hardened</div>
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Security
+                        </h3>
+                        <div class="dash-metric"><span class="dash-value status-green"><span class="status-dot status-dot-green"></span></span> <span class="dash-value">Hardened</span></div>
                         <p>AES-256-GCM + RBAC + Audit</p>
                     </div>
                 </div>
@@ -68,57 +100,54 @@
                 <h2>Test Coverage by Crate</h2>
                 <div class="chart-container">
                     <svg viewBox="0 0 800 300" class="bar-chart" role="img" aria-label="Test coverage bar chart">
-                        <!-- kcm-core -->
-                        <rect x="50" y="20" width="200" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="20" width="200" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="40" fill="currentColor" font-size="14" text-anchor="start">kcm-core: 53</text>
-                        <!-- kcm-storage -->
-                        <rect x="50" y="60" width="260" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="60" width="260" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="80" fill="currentColor" font-size="14" text-anchor="start">kcm-storage: 65</text>
-                        <!-- kcm-compute -->
-                        <rect x="50" y="100" width="180" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="100" width="180" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="120" fill="currentColor" font-size="14" text-anchor="start">kcm-compute: 46</text>
-                        <!-- kcm-reasoning -->
-                        <rect x="50" y="140" width="150" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="140" width="150" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="160" fill="currentColor" font-size="14" text-anchor="start">kcm-reasoning: 36</text>
-                        <!-- kcm-runtime -->
-                        <rect x="50" y="180" width="230" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="180" width="230" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="200" fill="currentColor" font-size="14" text-anchor="start">kcm-runtime: 80</text>
-                        <!-- kcm-security -->
-                        <rect x="50" y="220" width="120" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="220" width="120" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="240" fill="currentColor" font-size="14" text-anchor="start">kcm-security: 29</text>
-                        <!-- remaining -->
-                        <rect x="50" y="260" width="270" height="30" fill="#2563eb" rx="4"/>
+                        <rect x="50" y="260" width="270" height="30" fill="#228be6" rx="4"/>
                         <text x="260" y="280" fill="currentColor" font-size="14" text-anchor="start">Other crates: 63</text>
                     </svg>
                 </div>
 
                 <h2>Performance Targets</h2>
-                <table class="perf-table">
-                    <thead><tr><th>Operation</th><th>Target</th><th>Status</th></tr></thead>
-                    <tbody>
-                        <tr><td>Column sequential scan</td><td>&gt; 100M ops/sec</td><td class="status-green">Achieved</td></tr>
-                        <tr><td>Bitmap set/get</td><td>&gt; 8M ops/sec</td><td class="status-green">Achieved</td></tr>
-                        <tr><td>Dictionary lookup</td><td>&lt; 100ns</td><td class="status-green">Achieved</td></tr>
-                        <tr><td>Fact insert throughput</td><td>&gt; 50K facts/sec</td><td class="status-green">Achieved</td></tr>
-                        <tr><td>Query latency P99</td><td>&lt; 100ms</td><td class="status-green">Achieved</td></tr>
-                        <tr><td>Memory per fact</td><td>&lt; 34 bytes</td><td class="status-green">34 bytes</td></tr>
-                        <tr><td>Compression ratio</td><td>&gt; 5x</td><td class="status-green">Achieved</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table class="perf-table">
+                        <thead><tr><th>Operation</th><th>Target</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>Column sequential scan</td><td>&gt; 100M ops/sec</td><td class="status-green">Achieved</td></tr>
+                            <tr><td>Bitmap set/get</td><td>&gt; 8M ops/sec</td><td class="status-green">Achieved</td></tr>
+                            <tr><td>Dictionary lookup</td><td>&lt; 100ns</td><td class="status-green">Achieved</td></tr>
+                            <tr><td>Fact insert throughput</td><td>&gt; 50K facts/sec</td><td class="status-green">Achieved</td></tr>
+                            <tr><td>Query latency P99</td><td>&lt; 100ms</td><td class="status-green">Achieved</td></tr>
+                            <tr><td>Memory per fact</td><td>&lt; 34 bytes</td><td class="status-green">34 bytes</td></tr>
+                            <tr><td>Compression ratio</td><td>&gt; 5x</td><td class="status-green">Achieved</td></tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <h2>Engineering Health</h2>
-                <table class="perf-table">
-                    <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
-                    <tbody>
-                        <tr><td>Build</td><td>0 errors</td><td class="status-green">●</td></tr>
-                        <tr><td>Clippy</td><td>0 warnings</td><td class="status-green">●</td></tr>
-                        <tr><td>Format</td><td>Clean</td><td class="status-green">●</td></tr>
-                        <tr><td>Tests</td><td>372 passed, 0 failed</td><td class="status-green">●</td></tr>
-                        <tr><td>TODO/FIXME</td><td>0</td><td class="status-green">●</td></tr>
-                        <tr><td>Unsafe (undocumented)</td><td>0</td><td class="status-green">●</td></tr>
-                        <tr><td>Spec compliance</td><td>100%</td><td class="status-green">●</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table class="perf-table">
+                        <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>Build</td><td>0 errors</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                            <tr><td>Clippy</td><td>0 warnings</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                            <tr><td>Format</td><td>Clean</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                            <tr><td>Tests</td><td>372 passed, 0 failed</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                            <tr><td>TODO/FIXME</td><td>0</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                            <tr><td>Unsafe (undocumented)</td><td>0</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                            <tr><td>Spec compliance</td><td>100%</td><td class="status-green"><span class="status-dot status-dot-green"></span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>

@@ -20,7 +20,7 @@
         <div class="container">
             <a href="/" class="logo" aria-label="KCM Home">
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                    <rect width="32" height="32" rx="6" fill="#3b82f6"/>
+                    <rect width="32" height="32" rx="6" fill="#228be6"/>
                     <rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/>
                     <rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/>
                     <rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/>
@@ -33,28 +33,57 @@
                 <a href="docs/KCM_SPECIFICATION.html">Docs</a>
                 <a href="dashboard.html">Dashboard</a>
                 <a href="developer.html">Developers</a>
-                <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">GitHub</a>
-                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">☀</button>
+                <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">
+                    GitHub
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">
+                    <svg class="icon icon-sm theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon icon-sm theme-icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                </button>
             </div>
-            <button class="mobile-menu-btn" aria-label="Menu" aria-expanded="false">☰</button>
+            <button class="mobile-menu-btn" aria-label="Menu" aria-expanded="false">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </div>
     </nav>
 
     <header class="hero" role="banner">
         <div class="container">
-            <div class="hero-badge">Open Source · Rust · Enterprise</div>
+            <div class="hero-eyebrow">Open Source · Rust · Enterprise</div>
             <h1>Knowledge Columnar Model</h1>
-            <p class="hero-subtitle">A high-performance columnar storage and reasoning engine for knowledge representation. SIMD-accelerated scanning, per-column compression, bitmap indexing, and deterministic forward-chaining inference — all in Rust.</p>
-            <div class="hero-cta">
-                <a href="developer.html" class="btn btn-primary">Get Started</a>
-                <a href="docs/KCM_SPECIFICATION.html" class="btn btn-secondary">Documentation</a>
-                <a href="https://github.com/knowledge-columnar/kcm" class="btn btn-outline" target="_blank" rel="noopener">View Source</a>
+            <p class="hero-sub">A high-performance columnar storage and reasoning engine for knowledge representation. SIMD-accelerated scanning, per-column compression, bitmap indexing, and deterministic forward-chaining inference — all in Rust.</p>
+            <div class="hero-actions">
+                <a href="developer.html" class="btn btn-primary">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                    Get Started
+                </a>
+                <a href="docs/KCM_SPECIFICATION.html" class="btn btn-secondary">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Documentation
+                </a>
+                <a href="https://github.com/knowledge-columnar/kcm" class="btn btn-ghost" target="_blank" rel="noopener">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+                    View Source
+                </a>
             </div>
-            <div class="hero-stats">
-                <div class="stat"><span class="stat-value">12</span><span class="stat-label">Crates</span></div>
-                <div class="stat"><span class="stat-value">530+</span><span class="stat-label">Tests</span></div>
-                <div class="stat"><span class="stat-value">16K+</span><span class="stat-label">Lines of Rust</span></div>
-                <div class="stat"><span class="stat-value">18</span><span class="stat-label">Specifications</span></div>
+            <div class="hero-metrics">
+                <div class="metric">
+                    <span class="metric-value">13</span>
+                    <span class="metric-label">Crates</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-value">530+</span>
+                    <span class="metric-label">Tests</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-value">16K+</span>
+                    <span class="metric-label">Lines of Rust</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-value">18</span>
+                    <span class="metric-label">Specifications</span>
+                </div>
             </div>
         </div>
     </header>
@@ -63,7 +92,7 @@
         <section id="overview" class="section">
             <div class="container">
                 <h2>What is KCM</h2>
-                <p class="section-lead">KCM stores knowledge as columnar relation spaces rather than pointer-based graphs. Each attribute of a knowledge fact — subject, predicate, object, confidence, evidence, timestamp, context, version, priority, owner — is stored in its own independent, contiguous, SIMD-aligned column.</p>
+                <p class="lead">KCM stores knowledge as columnar relation spaces rather than pointer-based graphs. Each attribute of a knowledge fact — subject, predicate, object, confidence, evidence, timestamp, context, version, priority, owner — is stored in its own independent, contiguous, SIMD-aligned column.</p>
                 <div class="code-comparison">
                     <div class="code-card">
                         <h3>Traditional</h3>
@@ -72,9 +101,9 @@
                     </div>
                     <div class="code-card highlight">
                         <h3>KCM Columnar</h3>
-                        <pre><code>Column[Subject]  → Sequential → SIMD-ready
-Column[Predicate] → Sequential → SIMD-ready
-Column[Object]    → Sequential → SIMD-ready</code></pre>
+                        <pre><code>Column[Subject]    → Sequential → SIMD-ready
+Column[Predicate]  → Sequential → SIMD-ready
+Column[Object]     → Sequential → SIMD-ready</code></pre>
                         <p>Sequential memory access, SIMD-parallel filtering</p>
                     </div>
                 </div>
@@ -111,45 +140,61 @@ Column[Object]    → Sequential → SIMD-ready</code></pre>
         <section id="features" class="section">
             <div class="container">
                 <h2>Key Features</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">⚡</div>
-                        <h3>Columnar Storage</h3>
+                <div class="feature-grid">
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg>
+                            <h3>Columnar Storage</h3>
+                        </div>
                         <p>10-column fact store with cache-aligned DenseVec. 64-byte SIMD-aligned contiguous memory with independent per-column compression.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔍</div>
-                        <h3>Query Engine</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="M15 15l5 5"/><line x1="10" y1="6" x2="10" y2="14"/><line x1="6" y1="10" x2="14" y2="10"/></svg>
+                            <h3>Query Engine</h3>
+                        </div>
                         <p>5 algebraic operators with AVX2 SIMD acceleration. Bitmap indexing, zone maps, and bloom filters for fast filtering.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🧠</div>
-                        <h3>Reasoning Engine</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+                            <h3>Reasoning Engine</h3>
+                        </div>
                         <p>Forward-chaining inference with confidence calculus. Conjunction, disjunction, negation, and weighted combination.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔒</div>
-                        <h3>Security</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                            <h3>Security</h3>
+                        </div>
                         <p>AES-256-GCM encryption, RBAC with 5 permission levels, audit logging, and GDPR compliance.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📦</div>
-                        <h3>Compression</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            <h3>Compression</h3>
+                        </div>
                         <p>Dictionary, Delta, Gorilla, and RLE encoding. Zstd and LZ4 physical compression with per-column codec selection.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔄</div>
-                        <h3>Transactions</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                            <h3>Transactions</h3>
+                        </div>
                         <p>ACID transactions with WAL-based crash recovery. Tombstone-based soft delete with active count tracking.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🌐</div>
-                        <h3>Interfaces</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                            <h3>Interfaces</h3>
+                        </div>
                         <p>C FFI (13 functions), Python bindings (PyO3), REST API (actix-web), gRPC (tonic), KQL parser.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📐</div>
-                        <h3>Optimization</h3>
+                    <div class="card feature-card">
+                        <div class="card-header">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            <h3>Optimization</h3>
+                        </div>
                         <p>Cost-based query planner with filter pushdown, join reordering, statistics-driven selectivity, and adaptive execution.</p>
                     </div>
                 </div>
@@ -160,12 +205,18 @@ Column[Object]    → Sequential → SIMD-ready</code></pre>
             <div class="container">
                 <h2>Quick Start</h2>
                 <div class="quickstart-grid">
-                    <div class="quickstart-card">
-                        <h3>Build</h3>
+                    <div class="quickstart-card card">
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            Build
+                        </h3>
                         <pre><code>cargo build --release</code></pre>
                     </div>
-                    <div class="quickstart-card">
-                        <h3>Insert &amp; Query</h3>
+                    <div class="quickstart-card card">
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><circle cx="10" cy="10" r="7"/><path d="M15 15l5 5"/></svg>
+                            Insert &amp; Query
+                        </h3>
                         <pre><code>let kb = KnowledgeDatabase::new()?;
 let fact = Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9)?;
 kb.insert(&amp;fact)?;
@@ -174,8 +225,11 @@ let results = kb.query()
     .with_subject(SubjectID(1))
     .execute()?;</code></pre>
                     </div>
-                    <div class="quickstart-card">
-                        <h3>HTTP Server</h3>
+                    <div class="quickstart-card card">
+                        <h3>
+                            <svg class="icon" viewBox="0 0 24 24" style="display:inline-block;margin-right:6px;vertical-align:middle"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                            HTTP Server
+                        </h3>
                         <pre><code>cargo run --release -p kcm-server
 # POST   /facts
 # GET    /facts
@@ -190,21 +244,23 @@ let results = kb.query()
         <section id="performance" class="section">
             <div class="container">
                 <h2>Performance</h2>
-                <p class="section-lead">Benchmark targets measured with Criterion.rs on release builds with LTO.</p>
-                <table class="perf-table">
-                    <thead>
-                        <tr><th>Operation</th><th>Target</th><th>Method</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Column sequential scan</td><td>&gt; 100M ops/sec</td><td>DenseVec iteration</td></tr>
-                        <tr><td>Bitmap set/get</td><td>&gt; 8M ops/sec</td><td>64-bit word operations</td></tr>
-                        <tr><td>Dictionary lookup</td><td>&lt; 100ns</td><td>HashMap reverse lookup</td></tr>
-                        <tr><td>Fact insert throughput</td><td>&gt; 50K facts/sec</td><td>Schema append + WAL</td></tr>
-                        <tr><td>Query latency P99</td><td>&lt; 100ms</td><td>Filter + scan on 1M facts</td></tr>
-                        <tr><td>Memory per fact</td><td>&lt; 34 bytes</td><td>Uncompressed column data</td></tr>
-                        <tr><td>Compression ratio</td><td>&gt; 5x</td><td>Zstd/Gorilla/Delta encoding</td></tr>
-                    </tbody>
-                </table>
+                <p class="lead">Benchmark targets measured with Criterion.rs on release builds with LTO.</p>
+                <div class="table-wrap">
+                    <table class="perf-table">
+                        <thead>
+                            <tr><th>Operation</th><th>Target</th><th>Method</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Column sequential scan</td><td>&gt; 100M ops/sec</td><td>DenseVec iteration</td></tr>
+                            <tr><td>Bitmap set/get</td><td>&gt; 8M ops/sec</td><td>64-bit word operations</td></tr>
+                            <tr><td>Dictionary lookup</td><td>&lt; 100ns</td><td>HashMap reverse lookup</td></tr>
+                            <tr><td>Fact insert throughput</td><td>&gt; 50K facts/sec</td><td>Schema append + WAL</td></tr>
+                            <tr><td>Query latency P99</td><td>&lt; 100ms</td><td>Filter + scan on 1M facts</td></tr>
+                            <tr><td>Memory per fact</td><td>&lt; 34 bytes</td><td>Uncompressed column data</td></tr>
+                            <tr><td>Compression ratio</td><td>&gt; 5x</td><td>Zstd/Gorilla/Delta encoding</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p class="perf-note">Benchmarks are reproducible via <code>cargo bench --workspace</code>. Performance baselines tracked by Criterion with 5% regression threshold.</p>
             </div>
         </section>
@@ -213,14 +269,62 @@ let results = kb.query()
             <div class="container">
                 <h2>Documentation</h2>
                 <div class="docs-grid">
-                    <a href="docs/KCM_SPECIFICATION.html" class="doc-card"><h3>Specification</h3><p>Technical constitution, scope, requirements.</p></a>
-                    <a href="docs/KCM_ARCHITECTURE.html" class="doc-card"><h3>Architecture</h3><p>System architecture, crate responsibilities, data flow.</p></a>
-                    <a href="docs/KCM_DATA_MODEL_SPEC.html" class="doc-card"><h3>Data Model</h3><p>Knowledge model, type system, schema design.</p></a>
-                    <a href="docs/KCM_COLUMNAR_FORMAT_SPEC.html" class="doc-card"><h3>Storage Format</h3><p>Binary file format, WAL format, column layout.</p></a>
-                    <a href="docs/KCM_QUERY_EXECUTION_SPEC.html" class="doc-card"><h3>Query Engine</h3><p>Query pipeline, operators, optimizer, KQL.</p></a>
-                    <a href="docs/KCM_COMPRESSION_SPEC.html" class="doc-card"><h3>Compression</h3><p>Encoding algorithms, compression codecs.</p></a>
-                    <a href="docs/KCM_SECURITY_TRUST_SPEC.html" class="doc-card"><h3>Security</h3><p>RBAC, encryption, audit, GDPR.</p></a>
-                    <a href="docs/KCM_API_SPEC.html" class="doc-card"><h3>API Reference</h3><p>C FFI, Python, REST, gRPC contracts.</p></a>
+                    <a href="docs/KCM_SPECIFICATION.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <h3>Specification</h3>
+                        </div>
+                        <p>Technical constitution, scope, requirements.</p>
+                    </a>
+                    <a href="docs/KCM_ARCHITECTURE.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            <h3>Architecture</h3>
+                        </div>
+                        <p>System architecture, crate responsibilities, data flow.</p>
+                    </a>
+                    <a href="docs/KCM_DATA_MODEL_SPEC.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                            <h3>Data Model</h3>
+                        </div>
+                        <p>Knowledge model, type system, schema design.</p>
+                    </a>
+                    <a href="docs/KCM_COLUMNAR_FORMAT_SPEC.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                            <h3>Storage Format</h3>
+                        </div>
+                        <p>Binary file format, WAL format, column layout.</p>
+                    </a>
+                    <a href="docs/KCM_QUERY_EXECUTION_SPEC.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            <h3>Query Engine</h3>
+                        </div>
+                        <p>Query pipeline, operators, optimizer, KQL.</p>
+                    </a>
+                    <a href="docs/KCM_COMPRESSION_SPEC.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            <h3>Compression</h3>
+                        </div>
+                        <p>Encoding algorithms, compression codecs.</p>
+                    </a>
+                    <a href="docs/KCM_SECURITY_TRUST_SPEC.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <h3>Security</h3>
+                        </div>
+                        <p>RBAC, encryption, audit, GDPR.</p>
+                    </a>
+                    <a href="docs/KCM_API_SPEC.html" class="card doc-card">
+                        <div class="card-header">
+                            <svg class="icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            <h3>API Reference</h3>
+                        </div>
+                        <p>C FFI, Python, REST, gRPC contracts.</p>
+                    </a>
                 </div>
             </div>
         </section>
@@ -248,20 +352,22 @@ let results = kb.query()
         <section id="testing" class="section section-alt">
             <div class="container">
                 <h2>Testing</h2>
-                <table class="perf-table">
-                    <thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr><td>Unit</td><td>200+</td><td>Single function correctness</td></tr>
-                        <tr><td>Integration</td><td>108+</td><td>Cross-crate interaction</td></tr>
-                        <tr><td>Property</td><td>31</td><td>Roundtrip invariants, bounds</td></tr>
-                        <tr><td>Security</td><td>29</td><td>Encryption, RBAC, GDPR, corruption</td></tr>
-                        <tr><td>Concurrency</td><td>6</td><td>Thread safety under contention</td></tr>
-                        <tr><td>Recovery</td><td>12</td><td>WAL replay, crash recovery, backup</td></tr>
-                        <tr><td>Server/HTTP</td><td>19</td><td>REST endpoint validation</td></tr>
-                        <tr><td>KQL Parser</td><td>27</td><td>Lexer/parser edge cases</td></tr>
-                        <tr><td><strong>Total</strong></td><td><strong>530+</strong></td><td><strong>0 failures</strong></td></tr>
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table class="perf-table">
+                        <thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>Unit</td><td>200+</td><td>Single function correctness</td></tr>
+                            <tr><td>Integration</td><td>108+</td><td>Cross-crate interaction</td></tr>
+                            <tr><td>Property</td><td>31</td><td>Roundtrip invariants, bounds</td></tr>
+                            <tr><td>Security</td><td>29</td><td>Encryption, RBAC, GDPR, corruption</td></tr>
+                            <tr><td>Concurrency</td><td>6</td><td>Thread safety under contention</td></tr>
+                            <tr><td>Recovery</td><td>12</td><td>WAL replay, crash recovery, backup</td></tr>
+                            <tr><td>Server/HTTP</td><td>19</td><td>REST endpoint validation</td></tr>
+                            <tr><td>KQL Parser</td><td>27</td><td>Lexer/parser edge cases</td></tr>
+                            <tr><td><strong>Total</strong></td><td><strong>530+</strong></td><td><strong>0 failures</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
@@ -270,11 +376,11 @@ let results = kb.query()
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-col">
-                    <h3>KCM</h3>
+                    <h4>KCM</h4>
                     <p>Knowledge Columnar Model — a high-performance columnar storage and reasoning engine for knowledge representation, built in Rust.</p>
                 </div>
                 <div class="footer-col">
-                    <h3>Documentation</h3>
+                    <h4>Documentation</h4>
                     <a href="docs/KCM_SPECIFICATION.html">Specification</a>
                     <a href="docs/KCM_ARCHITECTURE.html">Architecture</a>
                     <a href="docs/KCM_API_SPEC.html">API Reference</a>
@@ -282,15 +388,15 @@ let results = kb.query()
                     <a href="docs/KCM_GLOSSARY.html">Glossary</a>
                 </div>
                 <div class="footer-col">
-                    <h3>Resources</h3>
+                    <h4>Resources</h4>
                     <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">GitHub</a>
                     <a href="https://github.com/knowledge-columnar/kcm/issues" target="_blank" rel="noopener">Issues</a>
                     <a href="https://github.com/knowledge-columnar/kcm/blob/main/PRD.md" target="_blank" rel="noopener">PRD</a>
                 </div>
                 <div class="footer-col">
-                    <h3>Community</h3>
+                    <h4>Community</h4>
                     <p>Contributions welcome. See CONTRIBUTING.md for guidelines.</p>
-                    <p class="license">MIT License</p>
+                    <p>MIT License</p>
                 </div>
             </div>
             <div class="footer-bottom">
