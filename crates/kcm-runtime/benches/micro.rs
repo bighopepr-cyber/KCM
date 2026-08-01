@@ -70,9 +70,11 @@ fn bench_column_push(c: &mut Criterion) {
     for &size in &[10_000, 100_000, 1_000_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             b.iter(|| {
-                let mut vec: DenseVec<u32> = DenseVec::new(size).expect("Failed to allocate DenseVec with capacity");
+                let mut vec: DenseVec<u32> =
+                    DenseVec::new(size).expect("Failed to allocate DenseVec with capacity");
                 for i in 0..size {
-                    vec.push(i as u32).expect("Failed to push element into DenseVec");
+                    vec.push(i as u32)
+                        .expect("Failed to push element into DenseVec");
                 }
                 black_box(&vec);
             });
@@ -180,7 +182,8 @@ fn bench_dictionary_insert(c: &mut Criterion) {
             b.iter(|| {
                 let mut dict = Dictionary::new();
                 for i in 0..size {
-                    dict.insert(&format!("key_{}", i)).expect("Failed to insert key into Dictionary");
+                    dict.insert(&format!("key_{}", i))
+                        .expect("Failed to insert key into Dictionary");
                 }
                 black_box(dict)
             });
@@ -210,11 +213,15 @@ fn bench_dictionary_insert_existing(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let mut dict = Dictionary::new();
             for i in 0..size {
-                dict.insert(&format!("key_{}", i)).expect("Failed to insert key into Dictionary during setup");
+                dict.insert(&format!("key_{}", i))
+                    .expect("Failed to insert key into Dictionary during setup");
             }
             b.iter(|| {
                 for i in 0..size {
-                    black_box(dict.insert(&format!("key_{}", i)).expect("Failed to insert existing key into Dictionary"));
+                    black_box(
+                        dict.insert(&format!("key_{}", i))
+                            .expect("Failed to insert existing key into Dictionary"),
+                    );
                 }
             });
         });
@@ -234,11 +241,15 @@ fn bench_database_insert(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
             let config = DatasetConfig::for_count(batch);
             b.iter_batched(
-                || KnowledgeDatabase::new().expect("Failed to create KnowledgeDatabase for insert benchmark"),
+                || {
+                    KnowledgeDatabase::new()
+                        .expect("Failed to create KnowledgeDatabase for insert benchmark")
+                },
                 |kb| {
                     for i in 0..batch {
                         let fact = deterministic_fact(i, &config);
-                        kb.insert(&fact).expect("Failed to insert fact into KnowledgeDatabase");
+                        kb.insert(&fact)
+                            .expect("Failed to insert fact into KnowledgeDatabase");
                     }
                 },
                 criterion::BatchSize::SmallInput,
@@ -283,7 +294,9 @@ fn bench_database_query_filtered(c: &mut Criterion) {
                         .with_subject(SubjectID(50))
                         .with_confidence(0.5)
                         .execute()
-                        .expect("Failed to execute filtered query in database_query_filtered benchmark"),
+                        .expect(
+                            "Failed to execute filtered query in database_query_filtered benchmark",
+                        ),
                 )
             });
         });
@@ -439,15 +452,19 @@ fn bench_wal_append(c: &mut Criterion) {
     let mut group = c.benchmark_group("wal_append");
     for &batch in &[100, 1_000, 10_000] {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
-            let dir = tempfile::tempdir().expect("Failed to create temp directory for WAL benchmark");
-            let wal = WriteAheadLog::new(dir.path().join("bench.wal")).expect("Failed to create WAL for benchmark");
+            let dir =
+                tempfile::tempdir().expect("Failed to create temp directory for WAL benchmark");
+            let wal = WriteAheadLog::new(dir.path().join("bench.wal"))
+                .expect("Failed to create WAL for benchmark");
             let config = DatasetConfig::for_count(batch);
             b.iter(|| {
                 for i in 0..batch {
                     let fact = deterministic_fact(i, &config);
-                    wal.append_fact(&fact).expect("Failed to append fact to WAL in wal_append benchmark");
+                    wal.append_fact(&fact)
+                        .expect("Failed to append fact to WAL in wal_append benchmark");
                 }
-                wal.flush_buffer().expect("Failed to flush WAL buffer in wal_append benchmark");
+                wal.flush_buffer()
+                    .expect("Failed to flush WAL buffer in wal_append benchmark");
             });
         });
     }
@@ -462,14 +479,15 @@ fn bench_wal_replay(c: &mut Criterion) {
             let config = DatasetConfig::for_count(count);
             let fixture = WALFixture::new(&config);
             b.iter(|| {
-                let wal_r = WriteAheadLog::new(&fixture.wal_path).unwrap();
+                let wal_r = WriteAheadLog::new(&fixture.wal_path)
+                    .expect("Failed to open WAL for replay benchmark");
                 let mut count = 0u64;
                 wal_r
                     .replay(|_| {
                         count += 1;
                         Ok(())
                     })
-                    .unwrap();
+                    .expect("Failed to replay WAL in wal_replay benchmark");
                 black_box(count)
             });
         });
@@ -484,7 +502,12 @@ fn bench_file_format_save_load(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let config = DatasetConfig::for_count(size);
             let fixture = FileFormatFixture::new(&config);
-            b.iter(|| black_box(DatabaseFile::load(&fixture.path).unwrap()));
+            b.iter(|| {
+                black_box(
+                    DatabaseFile::load(&fixture.path)
+                        .expect("Failed to load database file in file_format benchmark"),
+                )
+            });
         });
     }
     group.finish();
@@ -500,11 +523,21 @@ fn bench_compression_encode(c: &mut Criterion) {
     let data: Vec<u8> = (0..100_000).map(|i| (i % 256) as u8).collect();
     group.bench_function("zstd", |b| {
         let zstd = ZstdCompressor::default_level();
-        b.iter(|| black_box(zstd.compress(&data).unwrap()));
+        b.iter(|| {
+            black_box(
+                zstd.compress(&data)
+                    .expect("Failed to compress data with zstd"),
+            )
+        });
     });
     group.bench_function("lz4", |b| {
         let lz4 = Lz4Compressor::default_level();
-        b.iter(|| black_box(lz4.compress(&data).unwrap()));
+        b.iter(|| {
+            black_box(
+                lz4.compress(&data)
+                    .expect("Failed to compress data with lz4"),
+            )
+        });
     });
     let _ = fixture;
     group.finish();
@@ -520,7 +553,7 @@ fn bench_compression_decode(c: &mut Criterion) {
         b.iter(|| {
             black_box(
                 zstd.decompress(&fixture.zstd_compressed, fixture.original_size)
-                    .unwrap(),
+                    .expect("Failed to decompress zstd data in compression_decode benchmark"),
             )
         });
     });
@@ -528,7 +561,7 @@ fn bench_compression_decode(c: &mut Criterion) {
         b.iter(|| {
             black_box(
                 lz4.decompress(&fixture.lz4_compressed, fixture.original_size)
-                    .unwrap(),
+                    .expect("Failed to decompress lz4 data in compression_decode benchmark"),
             )
         });
     });
@@ -544,7 +577,12 @@ fn bench_rle_encode(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let rle = RleCompressor;
             let data: Vec<u8> = (0..size).map(|i| (i % 10) as u8).collect();
-            b.iter(|| black_box(rle.compress(&data).unwrap()));
+            b.iter(|| {
+                black_box(
+                    rle.compress(&data)
+                        .expect("Failed to RLE compress data in rle_encode benchmark"),
+                )
+            });
         });
     }
     group.finish();
@@ -558,8 +596,15 @@ fn bench_rle_decode(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let rle = RleCompressor;
             let data: Vec<u8> = (0..size).map(|i| (i % 10) as u8).collect();
-            let compressed = rle.compress(&data).unwrap();
-            b.iter(|| black_box(rle.decompress(&compressed, size).unwrap()));
+            let compressed = rle
+                .compress(&data)
+                .expect("Failed to RLE compress data in rle_decode setup");
+            b.iter(|| {
+                black_box(
+                    rle.decompress(&compressed, size)
+                        .expect("Failed to RLE decompress data in rle_decode benchmark"),
+                )
+            });
         });
     }
     group.finish();
@@ -651,16 +696,19 @@ fn bench_transaction_insert(c: &mut Criterion) {
                 let config = DatasetConfig::for_count(batch_size);
                 b.iter_batched(
                     || {
-                        let kb = KnowledgeDatabase::new().unwrap();
+                        let kb = KnowledgeDatabase::new()
+                            .expect("Failed to create KnowledgeDatabase for transaction benchmark");
                         let txn = kb.begin_transaction();
                         (kb, txn)
                     },
                     |(kb, mut txn)| {
                         for i in 0..batch_size {
                             let fact = deterministic_fact(i, &config);
-                            txn.insert(fact).unwrap();
+                            txn.insert(fact)
+                                .expect("Failed to insert fact into transaction");
                         }
-                        txn.apply_to_schema(&mut kb.get_schema_mut()).unwrap();
+                        txn.apply_to_schema(&mut kb.get_schema_mut())
+                            .expect("Failed to apply transaction to schema");
                         black_box(txn);
                     },
                     criterion::BatchSize::SmallInput,
@@ -678,13 +726,16 @@ fn bench_transaction_commit_rollback(c: &mut Criterion) {
     group.bench_function("commit", |b| {
         b.iter_batched(
             || {
-                let kb = KnowledgeDatabase::new().unwrap();
+                let kb = KnowledgeDatabase::new()
+                    .expect("Failed to create KnowledgeDatabase for commit/rollback benchmark");
                 let mut txn = kb.begin_transaction();
                 for i in 0..100 {
                     let fact = deterministic_fact(i, &DatasetConfig::for_count(100));
-                    txn.insert(fact).unwrap();
+                    txn.insert(fact)
+                        .expect("Failed to insert fact into transaction during commit setup");
                 }
-                txn.apply_to_schema(&mut kb.get_schema_mut()).unwrap();
+                txn.apply_to_schema(&mut kb.get_schema_mut())
+                    .expect("Failed to apply transaction to schema during commit setup");
                 txn
             },
             |txn| {
