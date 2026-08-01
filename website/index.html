@@ -20,7 +20,7 @@
         <div class="container">
             <a href="/" class="logo" aria-label="KCM Home">
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                    <rect width="32" height="32" rx="6" fill="#2563eb"/>
+                    <rect width="32" height="32" rx="6" fill="#3b82f6"/>
                     <rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/>
                     <rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/>
                     <rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/>
@@ -30,8 +30,9 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#architecture">Architecture</a>
-                <a href="docs/">Docs</a>
-                <a href="#performance">Benchmarks</a>
+                <a href="docs/KCM_SPECIFICATION.html">Docs</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="developer.html">Developers</a>
                 <a href="https://github.com/knowledge-columnar/kcm" target="_blank" rel="noopener">GitHub</a>
                 <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">☀</button>
             </div>
@@ -45,8 +46,8 @@
             <h1>Knowledge Columnar Model</h1>
             <p class="hero-subtitle">A high-performance columnar storage and reasoning engine for knowledge representation. SIMD-accelerated scanning, per-column compression, bitmap indexing, and deterministic forward-chaining inference — all in Rust.</p>
             <div class="hero-cta">
-                <a href="#quickstart" class="btn btn-primary">Get Started</a>
-                <a href="docs/" class="btn btn-secondary">Documentation</a>
+                <a href="developer.html" class="btn btn-primary">Get Started</a>
+                <a href="docs/KCM_SPECIFICATION.html" class="btn btn-secondary">Documentation</a>
                 <a href="https://github.com/knowledge-columnar/kcm" class="btn btn-outline" target="_blank" rel="noopener">View Source</a>
             </div>
             <div class="hero-stats">
@@ -71,9 +72,9 @@
                     </div>
                     <div class="code-card highlight">
                         <h3>KCM Columnar</h3>
-                        <pre><code>Column[Subject] → Column[Predicate] → Column[Object]
-Sequential      Sequential         Sequential
-SIMD-ready      SIMD-ready         SIMD-ready</code></pre>
+                        <pre><code>Column[Subject]  → Sequential → SIMD-ready
+Column[Predicate] → Sequential → SIMD-ready
+Column[Object]    → Sequential → SIMD-ready</code></pre>
                         <p>Sequential memory access, SIMD-parallel filtering</p>
                     </div>
                 </div>
@@ -176,7 +177,6 @@ let results = kb.query()
                     <div class="quickstart-card">
                         <h3>HTTP Server</h3>
                         <pre><code>cargo run --release -p kcm-server
-# API at http://0.0.0.0:8080
 # POST   /facts
 # GET    /facts
 # GET    /facts/{id}
@@ -213,38 +213,14 @@ let results = kb.query()
             <div class="container">
                 <h2>Documentation</h2>
                 <div class="docs-grid">
-                    <a href="docs/KCM_SPECIFICATION.html" class="doc-card">
-                        <h3>Specification</h3>
-                        <p>Technical constitution, scope, and requirements.</p>
-                    </a>
-                    <a href="docs/KCM_ARCHITECTURE.html" class="doc-card">
-                        <h3>Architecture</h3>
-                        <p>System architecture, crate responsibilities, data flow.</p>
-                    </a>
-                    <a href="docs/KCM_DATA_MODEL_SPEC.html" class="doc-card">
-                        <h3>Data Model</h3>
-                        <p>Knowledge model, type system, schema design.</p>
-                    </a>
-                    <a href="docs/KCM_COLUMNAR_FORMAT_SPEC.html" class="doc-card">
-                        <h3>Storage Format</h3>
-                        <p>Binary file format, WAL format, column layout.</p>
-                    </a>
-                    <a href="docs/KCM_QUERY_EXECUTION_SPEC.html" class="doc-card">
-                        <h3>Query Engine</h3>
-                        <p>Query pipeline, operators, optimizer, KQL.</p>
-                    </a>
-                    <a href="docs/KCM_COMPRESSION_SPEC.html" class="doc-card">
-                        <h3>Compression</h3>
-                        <p>Encoding algorithms, compression codecs.</p>
-                    </a>
-                    <a href="docs/KCM_SECURITY_TRUST_SPEC.html" class="doc-card">
-                        <h3>Security</h3>
-                        <p>RBAC, encryption, audit, GDPR.</p>
-                    </a>
-                    <a href="docs/KCM_API_SPEC.html" class="doc-card">
-                        <h3>API Reference</h3>
-                        <p>C FFI, Python, REST, gRPC contracts.</p>
-                    </a>
+                    <a href="docs/KCM_SPECIFICATION.html" class="doc-card"><h3>Specification</h3><p>Technical constitution, scope, requirements.</p></a>
+                    <a href="docs/KCM_ARCHITECTURE.html" class="doc-card"><h3>Architecture</h3><p>System architecture, crate responsibilities, data flow.</p></a>
+                    <a href="docs/KCM_DATA_MODEL_SPEC.html" class="doc-card"><h3>Data Model</h3><p>Knowledge model, type system, schema design.</p></a>
+                    <a href="docs/KCM_COLUMNAR_FORMAT_SPEC.html" class="doc-card"><h3>Storage Format</h3><p>Binary file format, WAL format, column layout.</p></a>
+                    <a href="docs/KCM_QUERY_EXECUTION_SPEC.html" class="doc-card"><h3>Query Engine</h3><p>Query pipeline, operators, optimizer, KQL.</p></a>
+                    <a href="docs/KCM_COMPRESSION_SPEC.html" class="doc-card"><h3>Compression</h3><p>Encoding algorithms, compression codecs.</p></a>
+                    <a href="docs/KCM_SECURITY_TRUST_SPEC.html" class="doc-card"><h3>Security</h3><p>RBAC, encryption, audit, GDPR.</p></a>
+                    <a href="docs/KCM_API_SPEC.html" class="doc-card"><h3>API Reference</h3><p>C FFI, Python, REST, gRPC contracts.</p></a>
                 </div>
             </div>
         </section>
@@ -273,9 +249,7 @@ let results = kb.query()
             <div class="container">
                 <h2>Testing</h2>
                 <table class="perf-table">
-                    <thead>
-                        <tr><th>Category</th><th>Count</th><th>Description</th></tr>
-                    </thead>
+                    <thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead>
                     <tbody>
                         <tr><td>Unit</td><td>200+</td><td>Single function correctness</td></tr>
                         <tr><td>Integration</td><td>108+</td><td>Cross-crate interaction</td></tr>
