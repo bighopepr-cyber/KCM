@@ -50,10 +50,10 @@
                 <a href="https://github.com/knowledge-columnar/kcm" class="btn btn-ghost" target="_blank">Source Code</a>
             </div>
             <div class="hero-metrics">
-                <div class="metric"><span class="metric-value">12</span><span class="metric-label">Crates</span></div>
+                <div class="metric"><span class="metric-value">13</span><span class="metric-label">Crates</span></div>
                 <div class="metric"><span class="metric-value">530+</span><span class="metric-label">Tests</span></div>
-                <div class="metric"><span class="metric-value">16K+</span><span class="metric-label">Lines of Rust</span></div>
-                <div class="metric"><span class="metric-value">18</span><span class="metric-label">Specifications</span></div>
+                <div class="metric"><span class="metric-value">18K+</span><span class="metric-label">Lines of Rust</span></div>
+                <div class="metric"><span class="metric-value">22</span><span class="metric-label">Specifications</span></div>
             </div>
         </div>
     </header>
@@ -86,7 +86,7 @@ Column[Object]    -> Sequential -> SIMD-ready</code></pre>
                 <div class="diagram"><code>
 +------------------------------------------------------------------+
 |                       Interface Layer                              |
-|  C FFI (13 functions) | REST API | KQL Parser | Python (PyO3)    |
+|  C FFI (15 functions) | REST API | KQL Parser | Python (PyO3)    |
 +------------------------------------------------------------------+
 |                       Runtime Layer                                |
 |  KnowledgeDatabase | Transactions | Metrics | Health              |
@@ -145,7 +145,7 @@ Column[Object]    -> Sequential -> SIMD-ready</code></pre>
                     <div class="card">
                         <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                         <h3>Interfaces</h3>
-                        <p>C FFI (13 functions), Python bindings, REST API (actix-web), gRPC (tonic), KQL parser.</p>
+                        <p>C FFI (15 functions), Python bindings, REST API (actix-web), gRPC (tonic), KQL parser.</p>
                     </div>
                     <div class="card">
                         <svg class="icon" viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
@@ -244,6 +244,7 @@ GET    /metrics   Metrics</code></pre>
                     <div class="card"><h4>kcm-security</h4><p>RBAC, AES-256-GCM, audit logging</p></div>
                     <div class="card"><h4>kcm-compliance</h4><p>GDPR, data classification</p></div>
                     <div class="card"><h4>kcm-testing</h4><p>Load/stress/recovery/security tests</p></div>
+                    <div class="card"><h4>kcm-server</h4><p>HTTP (actix-web) + gRPC (tonic) server binaries</p></div>
                 </div>
             </div>
         </section>

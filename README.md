@@ -30,7 +30,7 @@ KCM:             Column[Subject] → Column[Predicate] → Column[Object]
 ```
 ┌────────────────────────────────────────────────────────────┐
 │                     Interface Layer                          │
-│  C FFI (13 functions) · REST API · KQL Parser · Python     │
+│  C FFI (15 functions) · REST API · KQL Parser · Python     │
 ├────────────────────────────────────────────────────────────┤
 │                     Runtime Layer                            │
 │  KnowledgeDatabase · Transactions · Metrics · Health        │
@@ -65,7 +65,7 @@ KCM:             Column[Subject] → Column[Predicate] → Column[Object]
 | `kcm-reasoning` | Rule engine, forward-chaining inference, confidence calculus | InferenceEngine, ConfidenceCalculator |
 | `kcm-optimizer` | Cost model, query planner, statistics, adaptive execution | Planner, CostModel, Statistics |
 | `kcm-runtime` | Database lifecycle, transactions, metrics, health checks | KnowledgeDatabase, Transaction, Metrics |
-| `kcm-interface` | C FFI, Python bindings, REST API, KQL parser | 13 C functions, 8 REST handlers |
+| `kcm-interface` | C FFI, Python bindings, REST API, KQL parser | 15 C functions, 8 REST handlers |
 | `kcm-distributed` | Sharding (Hash/Range/Consistent Hash), 2PC coordinator | ShardMap, TransactionCoordinator |
 | `kcm-ml` | Learned index models, confidence learner, rule discovery | LearnedIndex, ConfidenceLearner |
 | `kcm-security` | RBAC, AES-256-GCM encryption, audit logging | ACLManager, EncryptedStorage, AuditLog |
@@ -286,7 +286,7 @@ Rule: IF subject_2(X, Y) AND subject_3(Y, Z) THEN subject_1(X, Z)
 | Recovery | 12 | WAL replay, crash recovery, backup/restore |
 | Server/HTTP | 19 | REST endpoint validation |
 | KQL Parser | 27 | Lexer/parser edge cases |
-| **Total** | **530** | **0 failures** |
+| **Total** | **534** | **0 failures** |
 
 ### Run Tests
 
@@ -371,7 +371,7 @@ KCM/
 │   ├── kcm-compliance/    Compliance: GDPR, data classification
 │   ├── kcm-testing/       Testing: load/stress/recovery/concurrency tests
 │   └── kcm-server/        Server: HTTP (actix-web) + gRPC (tonic) binaries
-├── docs/                   18 technical specification documents
+├── docs/                   22 technical specification documents
 ├── skills/                 16 engineering skill definitions
 ├── scripts/                Build and benchmark automation
 ├── benchmark-results/      Benchmark artifacts and metadata

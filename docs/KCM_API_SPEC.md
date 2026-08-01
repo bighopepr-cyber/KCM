@@ -58,6 +58,8 @@ typedef enum {
 | KCM_QueryNext | (query, fact_out: *mut KCM_Fact, has_next: *mut bool) -> KCM_Error | Status |
 | KCM_QueryFree | (query: *mut KCM_Query) | void |
 | KCM_DatabaseBeginTransaction | (db, txn: *mut *mut KCM_Transaction) -> KCM_Error | Status |
+| KCM_TransactionCommit | (txn: *mut KCM_Transaction) -> KCM_Error | Status |
+| KCM_TransactionRollback | (txn: *mut KCM_Transaction) -> KCM_Error | Status |
 | KCM_TransactionFree | (txn: *mut KCM_Transaction) | void |
 | KCM_ErrorMessage | (err: KCM_Error) -> *const c_char | Static string |
 
