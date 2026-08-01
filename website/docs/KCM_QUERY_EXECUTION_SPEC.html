@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Query Execution — KCM Documentation</title>
+    <meta name="description" content="Query execution model, operators, and optimization pipeline">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html" class="active">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Query Execution Specification</h1>
+<p><strong>Document ID:</strong> KCM-QUERY-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Depends on:</strong> KCM-DATA-001, KCM_ARCHITECTURE-001</p>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines the query execution model, operator specifications, and optimization pipeline.</p>
+<hr>
+<h2>2. Query Lifecycle</h2>
+<pre><code>┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│  KQL /   │───►│  Parser  │───►│  Planner │───►│ Executor │───►│  Result  │
+│  API     │    │  (AST)   │    │  (Plan)  │    │  (Ops)   │    │  (Facts) │
+└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘</code></pre>
+<h3>2.1 Execution Model</h3>
+<p>KCM uses a <strong>pull-based volcano model</strong> for query execution:</p>
+<ul>
+<li>Each operator implements the <code>Operator</code> trait</li>
+<li><code>execute()</code> returns <code>Result<Vec<usize>, KcmError></code> (row ID set)</li>
+<li>Operators compose by passing row ID sets downstream</li>
+</ul>
+<h3>2.2 Operator Trait</h3>
+<pre><code class="language-rust">trait Operator: Send + Sync {
+    fn execute(&amp;self) -&gt; Result&lt;Vec&lt;usize&gt;, KcmError&gt;;
+    fn estimated_rows(&amp;self) -&gt; usize;
+}</code></pre>
+<hr>
+<h2>3. Operators</h2>
+<h3>3.1 ScanOp</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>schema</td>
+<td>&Schema</td>
+<td>Reference to columnar schema</td>
+</tr>
+<tr>
+<td>context_filter</td>
+<td>Option<u8></td>
+<td>Optional context ID filter</td>
+</tr>
+<tr>
+<td>confidence_filter</td>
+<td>Option<f64></td>
+<td>Optional minimum confidence</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Behavior:</strong></p>
+<ol>
+<li>Iterate all rows (0..schema.len())</li>
+<li>Skip tombstone-deleted rows</li>
+<li>Apply context filter (if set): skip rows where context != filter</li>
+<li>Apply confidence filter (if set): skip rows where confidence < filter</li>
+<li>Return surviving row indices</li>
+</ol>
+<p><strong>Complexity:</strong> O(n) where n = row count</p>
+<h3>3.2 FilterOp</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rowids</td>
+<td>Vec<usize></td>
+<td>Input row set</td>
+</tr>
+<tr>
+<td>schema</td>
+<td>&Schema</td>
+<td>Columnar schema</td>
+</tr>
+<tr>
+<td>predicate</td>
+<td>FilterPredicate</td>
+<td>Filter condition</td>
+</tr>
+</tbody>
+</table>
+<p><strong>FilterPredicate variants:</strong></p>
+<ul>
+<li><code>EqualSubject(u32)</code> — Match subject column</li>
+<li><code>EqualPredicate(u8)</code> — Match predicate column</li>
+<li><code>EqualObject(u32)</code> — Match object column</li>
+<li><code>EqualContext(u8)</code> — Match context column</li>
+<li><code>InSet(HashSet<u32>)</code> — Match against value set (O(1) per lookup)</li>
+<li><code>RangeTimestamp(i64, i64)</code> — Match timestamp range</li>
+</ul>
+<p><strong>Behavior:</strong> Filter input rows by predicate.</p>
+<h3>3.3 ProjectOp</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rowids</td>
+<td>Vec<usize></td>
+<td>Input row set</td>
+</tr>
+<tr>
+<td>schema</td>
+<td>&Schema</td>
+<td>Columnar schema</td>
+</tr>
+<tr>
+<td>columns</td>
+<td>Vec<ColumnID></td>
+<td>Columns to extract</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Behavior:</strong> <code>execute()</code> passes through row IDs. <code>execute_projection()</code> extracts actual column values as <code>Vec<Vec<u64>></code>.</p>
+<h3>3.4 JoinOp</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>left_rowids</td>
+<td>Vec<usize></td>
+<td>Left input</td>
+</tr>
+<tr>
+<td>right_rowids</td>
+<td>Vec<usize></td>
+<td>Right input</td>
+</tr>
+<tr>
+<td>schema</td>
+<td>&Schema</td>
+<td>Columnar schema</td>
+</tr>
+<tr>
+<td>join_column</td>
+<td>ColumnID</td>
+<td>Column for equi-join key</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Algorithm:</strong> Hash join</p>
+<ol>
+<li>Build hash table from right side on join_column</li>
+<li>Probe with left side</li>
+<li>Return concatenated matched row ID pairs</li>
+</ol>
+<h3>3.5 AggregateOp</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rowids</td>
+<td>Vec<usize></td>
+<td>Input row set</td>
+</tr>
+<tr>
+<td>schema</td>
+<td>&Schema</td>
+<td>Columnar schema</td>
+</tr>
+<tr>
+<td>group_by</td>
+<td>Option<ColumnID></td>
+<td>Grouping column</td>
+</tr>
+<tr>
+<td>agg_func</td>
+<td>AggregateFunc</td>
+<td>Aggregation function</td>
+</tr>
+</tbody>
+</table>
+<p><strong>AggregateFunc variants:</strong></p>
+<ul>
+<li><code>Count</code> — Count matching rows</li>
+<li><code>Sum</code> — Sum confidence values</li>
+<li><code>Avg</code> — Average confidence values</li>
+<li><code>Min</code> — Minimum confidence value</li>
+<li><code>Max</code> — Maximum confidence value</li>
+</ul>
+<p><strong>Methods:</strong></p>
+<ul>
+<li><code>execute_aggregate() -> Result<f64></code> — Global aggregate</li>
+<li><code>execute_grouped() -> Result<Vec<(u32, f64)>></code> — Grouped aggregate</li>
+</ul>
+<hr>
+<h2>4. Optimization Pipeline</h2>
+<h3>4.1 CostModel</h3>
+<p>Estimates operator cost based on:</p>
+<ul>
+<li>Row count</li>
+<li>Selectivity</li>
+<li>CPU cost (per-row processing)</li>
+<li>I/O cost (storage access)</li>
+<li>Memory cost (intermediate result size)</li>
+</ul>
+<h3>4.2 Optimizer Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FilterPushdown</td>
+<td>Push filters closer to data source</td>
+</tr>
+<tr>
+<td>JoinReorder</td>
+<td>Join smaller relations first</td>
+</tr>
+<tr>
+<td>IndexSelection</td>
+<td>Choose best index for predicates</td>
+</tr>
+<tr>
+<td>ColumnPruning</td>
+<td>Read only required columns</td>
+</tr>
+<tr>
+<td>ConstantFolding</td>
+<td>Evaluate constant expressions at plan time</td>
+</tr>
+</tbody>
+</table>
+<h3>4.3 Adaptive Execution</h3>
+<p>The AdaptiveExecutor tracks prediction vs actual execution:</p>
+<ul>
+<li>Records row count estimates and actuals</li>
+<li>Computes cardinality correction factor</li>
+<li>Triggers re-optimization when error exceeds threshold (50%)</li>
+</ul>
+<hr>
+<h2>5. KQL (Knowledge Query Language)</h2>
+<h3>5.1 Grammar</h3>
+<pre><code class="language-sql">SELECT &lt;columns&gt; | *
+FROM &lt;entity&gt;
+WHERE &lt;condition&gt; [AND|OR &lt;condition&gt;]*
+[JOIN &lt;entity&gt; ON &lt;col&gt; = &lt;col&gt;]
+[ORDER BY &lt;column&gt; [ASC|DESC]]
+[LIMIT &lt;n&gt;]</code></pre>
+<h3>5.2 Condition Operators</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Token</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Equal</td>
+<td><code>=</code></td>
+<td><code>subject = 1</code></td>
+</tr>
+<tr>
+<td>Not Equal</td>
+<td><code>!=</code></td>
+<td><code>predicate != 0</code></td>
+</tr>
+<tr>
+<td>Less Than</td>
+<td><code><</code></td>
+<td><code>confidence < 0.5</code></td>
+</tr>
+<tr>
+<td>Greater Than</td>
+<td><code>></code></td>
+<td><code>confidence > 0.5</code></td>
+</tr>
+<tr>
+<td>Less or Equal</td>
+<td><code><=</code></td>
+<td><code>confidence <= 0.5</code></td>
+</tr>
+<tr>
+<td>Greater or Equal</td>
+<td><code>>=</code></td>
+<td><code>confidence >= 0.5</code></td>
+</tr>
+</tbody>
+</table>
+<h3>5.3 Reserved Keywords</h3>
+<p><code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>, <code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>LIMIT</code>, <code>ORDER</code>, <code>BY</code>, <code>ASC</code>, <code>DESC</code>, <code>JOIN</code>, <code>ON</code></p>
+<hr>
+<hr>
+<h2>6. KQL Error Taxonomy</h2>
+<table>
+<thead>
+<tr>
+<th>Error Code</th>
+<th>Type</th>
+<th>Description</th>
+<th>HTTP Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KQL-001</td>
+<td>SyntaxError</td>
+<td>Unexpected token in query</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-002</td>
+<td>MissingKeyword</td>
+<td>Required keyword missing (SELECT, FROM)</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-003</td>
+<td>UnknownColumn</td>
+<td>Column name not found in schema</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-004</td>
+<td>TypeMismatch</td>
+<td>Operand types incompatible</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-005</td>
+<td>UnterminatedString</td>
+<td>Missing closing quote</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-006</td>
+<td>InvalidNumber</td>
+<td>Number literal out of range</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-007</td>
+<td>UnknownKeyword</td>
+<td>Unrecognized reserved word</td>
+<td>400</td>
+</tr>
+<tr>
+<td>KQL-008</td>
+<td>EmptyQuery</td>
+<td>Query contains no statements</td>
+<td>400</td>
+</tr>
+</tbody>
+</table>
+<h3>6.1 Error Response Format</h3>
+<pre><code class="language-json">{
+    "error": "KQL-001",
+    "type": "SyntaxError",
+    "message": "Unexpected token '=' at position 15",
+    "position": 15
+}</code></pre>
+<hr>
+<h2>7. Constraints</h2>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All operators skip tombstoned rows</td>
+<td>Soft-delete consistency</td>
+</tr>
+<tr>
+<td>Join uses hash algorithm</td>
+<td>O(n+m) vs O(n×m) nested loop</td>
+</tr>
+<tr>
+<td>SIMD path requires runtime detection</td>
+<td>Portable across CPU architectures</td>
+</tr>
+<tr>
+<td>Optimizer must be idempotent</td>
+<td>Repeated optimization must not change result</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>8. References</h2>
+<ul>
+<li><strong>Depends on:</strong> KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC), KCM_ARCHITECTURE (KCM_ARCHITECTURE)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Related:</strong> KCM_INDEXING_SPEC (KCM_INDEXING_SPEC), KCM_API_SPEC (KCM_API_SPEC), KCM_PERFORMANCE_SPEC (KCM_PERFORMANCE_SPEC)</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

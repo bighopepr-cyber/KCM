@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Performance — KCM Documentation</title>
+    <meta name="description" content="Performance targets, benchmarks, and metrics">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html" class="active">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Performance Specification</h1>
+<p><strong>Document ID:</strong> KCM-PERF-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Depends on:</strong> KCM-SPEC-001</p>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines performance targets, benchmark methodology, and metrics for KCM.</p>
+<hr>
+<h2>2. Performance Targets</h2>
+<p><strong>See KCM_SPECIFICATION (Section 4.1) for authoritative performance targets.</strong> This section defines measurement methodology for those targets.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target (from KCM_SPECIFICATION)</th>
+<th>Measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column sequential scan</td>
+<td>> 100M ops/sec</td>
+<td>Criterion benchmark</td>
+</tr>
+<tr>
+<td>Bitmap set/get</td>
+<td>> 8M ops/sec</td>
+<td>Criterion benchmark</td>
+</tr>
+<tr>
+<td>Dictionary lookup</td>
+<td>< 100ns</td>
+<td>Criterion benchmark</td>
+</tr>
+<tr>
+<td>Insert throughput</td>
+<td>> 50K facts/sec</td>
+<td>Load test</td>
+</tr>
+<tr>
+<td>Query latency P99 (1M facts)</td>
+<td>< 100ms</td>
+<td>Load test</td>
+</tr>
+<tr>
+<td>Memory per fact</td>
+<td>< 100 bytes</td>
+<td>Static calculation</td>
+</tr>
+<tr>
+<td>Compression ratio</td>
+<td>> 5x</td>
+<td>Compressed / Uncompressed</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>3. Benchmark Suite</h2>
+<h3>3.1 Column Operations</h3>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Sizes</th>
+<th>Measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>column_sequential_scan</td>
+<td>1K, 10K, 100K, 1M</td>
+<td>Sum iteration throughput</td>
+</tr>
+<tr>
+<td>column_random_access</td>
+<td>1K, 10K, 100K, 1M</td>
+<td>Non-sequential access pattern</td>
+</tr>
+<tr>
+<td>column_simd_filter</td>
+<td>10K, 100K, 1M</td>
+<td>SIMD-accelerated filtering</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 Bitmap Operations</h3>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Sizes</th>
+<th>Measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bitmap_set</td>
+<td>10K, 100K, 1M</td>
+<td>Set bit throughput</td>
+</tr>
+<tr>
+<td>bitmap_count</td>
+<td>10K, 100K, 1M</td>
+<td>count_ones throughput</td>
+</tr>
+<tr>
+<td>bitmap_bitwise</td>
+<td>100K, 1M</td>
+<td>AND operation throughput</td>
+</tr>
+</tbody>
+</table>
+<h3>3.3 Dictionary Operations</h3>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Sizes</th>
+<th>Measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dictionary_insert</td>
+<td>1K, 10K, 100K</td>
+<td>Insert throughput</td>
+</tr>
+<tr>
+<td>dictionary_lookup</td>
+<td>1K, 10K, 100K</td>
+<td>Lookup throughput</td>
+</tr>
+</tbody>
+</table>
+<h3>3.4 Database Operations</h3>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Sizes</th>
+<th>Measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>database_insert</td>
+<td>100, 1K, 10K</td>
+<td>Batch insert throughput</td>
+</tr>
+<tr>
+<td>database_query</td>
+<td>1K, 10K, 100K</td>
+<td>Predicate query latency</td>
+</tr>
+<tr>
+<td>inference_pattern_matching</td>
+<td>1K, 10K, 100K</td>
+<td>Pattern scan throughput</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4. Benchmark Methodology</h2>
+<h3>4.1 Tool</h3>
+<p>Criterion.rs with <code>criterion_group!</code> and <code>criterion_main!</code>.</p>
+<h3>4.2 Configuration</h3>
+<ul>
+<li>Minimum 10 iterations per sample</li>
+<li>95% confidence interval</li>
+<li>Warmup: automatic (Criterion default)</li>
+</ul>
+<h3>4.3 Measurement</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Platform</td>
+<td>Linux x86_64</td>
+</tr>
+<tr>
+<td>CPU</td>
+<td>≥ 8 cores, ≥ 3.0 GHz</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>≥ 16 GB</td>
+</tr>
+<tr>
+<td>Kernel</td>
+<td>Linux 5.x+</td>
+</tr>
+<tr>
+<td>Profile</td>
+<td>bench (inherits release with LTO)</td>
+</tr>
+</tbody>
+</table>
+<h3>4.4 Regression Detection</h3>
+<p>Criterion auto-detects performance regressions against stored baselines in <code>target/criterion/</code>.</p>
+<hr>
+<h2>5. Memory Metrics</h2>
+<h3>5.1 Per-Column Memory</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Size/Element</th>
+<th>1M Elements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>u8</td>
+<td>1 byte</td>
+<td>1 MB</td>
+</tr>
+<tr>
+<td>u16</td>
+<td>2 bytes</td>
+<td>2 MB</td>
+</tr>
+<tr>
+<td>u32</td>
+<td>4 bytes</td>
+<td>4 MB</td>
+</tr>
+<tr>
+<td>u64/i64</td>
+<td>8 bytes</td>
+<td>8 MB</td>
+</tr>
+<tr>
+<td>f64</td>
+<td>8 bytes</td>
+<td>8 MB</td>
+</tr>
+<tr>
+<td>DenseVec overhead</td>
+<td>~64 bytes</td>
+<td>64 bytes</td>
+</tr>
+</tbody>
+</table>
+<h3>5.2 Per-Fact Memory (uncompressed)</h3>
+<pre><code>Subject (u32):     4 bytes
+Predicate (u8):    1 byte
+Object (u32):      4 bytes
+Confidence (f64):  8 bytes
+Evidence (u8):     1 byte
+Timestamp (i64):   8 bytes
+Context (u8):      1 byte
+Version (i32):     4 bytes
+Priority (i8):     1 byte
+Owner (u16):       2 bytes
+─────────────────────────
+Total:            34 bytes per fact
++ alignment:      ~34 bytes per fact</code></pre>
+<h3>5.3 Bitmap Memory</h3>
+<pre><code>1M bits = 128 KB (16 × 8-byte words per 1024 bits)</code></pre>
+<hr>
+<h2>6. Load Test Scenarios</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Users</th>
+<th>Ops/User</th>
+<th>Initial Facts</th>
+<th>Expected QPS</th>
+<th>Max P99 Latency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Light</td>
+<td>10</td>
+<td>100</td>
+<td>100K</td>
+<td>5,000</td>
+<td>10ms</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>50</td>
+<td>200</td>
+<td>1M</td>
+<td>15,000</td>
+<td>20ms</td>
+</tr>
+<tr>
+<td>Heavy</td>
+<td>100</td>
+<td>500</td>
+<td>5M</td>
+<td>25,000</td>
+<td>50ms</td>
+</tr>
+<tr>
+<td>Spike</td>
+<td>200</td>
+<td>—</td>
+<td>10M</td>
+<td>40,000</td>
+<td>100ms</td>
+</tr>
+<tr>
+<td>Read-Heavy</td>
+<td>100</td>
+<td>—</td>
+<td>10M</td>
+<td>50,000</td>
+<td>5ms</td>
+</tr>
+<tr>
+<td>Write-Heavy</td>
+<td>50</td>
+<td>—</td>
+<td>1M</td>
+<td>10,000</td>
+<td>30ms</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>7. Stress Test Scenarios</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Max Users</th>
+<th>Ramp-Up</th>
+<th>Hold</th>
+<th>Ramp-Down</th>
+<th>Max Failure Rate</th>
+<th>Memory Limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gradually Increasing</td>
+<td>1000</td>
+<td>1hr</td>
+<td>5min</td>
+<td>5min</td>
+<td>5%</td>
+<td>16GB</td>
+</tr>
+<tr>
+<td>Sudden Spike</td>
+<td>5000</td>
+<td>10s</td>
+<td>60s</td>
+<td>30s</td>
+<td>10%</td>
+<td>16GB</td>
+</tr>
+<tr>
+<td>Sustained Maximum</td>
+<td>500</td>
+<td>5min</td>
+<td>1hr</td>
+<td>5min</td>
+<td>1%</td>
+<td>16GB</td>
+</tr>
+<tr>
+<td>Memory Exhaustion</td>
+<td>100</td>
+<td>10min</td>
+<td>30min</td>
+<td>5min</td>
+<td>50%</td>
+<td>16GB</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>8. Comparison Baselines</h2>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Type</th>
+<th>Strengths</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DuckDB</td>
+<td>Columnar OLAP</td>
+<td>Vectorized execution</td>
+</tr>
+<tr>
+<td>ClickHouse</td>
+<td>Columnar OLAP</td>
+<td>Distributed analytics</td>
+</tr>
+<tr>
+<td>Apache Arrow</td>
+<td>Columnar format</td>
+<td>Zero-copy IPC</td>
+</tr>
+<tr>
+<td>Apache Parquet</td>
+<td>Columnar file</td>
+<td>Compression ratio</td>
+</tr>
+<tr>
+<td>Neo4j</td>
+<td>Graph DB</td>
+<td>Cypher query language</td>
+</tr>
+</tbody>
+</table>
+<p>KCM differentiates by combining columnar storage with knowledge representation semantics (confidence, evidence, provenance) and built-in inference.</p>
+<hr>
+<h2>9. Constraints</h2>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Benchmarks use release profile</td>
+<td>Reflects production performance</td>
+</tr>
+<tr>
+<td>Load tests use configurable durations</td>
+<td>CI vs full run</td>
+</tr>
+<tr>
+<td>Memory metrics are static</td>
+<td>No runtime allocation tracking needed</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>10. References</h2>
+<ul>
+<li><strong>Depends on:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Related:</strong> KCM_BENCHMARK_REPORTING_SPEC (KCM_BENCHMARK_REPORTING_SPEC), KCM_ENGINEERING_RULES (KCM_ENGINEERING_RULES)</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

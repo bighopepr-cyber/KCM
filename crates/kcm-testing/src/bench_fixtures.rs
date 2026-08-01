@@ -191,10 +191,11 @@ impl DictionaryFixture {
 
 /// A pre-populated Schema with deterministic facts.
 ///
-/// Capacity is allocated as `2 * fact_count` to accommodate inference-derived
-/// facts that get appended during forward-chaining. Without this headroom,
-/// `schema.append_fact()` returns `KcmError::OutOfMemory` when inference
-/// produces derived facts that exceed the original column capacity.
+/// Capacity is allocated as `fact_count` — exactly enough for the initial
+/// facts. Benchmarks that call mutating operations (like `infer_forward_chaining`
+/// which appends derived facts) must rebuild the schema inside each `b.iter()`
+/// from a pre-stored `Vec<Fact>` to avoid schema mutation accumulating across
+/// Criterion iterations.
 pub struct SchemaFixture {
     pub schema: Schema,
 }
@@ -202,22 +203,18 @@ pub struct SchemaFixture {
 impl SchemaFixture {
     /// Create a schema fixture for benchmarking.
     ///
-    /// The schema capacity must be large enough because `infer_forward_chaining`
-    /// appends derived facts to the schema on each invocation. During a Criterion
-    /// benchmark with warmup (3s) + measurement (10s) and sample_size (100),
-    /// the function is called hundreds of times, each adding ~predicate_range facts.
-    ///
-    /// For predicate_range=5 and size=1000, each call adds ~200 facts.
-    /// Over ~1000 calls: 1000 + 200,000 = 201,000 facts.
-    ///
-    /// We use `max(fact_count * 200, 1_000_000)` to safely handle any benchmark duration.
+    /// Allocates capacity exactly equal to `fact_count`. If a benchmark needs
+    /// to call mutating operations that append rows, it must rebuild the schema
+    /// per iteration from a stored `Vec<Fact>` rather than reusing this fixture.
     pub fn new(config: &DatasetConfig) -> Self {
         config.validate().expect("Invalid dataset config");
-        let capacity = (config.fact_count * 200).max(1_000_000);
-        let mut schema = Schema::new(capacity).unwrap();
+        let capacity = config.fact_count.max(1);
+        let mut schema = Schema::new(capacity).expect("Schema allocation failed");
         for i in 0..config.fact_count {
             let fact = deterministic_fact(i, config);
-            schema.append_fact(&fact).unwrap();
+            schema
+                .append_fact(&fact)
+                .expect("Failed to append initial fact");
         }
         SchemaFixture { schema }
     }

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Columnar Format — KCM Documentation</title>
+    <meta name="description" content="Physical binary storage format for KCM database files">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html" class="active">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Columnar Format Specification</h1>
+<p><strong>Document ID:</strong> KCM-FORMAT-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Depends on:</strong> KCM-DATA-001</p>
+<p><strong>Authoritative Source:</strong> PRD2.md §4 (Binary File Format)</p>
+<blockquote>
+<p><strong>Authority Notice:</strong> The canonical binary file layout, column block format, and tombstone bitmap format are defined in PRD2.md §4. This document provides the detailed field-level binary specification beyond the authoritative definition. Where conflicts exist, PRD2.md §4 wins.</p>
+</blockquote>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines the physical binary storage format for KCM database files. Derived from PRD2.md §4.</p>
+<hr>
+<h2>2. File Layout</h2>
+<blockquote>
+<p>Canonical layout: PRD2.md §4.1. Column encoding/compression: PRD2.md §2.1, §2.4.</p>
+</blockquote>
+<pre><code>┌─────────────────────────────────────────────┐
+│                 File Header                  │
+│  Magic Bytes (5):     "KCMDB"               │
+│  Version (1):         0x02                   │
+│  Row Count (8):       u64 little-endian     │
+│  Column Count (1):    u8 = 10               │
+│  Created Timestamp (8): i64 LE              │
+│  Modified Timestamp (8): i64 LE             │
+├─────────────────────────────────────────────┤
+│              Column Blocks (×10)             │
+│  For each column:                            │
+│    ┌────────────────────────────────────┐   │
+│    │ Length (8):     u64 LE             │   │
+│    │ Raw Data:       length × sizeof(T) │   │
+│    └────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│            File Checksum                     │
+│  Blake3 Hash (32 bytes)                     │
+└─────────────────────────────────────────────┘</code></pre>
+<h3>2.1 File Header</h3>
+<blockquote>
+<p>Invariants: PRD2.md §4.2 (Magic bytes always "KCMDB", Version byte determines compatibility).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Size</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>5</td>
+<td>[u8; 5]</td>
+<td>Magic bytes: <code>b"KCMDB"</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>1</td>
+<td>u8</td>
+<td>Format version: <code>2</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>8</td>
+<td>u64 LE</td>
+<td>Total row count</td>
+</tr>
+<tr>
+<td>14</td>
+<td>1</td>
+<td>u8</td>
+<td>Column count: <code>10</code> (fixed)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>8</td>
+<td>i64 LE</td>
+<td>Created timestamp (nanoseconds since epoch)</td>
+</tr>
+<tr>
+<td>23</td>
+<td>8</td>
+<td>i64 LE</td>
+<td>Modified timestamp (nanoseconds since epoch)</td>
+</tr>
+</tbody>
+</table>
+<p>Total header size: 31 bytes.</p>
+<h3>2.2 Column Block</h3>
+<blockquote>
+<p>Column order and encoding: PRD2.md §2.1, §2.4. Column blocks written in fixed order (Subject→Owner).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Length</td>
+<td>8 bytes (u64 LE)</td>
+<td>Number of elements</td>
+</tr>
+<tr>
+<td>Codec ID</td>
+<td>1 byte (u8)</td>
+<td>Compression codec: 0=None, 1=Zstd, 2=LZ4, 3=RLE</td>
+</tr>
+<tr>
+<td>Compressed Size</td>
+<td>8 bytes (u64 LE)</td>
+<td>Size of compressed data in bytes</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>variable</td>
+<td>Compressed column data</td>
+</tr>
+</tbody>
+</table>
+<p>Column order (fixed):</p>
+<ol>
+<li>SubjectColumn (u32) — 4 bytes/element</li>
+<li>PredicateColumn (u8) — 1 byte/element</li>
+<li>ObjectColumn (u32) — 4 bytes/element</li>
+<li>ConfidenceColumn (f64) — 8 bytes/element</li>
+<li>EvidenceColumn (u8) — 1 byte/element</li>
+<li>TimestampColumn (i64) — 8 bytes/element</li>
+<li>ContextColumn (u8) — 1 byte/element</li>
+<li>VersionColumn (i32) — 4 bytes/element</li>
+<li>PriorityColumn (i8) — 1 byte/element</li>
+<li>OwnerColumn (u16) — 2 bytes/element</li>
+</ol>
+<h3>2.3 Checksum</h3>
+<h3>2.4 Tombstone Bitmap Block</h3>
+<blockquote>
+<p>Tombstone bitmap layout: PRD2.md §4.1.</p>
+</blockquote>
+<p>After all 10 column blocks:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bitmap Length</td>
+<td>8 bytes (u64 LE)</td>
+<td>Number of bytes in bitmap</td>
+</tr>
+<tr>
+<td>Bitmap Data</td>
+<td>variable</td>
+<td>Packed bits (1 bit per row, LSB first)</td>
+</tr>
+</tbody>
+</table>
+<p>Total tombstone block size: 8 + ceil(row_count / 8) bytes</p>
+<hr>
+<p>Blake3 hash computed over entire file content excluding the checksum itself (bytes 0 to file_size - 32).</p>
+<hr>
+<h2>3. WAL Format</h2>
+<blockquote>
+<p>Canonical WAL entry format: PRD2.md §3.1, §3.2. WAL properties: PRD2.md §3.2.</p>
+</blockquote>
+<pre><code>┌────────────────────────────────────┐
+│         WAL Entry                  │
+│  Op Type (1):    u8               │
+│    0x01 = Insert                   │
+│    0x02 = Delete                   │
+│  Payload:        variable          │
+└────────────────────────────────────┘</code></pre>
+<h3>3.1 Insert Entry (34 bytes)</h3>
+<table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Size</th>
+<th>Type</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>u8</td>
+<td>Op type: <code>0x01</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>4</td>
+<td>u32 LE</td>
+<td>Subject</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1</td>
+<td>u8</td>
+<td>Predicate</td>
+</tr>
+<tr>
+<td>6</td>
+<td>4</td>
+<td>u32 LE</td>
+<td>Object</td>
+</tr>
+<tr>
+<td>10</td>
+<td>8</td>
+<td>f64 LE</td>
+<td>Confidence</td>
+</tr>
+<tr>
+<td>18</td>
+<td>8</td>
+<td>i64 LE</td>
+<td>Timestamp</td>
+</tr>
+<tr>
+<td>26</td>
+<td>1</td>
+<td>u8</td>
+<td>Context</td>
+</tr>
+<tr>
+<td>27</td>
+<td>4</td>
+<td>i32 LE</td>
+<td>Version</td>
+</tr>
+<tr>
+<td>31</td>
+<td>1</td>
+<td>i8</td>
+<td>Priority</td>
+</tr>
+<tr>
+<td>32</td>
+<td>2</td>
+<td>u16 LE</td>
+<td>Owner</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 Delete Entry (9 bytes)</h3>
+<table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>Size</th>
+<th>Type</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>u8</td>
+<td>Op type: <code>0x02</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>8</td>
+<td>u64 LE</td>
+<td>Row ID</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4. Compression</h2>
+<blockquote>
+<p>Compression codecs: PRD2.md §2.2. Compressor trait: PRD2.md §2.2.</p>
+</blockquote>
+<h3>4.1 Column-Level Compression</h3>
+<p>Each column can be independently compressed using:</p>
+<table>
+<thead>
+<tr>
+<th>Codec</th>
+<th>Algorithm</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None (Noop)</td>
+<td>Passthrough</td>
+<td>Small columns, test data</td>
+</tr>
+<tr>
+<td>Zstd</td>
+<td>Zstandard</td>
+<td>General-purpose, high ratio</td>
+</tr>
+<tr>
+<td>LZ4</td>
+<td>LZ4 block</td>
+<td>Fast decompression</td>
+</tr>
+<tr>
+<td>RLE</td>
+<td>Run-length</td>
+<td>Low-cardinality columns (predicate, evidence, context, priority)</td>
+</tr>
+</tbody>
+</table>
+<h3>4.2 In-Memory vs On-Disk</h3>
+<ul>
+<li><strong>In-memory</strong>: Columns store uncompressed DenseVec data for O(1) random access</li>
+<li><strong>On-disk</strong>: Columns store compressed bytes; decompressed on load via RecoveryManager</li>
+</ul>
+<h3>4.3 Compression Pipeline</h3>
+<pre><code>Append (uncompressed) → Flush → Compress → Write to disk
+Load → Read from disk → Decompress → Populate DenseVec</code></pre>
+<hr>
+<h2>5. Validation</h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>When</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Magic bytes match</td>
+<td>File open</td>
+<td>Direct comparison</td>
+</tr>
+<tr>
+<td>Version supported</td>
+<td>File open</td>
+<td>Version == 2</td>
+</tr>
+<tr>
+<td>Column length matches row count</td>
+<td>File load</td>
+<td>Per-column length check</td>
+</tr>
+<tr>
+<td>Checksum valid</td>
+<td>File verify</td>
+<td>Blake3 recomputation</td>
+</tr>
+<tr>
+<td>WAL entry format valid</td>
+<td>Replay</td>
+<td>Op type + boundary check</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>6. Constraints</h2>
+<blockquote>
+<p>File invariants: PRD2.md §4.2.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Rationale</th>
+<th>PRD2.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed column count (10)</td>
+<td>Enables zero-parse column access</td>
+<td>PRD2.md §4.1</td>
+</tr>
+<tr>
+<td>Little-endian encoding</td>
+<td>x86_64 native, avoids byte-swap overhead</td>
+<td>PRD2.md §4.1</td>
+</tr>
+<tr>
+<td>Blake3 checksum (not CRC32)</td>
+<td>Cryptographic integrity verification</td>
+<td>PRD2.md §4.1</td>
+</tr>
+<tr>
+<td>WAL entries are variable-length</td>
+<td>Insert (34 bytes) vs Delete (9 bytes)</td>
+<td>PRD2.md §3.1</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>7. References</h2>
+<ul>
+<li><strong>Authoritative sources:</strong> PRD2.md §4 (Binary File Format), PRD2.md §3 (WAL), PRD2.md §2.2 (Compression Codecs)</li>
+<li><strong>Depends on:</strong> PRD2.md (P3 authority), KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Related:</strong> KCM_VERSIONING_SPEC, KCM_COMPRESSION_SPEC</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

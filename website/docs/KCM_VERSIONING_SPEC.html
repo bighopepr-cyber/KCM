@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Versioning — KCM Documentation</title>
+    <meta name="description" content="Versioning strategy, schema migration, and compatibility">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html" class="active">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Versioning Specification</h1>
+<p><strong>Document ID:</strong> KCM-VER-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines versioning strategy, schema migration, and compatibility guarantees.</p>
+<hr>
+<h2>2. Version Strategy</h2>
+<h3>2.1 Semantic Versioning</h3>
+<p>KCM follows <a href="https://semver.org/">Semantic Versioning 2.0</a>:</p>
+<pre><code>MAJOR.MINOR.PATCH
+
+MAJOR: Breaking API or storage format changes
+MINOR: Backward-compatible feature additions
+PATCH: Backward-compatible bug fixes</code></pre>
+<h3>2.2 Version Scope</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+<th>Current</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>kcm-core</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-storage</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-compute</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-reasoning</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-optimizer</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-runtime</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-interface</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-distributed</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-ml</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-security</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-compliance</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+<tr>
+<td>kcm-testing</td>
+<td>Independent</td>
+<td>0.1.0</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>3. Storage Format Versioning</h2>
+<h3>3.1 File Format Version</h3>
+<pre><code>File Header Byte 5: Format version (u8)</code></pre>
+<p>Current: <code>2</code></p>
+<h3>3.2 Migration Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Change Type</th>
+<th>Version Action</th>
+<th>Migration Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add column</td>
+<td>MAJOR</td>
+<td>Yes — new file format</td>
+</tr>
+<tr>
+<td>Remove column</td>
+<td>MAJOR</td>
+<td>Yes — new file format</td>
+</tr>
+<tr>
+<td>Change column type</td>
+<td>MAJOR</td>
+<td>Yes — new file format</td>
+</tr>
+<tr>
+<td>Add index type</td>
+<td>MINOR</td>
+<td>No — backward compatible</td>
+</tr>
+<tr>
+<td>Change compression</td>
+<td>MINOR</td>
+<td>No — transparent decompression</td>
+</tr>
+<tr>
+<td>Change block size</td>
+<td>PATCH</td>
+<td>No — transparent</td>
+</tr>
+</tbody>
+</table>
+<h3>3.3 Backward Compatibility</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New code reads old format</td>
+<td>Yes (within MAJOR version)</td>
+</tr>
+<tr>
+<td>Old code reads new format</td>
+<td>No (within MINOR version)</td>
+</tr>
+<tr>
+<td>Format migration tool</td>
+<td>Provided for MAJOR version changes</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4. API Versioning</h2>
+<h3>4.1 C FFI Stability</h3>
+<table>
+<thead>
+<tr>
+<th>Guarantee</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Function signatures stable within MAJOR</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Error codes stable within MAJOR</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Struct layouts stable within MAJOR</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>New functions added in MINOR</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Deprecated functions marked in MINOR</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Deprecated functions removed in MAJOR</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<h3>4.2 Rust API Stability</h3>
+<table>
+<thead>
+<tr>
+<th>Guarantee</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public trait implementations</td>
+<td>Stable within MAJOR</td>
+</tr>
+<tr>
+<td>Generic bounds</td>
+<td>Stable within MAJOR</td>
+</tr>
+<tr>
+<td>Error type variants</td>
+<td>Additive in MINOR</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>5. WAL Compatibility</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entry format</td>
+<td>Fixed per MAJOR version</td>
+</tr>
+<tr>
+<td>Replay</td>
+<td>WAL entries from same MAJOR version can be replayed</td>
+</tr>
+<tr>
+<td>Cross-version</td>
+<td>WAL from different MAJOR version is ignored (not replayed)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>6. Constraints</h2>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No implicit migration</td>
+<td>User must explicitly upgrade</td>
+</tr>
+<tr>
+<td>WAL forward-compatible within MAJOR</td>
+<td>Recovery must work across patches</td>
+</tr>
+<tr>
+<td>Breaking changes require MAJOR bump</td>
+<td>Prevents silent data corruption</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>7. References</h2>
+<ul>
+<li><strong>Depends on:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Related:</strong> KCM_COLUMNAR_FORMAT_SPEC (KCM_COLUMNAR_FORMAT_SPEC), KCM_API_SPEC (KCM_API_SPEC)</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Architecture — KCM Documentation</title>
+    <meta name="description" content="System architecture, crate dependencies, and component specifications">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html" class="active">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Architecture Specification</h1>
+<p><strong>Document ID:</strong> KCM-ARCH-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Depends on:</strong> KCM-SPEC-001</p>
+<p><strong>Authoritative Sources:</strong> PRD.md §2 (Design Principles), AGENTS.md §System Architecture, AGENTS.md §Crate Map</p>
+<blockquote>
+<p><strong>Authority Notice:</strong> The canonical crate map, dependency flow, and dependency policy are defined in AGENTS.md §Crate Map and §Dependency Flow. Design principles are defined in PRD.md §2. This document provides operational detail and component specifications beyond the authoritative definitions.</p>
+</blockquote>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines the system architecture, component boundaries, dependency graph, and data flow for KCM. Derived from PRD.md §2 and AGENTS.md §System Architecture.</p>
+<hr>
+<h2>2. Architecture Overview</h2>
+<blockquote>
+<p>Full crate map: AGENTS.md §Crate Map. Dependency flow: AGENTS.md §Dependency Flow.</p>
+</blockquote>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    Application Layer                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│  │ C FFI    │  │ Python   │  │ REST API │  │ KQL      │   │
+│  │ (FFI)    │  │ (PyO3)   │  │ (HTTP)   │  │ (Parser) │   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
+│       └──────────────┼──────────────┼──────────────┘        │
+│                      ▼                                      │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              kcm-runtime (Orchestration)              │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐           │   │
+│  │  │ Database │  │Transact. │  │ Executor │           │   │
+│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘           │   │
+│  │       └──────────────┼──────────────┘                │   │
+│  └──────────────────────┼───────────────────────────────┘   │
+│                         ▼                                   │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              kcm-compute (Query Execution)            │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐           │   │
+│  │  │ Algebra  │  │ SIMD     │  │ Optimizer│           │   │
+│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘           │   │
+│  └───────┼──────────────┼─────────────┼─────────────────┘   │
+│          ▼              ▼             ▼                     │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              kcm-storage (Data Layer)                 │   │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐      │   │
+│  │  │Column│ │Codec │ │Compr.│ │Index │ │ WAL  │      │   │
+│  │  └──┬───┘ └──┬───┘ └──┬───┘ └──┬───┘ └──┬───┘      │   │
+│  └─────┼────────┼────────┼────────┼────────┼────────────┘   │
+│        ▼        ▼        ▼        ▼        ▼                │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              kcm-core (Foundation)                    │   │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐               │   │
+│  │  │Types │ │Vec   │ │Bitmap│ │Dict  │               │   │
+│  │  └──────┘ └──────┘ └──────┘ └──────┘               │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<hr>
+<h2>3. Crate Dependency Graph</h2>
+<blockquote>
+<p>Canonical dependency flow: AGENTS.md §Dependency Flow.</p>
+</blockquote>
+<pre><code>kcm-core (foundation, zero internal dependencies)
+    ↑
+kcm-storage (depends on: kcm-core)
+    ↑
+kcm-compute (depends on: kcm-core, kcm-storage)
+kcm-reasoning (depends on: kcm-core, kcm-storage)
+kcm-optimizer (depends on: kcm-core, kcm-storage)
+kcm-distributed (depends on: kcm-core, kcm-storage)
+kcm-ml (depends on: kcm-core, kcm-reasoning)
+    ↑
+kcm-runtime (depends on: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer)
+    ↑
+kcm-interface (depends on: kcm-core, kcm-runtime)
+kcm-security (depends on: kcm-core, kcm-storage)
+kcm-compliance (depends on: kcm-core, kcm-storage)
+kcm-testing (depends on: kcm-core, kcm-storage, kcm-runtime, kcm-security)
+    ↑
+kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, kcm-security)</code></pre>
+<hr>
+<h2>4. Component Specifications</h2>
+<blockquote>
+<p>Full crate responsibilities: AGENTS.md §Crate Map. Dependency policy: AGENTS.md §Dependency Policy.</p>
+</blockquote>
+<h3>4.1 kcm-core</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Foundation types and data structures</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>Primitive types (RowID, SubjectID, PredicateID, ObjectID, Confidence, Fact), DenseVec (SIMD-aligned vector), Bitmap (64-bit word operations), Dictionary (string-to-integer mapping)</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Raw values, capacity specifications</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Typed IDs, aligned memory buffers, bitmap bitsets, dictionary IDs</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>parking_lot (only)</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Must be no_std-compatible in future; no heap allocation in hot paths</td>
+</tr>
+</tbody>
+</table>
+<h3>4.2 kcm-storage</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Columnar storage engine with persistence</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>Column<T>, Schema (10-column fact store), encoding/compression, WAL, file format, backup/restore, recovery, bitmap/zone/bloom indexes</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Facts, capacity specs, file paths</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Persisted column data, compressed blocks, WAL entries</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, zstd, lz4, blake3, thiserror, parking_lot</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Each column must support compress/decompress roundtrip; WAL must be fsync'd before acknowledgment</td>
+</tr>
+</tbody>
+</table>
+<h3>4.3 kcm-compute</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Query execution engine</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>ScanOp, FilterOp, ProjectOp, JoinOp, AggregateOp; AVX2 SIMD intrinsics with scalar fallback</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Schema references, filter predicates, row ID sets</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Filtered row ID sets, aggregate values, projected column data</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-storage</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>All operators must skip tombstone-deleted rows; SIMD path must have runtime feature detection</td>
+</tr>
+</tbody>
+</table>
+<h3>4.4 kcm-reasoning</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Rule-based inference engine</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>Rule/RulePattern/RuleRegistry, forward-chaining inference, confidence calculus (conjunction, disjunction, negation, chain, weighted)</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Rules with patterns and confidence formulas, schema with facts</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Derived facts with computed confidence</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-storage</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Must have max iteration limit; derived facts must be appended to schema for cross-iteration chaining; negation must be implemented</td>
+</tr>
+</tbody>
+</table>
+<h3>4.5 kcm-optimizer</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Query plan optimization</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>CostModel, Planner, Statistics, OptimizerPipeline, FilterPushdown, JoinOrdering, IndexSelection, AdaptiveExecutor</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Query plans, schema statistics</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Optimized execution plans</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-storage</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Must handle missing statistics gracefully; optimization must be idempotent</td>
+</tr>
+</tbody>
+</table>
+<h3>4.6 kcm-runtime</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Execution lifecycle and operations</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>KnowledgeDatabase (Insert/Query/Update/Delete), Transaction with apply_to_schema/rollback, VersionStore, Metrics, HealthCheck, Logging, AsyncExecutor (tokio), Executor (rayon)</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Facts, queries, operations</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Query results, metrics snapshots, health reports</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, parking_lot, rayon, tokio</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Schema cloning per query is acceptable for current scale; future optimization needed for >10M facts</td>
+</tr>
+</tbody>
+</table>
+<h3>4.7 kcm-interface</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>External API surface</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>C FFI (13 functions), Python bindings (PyO3), REST API handlers, KQL parser, example implementations</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>C types, Python objects, HTTP requests, KQL strings</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>C-compatible results, Python objects, HTTP responses, parsed ASTs</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-runtime, parking_lot, serde_json</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>C API must use static null-terminated strings (no dangling pointers); KQL parser must handle all token types</td>
+</tr>
+</tbody>
+</table>
+<h3>4.8 kcm-distributed</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Distributed system primitives</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>Hash/Range/ConsistentHash sharding, ShardMap, TransactionCoordinator (2PC)</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Shard configurations, transaction requests</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Shard routing decisions, transaction status</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, parking_lot</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>ShardingStrategy must be Send + Sync; 2PC must handle all-votes-committed-or-abort</td>
+</tr>
+</tbody>
+</table>
+<h3>4.9 kcm-ml</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Machine learning integration</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>RegressionModel/LearnedIndex (position prediction), ConfidenceLearner (accuracy tracking), RuleDiscoveryEngine (pattern mining)</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Value-position pairs, fact observations, pattern frequencies</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Predicted positions, confidence adjustments, discovered rules</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-reasoning</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>LearnedIndex search must return ranges for binary search refinement</td>
+</tr>
+</tbody>
+</table>
+<h3>4.10 kcm-security</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Security and access control</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>RBAC (Permission/Role/User/ACLManager), AES-256-GCM encryption, AuditLog</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>User IDs, permissions, plaintext data</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Permission decisions, ciphertext, audit events</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, blake3, aes-gcm, getrandom, parking_lot</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Key generation must use CSPRNG; encryption must use AEAD; audit log must cap at 100K events</td>
+</tr>
+</tbody>
+</table>
+<h3>4.11 kcm-compliance</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Regulatory compliance</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>GDPR manager (consent, export, delete), data classification (Public/Internal/Confidential/Restricted with retention policies)</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Subject data, consent actions</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Consent status, exported data, retention decisions</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, parking_lot</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>GDPR delete must be irreversible within session</td>
+</tr>
+</tbody>
+</table>
+<h3>4.12 kcm-testing</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Testing infrastructure</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>Load test runner, stress test runner, security test suite, regression detector, metrics dashboard</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Test scenarios, baselines</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Test results, performance reports, regression alerts</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-storage, kcm-runtime, kcm-security, parking_lot</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>All test runners must be invokable via <code>cargo test</code>; load/stress tests must be configurable for CI duration</td>
+</tr>
+</tbody>
+</table>
+<h3>4.13 kcm-server</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Production server binary</td>
+</tr>
+<tr>
+<td><strong>Responsibility</strong></td>
+<td>HTTP/gRPC server, configuration loading, graceful shutdown, signal handling</td>
+</tr>
+<tr>
+<td><strong>Input</strong></td>
+<td>Configuration files, command-line arguments</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>Running server process</td>
+</tr>
+<tr>
+<td><strong>Dependency</strong></td>
+<td>kcm-core, kcm-runtime, kcm-interface, kcm-distributed, kcm-security, parking_lot</td>
+</tr>
+<tr>
+<td><strong>Constraint</strong></td>
+<td>Must support graceful shutdown on SIGTERM/SIGINT; must expose health endpoint</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>5. Data Flow</h2>
+<h3>5.1 Insert Flow</h3>
+<pre><code>Application
+    │
+    ▼
+KCM_DatabaseInsert (FFI)
+    │
+    ▼
+KnowledgeDatabase::insert()
+    │
+    ├──► Schema::append_fact()
+    │       ├──► subject_col.append()
+    │       ├──► predicate_col.append()
+    │       ├──► object_col.append()
+    │       ├──► confidence_col.append()
+    │       ├──► evidence_col.append()
+    │       ├──► timestamp_col.append()
+    │       ├──► context_col.append()
+    │       ├──► version_col.append()
+    │       ├──► priority_col.append()
+    │       └──► owner_col.append()
+    │
+    └──► WAL::append_fact()
+            └──► fsync to disk</code></pre>
+<h3>5.2 Query Flow</h3>
+<pre><code>Application
+    │
+    ▼
+QueryBuilder::new(schema_snapshot)
+    │
+    ├──► .with_subject(SubjectID(1))
+    ├──► .with_predicate(PredicateID(0))
+    └──► .with_confidence(0.5)
+    │
+    ▼
+execute()
+    │
+    ├──► For each idx in 0..schema.len()
+    │       ├──► Skip if tombstone deleted
+    │       ├──► Check subject filter
+    │       ├──► Check predicate filter
+    │       ├──► Check object filter
+    │       └──► Check confidence filter
+    │
+    └──► Return Vec&lt;Fact&gt;</code></pre>
+<h3>5.3 Inference Flow</h3>
+<pre><code>InferenceEngine::infer_forward_chaining(&amp;mut schema)
+    │
+    ├──► For each iteration (0..max_iterations):
+    │       ├──► For each enabled rule:
+    │       │       ├──► find_pattern_matches()
+    │       │       │       ├──► Triple pattern: scan columns
+    │       │       │       ├──► And pattern: join matches
+    │       │       │       ├──► Or pattern: union matches
+    │       │       │       └──► Not pattern: exclude matches
+    │       │       └──► Apply confidence_formula
+    │       ├──► Filter by confidence_threshold
+    │       ├──► Append derived facts to schema
+    │       └──► If no new facts, break
+    │
+    └──► Return Vec&lt;(Fact, RuleID)&gt;</code></pre>
+<hr>
+<h2>6. Concurrency Model</h2>
+<blockquote>
+<p>Canonical concurrency model: AGENTS.md §Concurrency Model.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Mechanism</th>
+<th>Protection</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KnowledgeDatabase</td>
+<td>Arc<RwLock<Schema>></td>
+<td>Write lock for insert/update/delete; read lock for query snapshot</td>
+<td>Schema — Arc<RwLock<Schema>></td>
+</tr>
+<tr>
+<td>SharedDictionary</td>
+<td>Arc<RwLock<Dictionary>></td>
+<td>Write lock for insert; read lock for lookup</td>
+<td>Dictionaries — Arc<RwLock<Dictionary>></td>
+</tr>
+<tr>
+<td>WriteAheadLog</td>
+<td>Mutex<File></td>
+<td>Serialized writes</td>
+<td>WAL — Mutex<File></td>
+</tr>
+<tr>
+<td>AuditLog</td>
+<td>Mutex<Vec<AuditEvent>></td>
+<td>Serialized append</td>
+<td>Audit Log — Mutex<Vec<AuditEvent>></td>
+</tr>
+<tr>
+<td>Metrics</td>
+<td>AtomicU64 counters</td>
+<td>Lock-free atomic operations</td>
+<td>Metrics — AtomicU64 (10 counters)</td>
+</tr>
+<tr>
+<td>TransactionCoordinator</td>
+<td>Mutex<HashMap></td>
+<td>Serial transaction management</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>7. Constraints</h2>
+<blockquote>
+<p>Non-negotiable rules: AGENTS.md §Non-Negotiable Rules.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Rationale</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single-process, single-writer</td>
+<td>Simplifies concurrency; distributed mode is optional</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Schema capacity pre-allocated</td>
+<td>Avoids reallocation in hot path</td>
+<td>—</td>
+</tr>
+<tr>
+<td>WAL fsync on flush</td>
+<td>Ensures crash recovery correctness</td>
+<td>—</td>
+</tr>
+<tr>
+<td>No circular crate dependencies</td>
+<td>Enforces clean module boundaries</td>
+<td>AGENTS.md §Dependency Policy</td>
+</tr>
+<tr>
+<td>Foundation crate (kcm-core) has zero internal dependencies</td>
+<td>Enables maximum reuse and testability</td>
+<td>AGENTS.md §Crate Map</td>
+</tr>
+<tr>
+<td>No panic!() in production code</td>
+<td>System stability</td>
+<td>AGENTS.md §Non-Negotiable Rules #3</td>
+</tr>
+<tr>
+<td>No TODO/FIXME/HACK in production code</td>
+<td>Code completeness</td>
+<td>AGENTS.md §Non-Negotiable Rules #4</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>8. References</h2>
+<ul>
+<li><strong>Authoritative sources:</strong> PRD.md §2 (Design Principles), PRD.md §4 (Data Structures), PRD.md §5 (Compute Engine), PRD.md §6 (Reasoning Engine), AGENTS.md §Crate Map, AGENTS.md §Dependency Flow, AGENTS.md §Concurrency Model</li>
+<li><strong>Depends on:</strong> PRD.md (P4 authority), AGENTS.md (Engineering Constitution)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION</li>
+<li><strong>Related:</strong> KCM_DATA_MODEL_SPEC, KCM_RUNTIME_SPEC, KCM_API_SPEC</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

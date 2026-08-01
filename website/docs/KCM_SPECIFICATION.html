@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Specification — KCM Documentation</title>
+    <meta name="description" content="Technical constitution and single source of truth for the KCM knowledge columnar model">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html" class="active">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Specification — Technical Constitution</h1>
+<p><strong>Document ID:</strong> KCM-SPEC-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Status:</strong> Active</p>
+<p><strong>Classification:</strong> Technical Constitution / Single Source of Truth</p>
+<p><strong>Authoritative Sources:</strong> PRD.md (P4, Core), PRD2.md (P3, Storage/Runtime), PRD3.md (P2, Distributed/Security), AGENTS.md (Engineering Constitution)</p>
+<blockquote>
+<p><strong>Authority Notice:</strong> This document is the derived specification for KCM. The authoritative definitions for types, storage, and architecture live in the PRD documents (see PRD.md §3, PRD2.md §4, PRD3.md §27–32) and AGENTS.md. Where this document duplicates definitions from those sources, the PRD/AGENTS.md definitions take precedence. See <strong>§5 Conflict Resolution</strong> and <strong>§7 References</strong>.</p>
+</blockquote>
+<hr>
+<h2>1. Overview</h2>
+<p>Knowledge Columnar Model (KCM) is a columnar knowledge representation, storage, and reasoning engine implemented in Rust. KCM replaces pointer-based knowledge graph traversal with columnar relation spaces that support SIMD-accelerated scanning, dictionary encoding, compression-native storage, and deterministic inference.</p>
+<h3>1.1 Problem Statement</h3>
+<p>Traditional knowledge graphs use adjacency-list representations that:</p>
+<ul>
+<li>Degrade performance on full-scan queries (cache-unfriendly pointer chasing)</li>
+<li>Cannot leverage SIMD instructions for bulk filtering</li>
+<li>Lack native compression for repetitive knowledge patterns</li>
+<li>Provide no column-level encoding optimization</li>
+</ul>
+<h3>1.2 Technical Goals</h3>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Metric</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column scan throughput</td>
+<td>ops/sec</td>
+<td>> 100M</td>
+</tr>
+<tr>
+<td>Bitmap operations</td>
+<td>ops/sec</td>
+<td>> 8M</td>
+</tr>
+<tr>
+<td>Dictionary lookup</td>
+<td>latency</td>
+<td>< 100ns</td>
+</tr>
+<tr>
+<td>Insert throughput</td>
+<td>facts/sec</td>
+<td>> 50K</td>
+</tr>
+<tr>
+<td>Query latency (1M facts)</td>
+<td>P99 ms</td>
+<td>< 100ms</td>
+</tr>
+<tr>
+<td>Memory efficiency</td>
+<td>bytes/fact</td>
+<td>< 100</td>
+</tr>
+<tr>
+<td>Test coverage</td>
+<td>line coverage</td>
+<td>≥ 95%</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>2. Core Principles</h2>
+<table>
+<thead>
+<tr>
+<th>Principle</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Column-First</strong></td>
+<td>Knowledge is stored as independent linear arrays per attribute, not as object graphs</td>
+</tr>
+<tr>
+<td><strong>Deterministic Retrieval</strong></td>
+<td>Identical input queries always produce identical output, regardless of timing</td>
+</tr>
+<tr>
+<td><strong>Dictionary-Encoded</strong></td>
+<td>All string/entity references are mapped to compact integer dictionaries</td>
+</tr>
+<tr>
+<td><strong>Compression-Native</strong></td>
+<td>Each column uses the optimal encoding (Delta, Gorilla, RLE, Dictionary) and compression (Zstd, LZ4)</td>
+</tr>
+<tr>
+<td><strong>Verification-Capable</strong></td>
+<td>Every fact carries confidence, evidence, and timestamp for auditability</td>
+</tr>
+<tr>
+<td><strong>Zero-Copy Query</strong></td>
+<td>Query operations iterate over column slices without materialization until projection</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>3. System Scope</h2>
+<h3>3.1 In Scope</h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Components</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Storage</td>
+<td>Columnar storage, encoding, compression, file format, WAL, backup/recovery</td>
+</tr>
+<tr>
+<td>Retrieval</td>
+<td>Query algebra operators, filter pushdown, index selection</td>
+</tr>
+<tr>
+<td>Computation</td>
+<td>SIMD-accelerated scan, bitmap intersection, aggregate functions</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td>Rule engine, forward-chaining inference, confidence calculus</td>
+</tr>
+<tr>
+<td>Optimization</td>
+<td>Cost model, query planner, statistics, adaptive execution</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>RBAC, AES-256-GCM encryption, audit logging</td>
+</tr>
+<tr>
+<td>Compliance</td>
+<td>GDPR data subject management, data classification</td>
+</tr>
+<tr>
+<td>Distribution</td>
+<td>Sharding (hash, range, consistent hash), 2PC coordinator</td>
+</tr>
+<tr>
+<td>ML Integration</td>
+<td>Learned index, confidence learner, rule discovery</td>
+</tr>
+<tr>
+<td>API</td>
+<td>C FFI, Python bindings (PyO3), KQL parser, REST handlers</td>
+</tr>
+<tr>
+<td>Persistence</td>
+<td>WAL, binary file format, backup/restore, crash recovery</td>
+</tr>
+<tr>
+<td>Operations</td>
+<td>Metrics, health checks, logging, Docker/K8s deployment</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 Out of Scope</h3>
+<table>
+<thead>
+<tr>
+<th>Exclusion</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM training</td>
+<td>KCM is a storage and reasoning engine, not an ML training platform</td>
+</tr>
+<tr>
+<td>Chatbot UI</td>
+<td>Application-layer concern</td>
+</tr>
+<tr>
+<td>Application business logic</td>
+<td>Consumer responsibility</td>
+</tr>
+<tr>
+<td>Network protocol implementation</td>
+<td>REST/gRPC API is defined; server framework is consumer responsibility</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4. Technical Requirements</h2>
+<h3>4.1 Mandatory Requirements</h3>
+<blockquote>
+<p><strong>Note:</strong> Core requirements TR-009 through TR-012 are defined authoritatively in AGENTS.md §Non-Negotiable Rules.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+<th>Priority</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TR-001</td>
+<td>All column data stored as DenseVec with ≥64-byte alignment</td>
+<td>Critical</td>
+<td>PRD.md §4.1</td>
+</tr>
+<tr>
+<td>TR-002</td>
+<td>Dictionary encoding maps all string references to u32 IDs</td>
+<td>Critical</td>
+<td>PRD.md §4.3</td>
+</tr>
+<tr>
+<td>TR-003</td>
+<td>Confidence values stored as f64, validated in [0.0, 1.0]</td>
+<td>Critical</td>
+<td>PRD.md §3.2</td>
+</tr>
+<tr>
+<td>TR-004</td>
+<td>Tombstone-based soft delete with active_count tracking</td>
+<td>High</td>
+<td>PRD2.md §2</td>
+</tr>
+<tr>
+<td>TR-005</td>
+<td>WAL-based crash recovery with blake3 checksums</td>
+<td>Critical</td>
+<td>PRD2.md §3</td>
+</tr>
+<tr>
+<td>TR-006</td>
+<td>AES-256-GCM encryption for at-rest data protection</td>
+<td>Critical</td>
+<td>PRD3.md §10</td>
+</tr>
+<tr>
+<td>TR-007</td>
+<td>RBAC with Role/User/Permission/Context ACL model</td>
+<td>High</td>
+<td>PRD3.md §10</td>
+</tr>
+<tr>
+<td>TR-008</td>
+<td>Forward-chaining inference with max iteration limit</td>
+<td>High</td>
+<td>PRD.md §6</td>
+</tr>
+<tr>
+<td>TR-009</td>
+<td>All public APIs return Result<T, KcmError></td>
+<td>Critical</td>
+<td>AGENTS.md §Non-Negotiable Rules</td>
+</tr>
+<tr>
+<td>TR-010</td>
+<td>No unwrap() in production code paths (test-only)</td>
+<td>High</td>
+<td>AGENTS.md §Non-Negotiable Rules</td>
+</tr>
+<tr>
+<td>TR-011</td>
+<td>Send + Sync bounds on all shared types</td>
+<td>Critical</td>
+<td>AGENTS.md §Concurrency Model</td>
+</tr>
+<tr>
+<td>TR-012</td>
+<td>Zero runtime overhead from Rust (no GC, no reflection)</td>
+<td>High</td>
+<td>AGENTS.md §Engineering Philosophy</td>
+</tr>
+</tbody>
+</table>
+<h3>4.2 Quality Requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+<th>Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QR-001</td>
+<td>Test pass rate</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>QR-002</td>
+<td>Clippy warnings</td>
+<td>0 (style warnings excluded)</td>
+</tr>
+<tr>
+<td>QR-003</td>
+<td>Unsafe code in public API</td>
+<td>None</td>
+</tr>
+<tr>
+<td>QR-004</td>
+<td>Deterministic execution</td>
+<td>Verified by regression tests</td>
+</tr>
+<tr>
+<td>QR-005</td>
+<td>Performance regression</td>
+<td>< 5% from baseline</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>5. Conflict Resolution</h2>
+<p>When specifications conflict between documents, follow this hierarchy (derived from AGENTS.md §Document Hierarchy):</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Document</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>PRD-TESTING&BRACHMARCK.md</td>
+<td>Performance targets, validation methodology, testing strategy</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>PRD3.md</td>
+<td>Distributed architecture, ML integration, security, compliance</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>PRD2.md</td>
+<td>Persistence layer, optimizer, monitoring, interfaces</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>PRD.md</td>
+<td>Core types, storage engine, compute engine, reasoning engine</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>AGENTS.md</td>
+<td>Engineering constitution, non-negotiable rules, crate map</td>
+</tr>
+</tbody>
+</table>
+<p>Undocumented conflicts are recorded in change history rather than resolved by assumption.</p>
+<hr>
+<h2>6. Document Map</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KCM_ARCHITECTURE.md</td>
+<td>System architecture and module responsibilities</td>
+</tr>
+<tr>
+<td>KCM_DATA_MODEL_SPEC.md</td>
+<td>Knowledge representation model</td>
+</tr>
+<tr>
+<td>KCM_COLUMNAR_FORMAT_SPEC.md</td>
+<td>Physical storage format</td>
+</tr>
+<tr>
+<td>KCM_QUERY_EXECUTION_SPEC.md</td>
+<td>Query lifecycle and operators</td>
+</tr>
+<tr>
+<td>KCM_COMPRESSION_SPEC.md</td>
+<td>Encoding and compression strategies</td>
+</tr>
+<tr>
+<td>KCM_INDEXING_SPEC.md</td>
+<td>Index structures and usage</td>
+</tr>
+<tr>
+<td>KCM_SECURITY_TRUST_SPEC.md</td>
+<td>Security, trust, and verification</td>
+</tr>
+<tr>
+<td>KCM_API_SPEC.md</td>
+<td>Public API contracts</td>
+</tr>
+<tr>
+<td>KCM_RUNTIME_SPEC.md</td>
+<td>Runtime lifecycle and concurrency</td>
+</tr>
+<tr>
+<td>KCM_PERFORMANCE_SPEC.md</td>
+<td>Performance targets and benchmarks</td>
+</tr>
+<tr>
+<td>KCM_TESTING_SPEC.md</td>
+<td>Testing standards</td>
+</tr>
+<tr>
+<td>KCM_ENGINEERING_RULES.md</td>
+<td>Development rules</td>
+</tr>
+<tr>
+<td>KCM_VERSIONING_SPEC.md</td>
+<td>Versioning and compatibility</td>
+</tr>
+<tr>
+<td>KCM_GLOSSARY.md</td>
+<td>Terminology definitions</td>
+</tr>
+<tr>
+<td>KCM_DEPLOYMENT_SPEC.md</td>
+<td>Deployment and container specifications</td>
+</tr>
+<tr>
+<td>KCM_DOCUMENT_AUDIT_REPORT.md</td>
+<td>Documentation audit results</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>7. References</h2>
+<ul>
+<li><strong>Authoritative sources:</strong> PRD.md (§3 Type System, §5 Compute, §6 Reasoning), PRD2.md (§2 Storage, §4 File Format, §7 Optimizer, §8 Runtime), PRD3.md (§2 Distributed, §10 Security, §12 Compliance), AGENTS.md (Non-Negotiable Rules, Crate Map, Error Model, Concurrency Model)</li>
+<li><strong>Depends on:</strong> PRD.md, PRD2.md, PRD3.md, PRD-TESTING&BRACHMARCK.md, AGENTS.md</li>
+<li><strong>Parent specs:</strong> AGENTS.md (Engineering Constitution)</li>
+<li><strong>Derived specs:</strong> All KCM specification documents in this directory</li>
+<li><strong>Note:</strong> Duplicated definitions (types, error model, concurrency model) are maintained in AGENTS.md as the Single Source of Truth</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

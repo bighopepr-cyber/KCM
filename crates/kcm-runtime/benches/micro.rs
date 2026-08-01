@@ -70,9 +70,9 @@ fn bench_column_push(c: &mut Criterion) {
     for &size in &[10_000, 100_000, 1_000_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             b.iter(|| {
-                let mut vec: DenseVec<u32> = DenseVec::new(size).unwrap();
+                let mut vec: DenseVec<u32> = DenseVec::new(size).expect("Failed to allocate DenseVec with capacity");
                 for i in 0..size {
-                    vec.push(i as u32).unwrap();
+                    vec.push(i as u32).expect("Failed to push element into DenseVec");
                 }
                 black_box(&vec);
             });
@@ -180,7 +180,7 @@ fn bench_dictionary_insert(c: &mut Criterion) {
             b.iter(|| {
                 let mut dict = Dictionary::new();
                 for i in 0..size {
-                    dict.insert(&format!("key_{}", i)).unwrap();
+                    dict.insert(&format!("key_{}", i)).expect("Failed to insert key into Dictionary");
                 }
                 black_box(dict)
             });
@@ -210,11 +210,11 @@ fn bench_dictionary_insert_existing(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let mut dict = Dictionary::new();
             for i in 0..size {
-                dict.insert(&format!("key_{}", i)).unwrap();
+                dict.insert(&format!("key_{}", i)).expect("Failed to insert key into Dictionary during setup");
             }
             b.iter(|| {
                 for i in 0..size {
-                    black_box(dict.insert(&format!("key_{}", i)).unwrap());
+                    black_box(dict.insert(&format!("key_{}", i)).expect("Failed to insert existing key into Dictionary"));
                 }
             });
         });
@@ -234,11 +234,11 @@ fn bench_database_insert(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
             let config = DatasetConfig::for_count(batch);
             b.iter_batched(
-                || KnowledgeDatabase::new().unwrap(),
+                || KnowledgeDatabase::new().expect("Failed to create KnowledgeDatabase for insert benchmark"),
                 |kb| {
                     for i in 0..batch {
                         let fact = deterministic_fact(i, &config);
-                        kb.insert(&fact).unwrap();
+                        kb.insert(&fact).expect("Failed to insert fact into KnowledgeDatabase");
                     }
                 },
                 criterion::BatchSize::SmallInput,
@@ -261,7 +261,7 @@ fn bench_database_query(c: &mut Criterion) {
                         .query()
                         .with_predicate(PredicateID(5))
                         .execute()
-                        .unwrap(),
+                        .expect("Failed to execute predicate query in database_query benchmark"),
                 )
             });
         });
@@ -283,7 +283,7 @@ fn bench_database_query_filtered(c: &mut Criterion) {
                         .with_subject(SubjectID(50))
                         .with_confidence(0.5)
                         .execute()
-                        .unwrap(),
+                        .expect("Failed to execute filtered query in database_query_filtered benchmark"),
                 )
             });
         });
@@ -309,7 +309,7 @@ fn bench_database_join(c: &mut Criterion) {
                 .query()
                 .with_subject(SubjectID(500))
                 .execute()
-                .unwrap();
+                .expect("Failed to execute join setup query in database_join benchmark");
             let right: Vec<usize> = (0..size).collect();
             b.iter(|| {
                 black_box(
@@ -356,7 +356,11 @@ fn bench_inference_pattern_matching(c: &mut Criterion) {
 fn bench_inference_full_engine(c: &mut Criterion) {
     use kcm_reasoning::inference::InferenceEngine;
     use kcm_reasoning::rule::{Rule, RulePattern};
+    use kcm_storage::column::Schema;
     let mut group = c.benchmark_group("inference_full_engine");
+    group.measurement_time(Duration::from_secs(10));
+    group.sample_size(100);
+    group.warm_up_time(Duration::from_secs(3));
     for &size in INFERENCE_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let mut engine = InferenceEngine::new().with_max_iterations(1);
@@ -367,7 +371,7 @@ fn bench_inference_full_engine(c: &mut Criterion) {
                 PredicateID(1),
                 Box::new(|confs| confs.first().copied().unwrap_or(0.0) * 0.9),
             );
-            engine.register_rule(rule).unwrap();
+            engine.register_rule(rule).expect("Failed to register rule");
             let config = DatasetConfig {
                 fact_count: size,
                 subject_range: 100,
@@ -376,8 +380,26 @@ fn bench_inference_full_engine(c: &mut Criterion) {
                 base_confidence: 0.5,
                 confidence_step: 0.0001,
             };
-            let mut fixture = SchemaFixture::new(&config);
-            b.iter(|| black_box(engine.infer_forward_chaining(&mut fixture.schema).unwrap()));
+            config
+                .validate()
+                .expect("Invalid dataset config for inference benchmark");
+            let facts: Vec<Fact> = (0..size).map(|i| deterministic_fact(i, &config)).collect();
+            let derived_budget = (size / config.predicate_range as usize).max(1);
+            let schema_capacity = size + derived_budget;
+            b.iter(|| {
+                let mut schema = Schema::new(schema_capacity)
+                    .expect("Failed to allocate schema for inference benchmark");
+                for fact in &facts {
+                    schema
+                        .append_fact(fact)
+                        .expect("Failed to insert fact into benchmark schema");
+                }
+                black_box(
+                    engine
+                        .infer_forward_chaining(&mut schema)
+                        .expect("Inference failed during benchmark"),
+                )
+            });
         });
     }
     group.finish();
@@ -399,7 +421,7 @@ fn bench_rule_registry(c: &mut Criterion) {
                             PredicateID(1),
                             Box::new(|c| c.first().copied().unwrap_or(0.0)),
                         ))
-                        .unwrap();
+                        .expect("Failed to register rule in rule_registry benchmark");
                 }
                 black_box(registry.all_enabled());
             });
@@ -417,15 +439,15 @@ fn bench_wal_append(c: &mut Criterion) {
     let mut group = c.benchmark_group("wal_append");
     for &batch in &[100, 1_000, 10_000] {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
-            let dir = tempfile::tempdir().unwrap();
-            let wal = WriteAheadLog::new(dir.path().join("bench.wal")).unwrap();
+            let dir = tempfile::tempdir().expect("Failed to create temp directory for WAL benchmark");
+            let wal = WriteAheadLog::new(dir.path().join("bench.wal")).expect("Failed to create WAL for benchmark");
             let config = DatasetConfig::for_count(batch);
             b.iter(|| {
                 for i in 0..batch {
                     let fact = deterministic_fact(i, &config);
-                    wal.append_fact(&fact).unwrap();
+                    wal.append_fact(&fact).expect("Failed to append fact to WAL in wal_append benchmark");
                 }
-                wal.flush_buffer().unwrap();
+                wal.flush_buffer().expect("Failed to flush WAL buffer in wal_append benchmark");
             });
         });
     }

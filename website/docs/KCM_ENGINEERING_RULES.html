@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Engineering Rules — KCM Documentation</title>
+    <meta name="description" content="Mandatory engineering practices for KCM development">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html" class="active">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Engineering Rules</h1>
+<p><strong>Document ID:</strong> KCM-ENG-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Authoritative Source:</strong> AGENTS.md §Non-Negotiable Rules</p>
+<blockquote>
+<p><strong>Authority Notice:</strong> The 12 Non-Negotiable Rules in AGENTS.md are the authoritative engineering rules for KCM. This document provides the detailed operational rules that derive from those principles. Where conflicts exist, AGENTS.md §Non-Negotiable Rules wins.</p>
+</blockquote>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines mandatory engineering practices for KCM development. Derived from AGENTS.md §Non-Negotiable Rules and §Engineering Gates.</p>
+<hr>
+<h2>2. Code Rules</h2>
+<blockquote>
+<p>Core rules: AGENTS.md §Non-Negotiable Rules #1–12.</p>
+</blockquote>
+<h3>2.1 Rust Conventions</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ER-001</td>
+<td>All public functions return <code>Result<T, KcmError></code></td>
+<td>§Non-Negotiable Rules #1</td>
+</tr>
+<tr>
+<td>ER-002</td>
+<td>No <code>unwrap()</code> in production code paths</td>
+<td>§Non-Negotiable Rules #2</td>
+</tr>
+<tr>
+<td>ER-003</td>
+<td>All <code>unsafe</code> blocks must have a <code>// SAFETY:</code> comment explaining correctness</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-004</td>
+<td>All public types must implement <code>Debug</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-005</td>
+<td>Use <code>parking_lot</code> for mutexes/rwlocks (not std)</td>
+<td>§Concurrency Model</td>
+</tr>
+<tr>
+<td>ER-006</td>
+<td>Use <code>Send + Sync</code> bounds on all shared types</td>
+<td>§Concurrency Model</td>
+</tr>
+<tr>
+<td>ER-007</td>
+<td>Prefer <code>is_some_and</code> over <code>map_or(false, ...)</code> for Option checks</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-008</td>
+<td>Use <code>div_ceil</code> instead of manual ceiling division</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-009</td>
+<td>Use <code>clamp</code> instead of chained <code>min/max</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-010</td>
+<td>Use <code>or_default()</code> instead of <code>or_insert_with(Vec::new)</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 Architecture Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ER-011</td>
+<td>No circular crate dependencies</td>
+<td>§Dependency Policy</td>
+</tr>
+<tr>
+<td>ER-012</td>
+<td>kcm-core has zero internal dependencies</td>
+<td>§Crate Map</td>
+</tr>
+<tr>
+<td>ER-013</td>
+<td>All inter-crate communication through public API only</td>
+<td>§Engineering Philosophy</td>
+</tr>
+<tr>
+<td>ER-014</td>
+<td>New modules must have corresponding tests</td>
+<td>§Non-Negotiable Rules #10</td>
+</tr>
+<tr>
+<td>ER-015</td>
+<td>Feature-gated dependencies (e.g., serde, pyo3) must have <code>#[cfg(feature)]</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3>2.3 API Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ER-016</td>
+<td>No breaking API changes without version bump</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-017</td>
+<td>New API functions must have doc comments</td>
+<td>§Non-Negotiable Rules #12</td>
+</tr>
+<tr>
+<td>ER-018</td>
+<td>C FFI functions must validate null pointers</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-019</td>
+<td>Builder pattern methods consume self</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ER-020</td>
+<td>Error messages must be descriptive and actionable</td>
+<td>§Error Model</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>3. Testing Rules</h2>
+<blockquote>
+<p>Test pyramid: AGENTS.md §Testing Strategy. Quality gates: AGENTS.md §Engineering Gates (Gate 6).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TR-001</td>
+<td>Every PR must pass <code>cargo test --workspace</code></td>
+<td>§Engineering Gates Gate 6</td>
+</tr>
+<tr>
+<td>TR-002</td>
+<td>Every PR must pass <code>cargo clippy --workspace</code></td>
+<td>§Engineering Gates Gate 6</td>
+</tr>
+<tr>
+<td>TR-003</td>
+<td>Every PR must pass <code>cargo fmt --check</code></td>
+<td>§Engineering Gates Gate 6</td>
+</tr>
+<tr>
+<td>TR-004</td>
+<td>New code must have ≥ 95% test coverage</td>
+<td>§Testing Strategy</td>
+</tr>
+<tr>
+<td>TR-005</td>
+<td>Security-sensitive code must have security tests</td>
+<td>§Testing Strategy (Security tier)</td>
+</tr>
+<tr>
+<td>TR-006</td>
+<td>Performance-critical code must have benchmarks</td>
+<td>§Testing Strategy</td>
+</tr>
+<tr>
+<td>TR-007</td>
+<td>Property tests required for arithmetic operations</td>
+<td>§Testing Strategy (Property tier)</td>
+</tr>
+<tr>
+<td>TR-008</td>
+<td>Load tests run before releases</td>
+<td>§Testing Strategy (Load tier)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4. Performance Rules</h2>
+<blockquote>
+<p>Performance targets: PRD.md §8. Benchmark validation: PRD-TESTING&BRACHMARCK.md §4.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PR-001</td>
+<td>Benchmark regression > 5% triggers WARNING, > 10% triggers FAILURE</td>
+<td>PRD-TESTING&BRACHMARCK.md §4</td>
+</tr>
+<tr>
+<td>PR-002</td>
+<td>Memory usage must not exceed 100 bytes/fact</td>
+<td>PRD.md §8</td>
+</tr>
+<tr>
+<td>PR-003</td>
+<td>Compression ratio must exceed 5x</td>
+<td>PRD2.md §2.2</td>
+</tr>
+<tr>
+<td>PR-004</td>
+<td>New operators must report estimated_rows</td>
+<td>PRD.md §5.1</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>5. Documentation Rules</h2>
+<blockquote>
+<p>Documentation authority: AGENTS.md §Document Hierarchy. Documentation guardian: AGENTS.md §Skill Governance (P11).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DR-001</td>
+<td>Architecture changes must update KCM_ARCHITECTURE.md</td>
+<td>§Document Hierarchy</td>
+</tr>
+<tr>
+<td>DR-002</td>
+<td>API changes must update KCM_API_SPEC.md</td>
+<td>§Document Hierarchy</td>
+</tr>
+<tr>
+<td>DR-003</td>
+<td>New compression must update KCM_COMPRESSION_SPEC.md</td>
+<td>§Document Hierarchy</td>
+</tr>
+<tr>
+<td>DR-004</td>
+<td>New tests must update KCM_TESTING_SPEC.md</td>
+<td>§Document Hierarchy</td>
+</tr>
+<tr>
+<td>DR-005</td>
+<td>All changes must update this document's change history</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>6. Security Rules</h2>
+<blockquote>
+<p>Security requirements: PRD3.md §10 (Security). Non-negotiable: AGENTS.md §Non-Negotiable Rules.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SR-001</td>
+<td>No hardcoded secrets or keys</td>
+<td>AGENTS.md §Non-Negotiable Rules #6</td>
+</tr>
+<tr>
+<td>SR-002</td>
+<td>Encryption must use AEAD (AES-256-GCM)</td>
+<td>PRD3.md §10</td>
+</tr>
+<tr>
+<td>SR-003</td>
+<td>Key generation must use CSPRNG</td>
+<td>PRD3.md §10</td>
+</tr>
+<tr>
+<td>SR-004</td>
+<td>All user input must be validated</td>
+<td>AGENTS.md §Non-Negotiable Rules #9</td>
+</tr>
+<tr>
+<td>SR-005</td>
+<td>Audit logging for all write operations</td>
+<td>PRD3.md §10</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>7. Process Rules</h2>
+<blockquote>
+<p>Engineering gates: AGENTS.md §Engineering Gates.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Description</th>
+<th>AGENTS.md Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PS-001</td>
+<td>All changes via pull request</td>
+<td>§Engineering Gates</td>
+</tr>
+<tr>
+<td>PS-002</td>
+<td>Minimum 1 approval for merge</td>
+<td>§Engineering Gates</td>
+</tr>
+<tr>
+<td>PS-003</td>
+<td>CI must pass before merge</td>
+<td>§Engineering Gates Gate 6</td>
+</tr>
+<tr>
+<td>PS-004</td>
+<td>Breaking changes require RFC</td>
+<td>§Specification Lock (P4)</td>
+</tr>
+<tr>
+<td>PS-005</td>
+<td>Version bump on every release</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>8. Change History</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Change</th>
+<th>Author</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-07-31</td>
+<td>Initial version</td>
+<td>KCM Engineering</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>9. References</h2>
+<ul>
+<li><strong>Authoritative sources:</strong> AGENTS.md §Non-Negotiable Rules (12 rules), AGENTS.md §Engineering Gates (6 gates), AGENTS.md §Testing Strategy (4-tier pyramid), AGENTS.md §Dependency Policy</li>
+<li><strong>Depends on:</strong> AGENTS.md (Engineering Constitution), PRD.md (P4), PRD2.md (P3), PRD3.md (P2), PRD-TESTING&BRACHMARCK.md (P1)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION</li>
+<li><strong>Related:</strong> KCM_BENCHMARK_REPORTING_SPEC, KCM_PERFORMANCE_SPEC</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Indexing — KCM Documentation</title>
+    <meta name="description" content="Index structures for accelerating query execution">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a href="../" class="logo" aria-label="KCM Home">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#2563eb"/><rect x="4" y="4" width="6" height="24" rx="1" fill="#fff" opacity="0.9"/><rect x="13" y="8" width="6" height="20" rx="1" fill="#fff" opacity="0.7"/><rect x="22" y="6" width="6" height="22" rx="1" fill="#fff" opacity="0.5"/></svg>
+                <span>KCM</span>
+            </a>
+            <div class="nav-links">
+                <a href="../#features">Features</a>
+                <a href="../#architecture">Architecture</a>
+                <a href="KCM_SPECIFICATION.html">Docs</a>
+                <a href="../#performance">Benchmarks</a>
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark/light mode">&#9788;</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <aside class="doc-sidebar">
+            <nav aria-label="Documentation navigation">
+<div class="nav-section">Specifications</div>
+                <a href="KCM_SPECIFICATION.html">Specification</a>
+                <a href="KCM_ARCHITECTURE.html">Architecture</a>
+                <a href="KCM_DATA_MODEL_SPEC.html">Data Model</a>
+                <a href="KCM_COLUMNAR_FORMAT_SPEC.html">Columnar Format</a>
+                <a href="KCM_QUERY_EXECUTION_SPEC.html">Query Execution</a>
+                <a href="KCM_COMPRESSION_SPEC.html">Compression</a>
+                <a href="KCM_INDEXING_SPEC.html" class="active">Indexing</a>
+                <a href="KCM_SECURITY_TRUST_SPEC.html">Security & Trust</a>
+                <div class="nav-section">Interfaces</div>
+                <a href="KCM_API_SPEC.html">API</a>
+                <a href="KCM_RUNTIME_SPEC.html">Runtime</a>
+                <div class="nav-section">Operations</div>
+                <a href="KCM_PERFORMANCE_SPEC.html">Performance</a>
+                <a href="KCM_TESTING_SPEC.html">Testing</a>
+                <a href="KCM_DEPLOYMENT_SPEC.html">Deployment</a>
+                <div class="nav-section">Reference</div>
+                <a href="KCM_ENGINEERING_RULES.html">Engineering Rules</a>
+                <a href="KCM_VERSIONING_SPEC.html">Versioning</a>
+                <a href="KCM_GLOSSARY.html">Glossary</a>
+            </nav>
+        </aside>
+        <main class="doc-content" role="main">
+            <article class="doc-article">
+<h1>KCM Indexing Specification</h1>
+<p><strong>Document ID:</strong> KCM-INDEX-001</p>
+<p><strong>Version:</strong> 1.0.0</p>
+<p><strong>Depends on:</strong> KCM-DATA-001</p>
+<hr>
+<h2>1. Purpose</h2>
+<p>Defines index structures for accelerating query execution.</p>
+<hr>
+<h2>2. Index Types</h2>
+<h3>2.1 Bitmap Index</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Structure</strong></td>
+<td>One bitmap per unique value</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Low-cardinality columns (≤256 values)</td>
+</tr>
+<tr>
+<td><strong>Used on</strong></td>
+<td>Predicate column, context column</td>
+</tr>
+<tr>
+<td><strong>Update strategy</strong></td>
+<td>Rebuild from column on schema change</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Construction:</strong></p>
+<pre><code>For each unique value v in column:
+  Create bitmap of size row_count
+  Set bit i for each row where column[i] == v</code></pre>
+<p><strong>Lookup:</strong> <code>lookup(value) -> Option<&Bitmap></code> — Binary search on sorted value array, return corresponding bitmap.</p>
+<p><strong>Range query:</strong> <code>range_query(low, high) -> Result<Bitmap></code> — OR all bitmaps in range [low, high].</p>
+<h3>2.2 Zone Map</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Structure</strong></td>
+<td>Min/Max per block</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Range queries on sorted data</td>
+</tr>
+<tr>
+<td><strong>Used on</strong></td>
+<td>Timestamp column, integer columns</td>
+</tr>
+<tr>
+<td><strong>Block size</strong></td>
+<td>Configurable (default: 1000 rows)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Construction:</strong></p>
+<pre><code>For each block of block_size rows:
+  Compute min and max values
+  Store (min, max, row_range)</code></pre>
+<p><strong>Range query:</strong> Returns row ranges where block_max >= low AND block_min <= high.</p>
+<h3>2.3 Bloom Filter</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Structure</strong></td>
+<td>Bit array with k hash functions</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Membership testing (probabilistic)</td>
+</tr>
+<tr>
+<td><strong>Used on</strong></td>
+<td>Subject/Object membership pre-filter</td>
+</tr>
+<tr>
+<td><strong>False positive rate</strong></td>
+<td>~1% with 10 bits/element, 7 hashes</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Operations:</strong></p>
+<ul>
+<li><code>insert(value)</code> — Set k bits</li>
+<li><code>contains(value) -> bool</code> — Check k bits (may false-positive)</li>
+</ul>
+<h3>2.4 Composite Index</h3>
+<h4>2.4.1 Structure</h4>
+<pre><code class="language-rust">struct CompositeIndex {
+    entries: HashMap&lt;(u32, u8), Vec&lt;usize&gt;&gt;,
+}</code></pre>
+<p>Key = (SubjectID, PredicateID), Value = Vec<row_index></p>
+<h4>2.4.2 Operations</h4>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Algorithm</th>
+<th>Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>build(subjects, predicates)</td>
+<td>Single-pass hash table construction</td>
+<td>O(n)</td>
+</tr>
+<tr>
+<td>lookup(subject, predicate)</td>
+<td>HashMap get</td>
+<td>O(1) amortized</td>
+</tr>
+</tbody>
+</table>
+<h4>2.4.3 Usage</h4>
+<p>Accelerates queries that filter on both subject and predicate simultaneously:</p>
+<pre><code class="language-rust">let index = CompositeIndex::build(&amp;subjects, &amp;predicates, row_count);
+if let Some(rows) = index.lookup(SubjectID(1).0, PredicateID(0).0) {
+    // rows contains matching row indices
+}</code></pre>
+<h3>2.5 Dictionary Codec</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Structure</strong></td>
+<td>HashMap<String, u32> + Vec<String></td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>String-to-integer encoding</td>
+</tr>
+<tr>
+<td><strong>Used on</strong></td>
+<td>All string-valued columns via SharedDictionary</td>
+</tr>
+<tr>
+<td><strong>Thread safety</strong></td>
+<td>Arc<RwLock<Dictionary>></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>3. Index Selection</h2>
+<p>The IndexSelectionOptimizer chooses indexes based on predicate type:</p>
+<table>
+<thead>
+<tr>
+<th>Predicate</th>
+<th>Preferred Index</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EqualPredicate(v)</td>
+<td>BitmapIndex</td>
+<td>Exact match on low-cardinality</td>
+</tr>
+<tr>
+<td>EqualContext(v)</td>
+<td>BitmapIndex</td>
+<td>Exact match on context</td>
+</tr>
+<tr>
+<td>EqualSubject(v)</td>
+<td>Composite (Subject, Predicate)</td>
+<td>Subject-predicate pair lookup</td>
+</tr>
+<tr>
+<td>EqualObject(v)</td>
+<td>BloomFilter</td>
+<td>Pre-filter before full scan</td>
+</tr>
+<tr>
+<td>RangeTimestamp(lo, hi)</td>
+<td>ZoneMap</td>
+<td>Block-level range skip</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4. Integration</h2>
+<p>Indexes are constructed on-demand from column data:</p>
+<pre><code class="language-rust">// Construct bitmap index from predicate column
+let index = BitmapIndex::new(schema.predicate_col.as_slice(), schema.len())?;
+
+// Lookup
+let bitmap = index.lookup(predicate_id);</code></pre>
+<hr>
+<h2>5. Constraints</h2>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bitmap index requires ≤256 unique values</td>
+<td>Memory scales with cardinality</td>
+</tr>
+<tr>
+<td>ZoneMap is approximate</td>
+<td>Block-level filtering only</td>
+</tr>
+<tr>
+<td>BloomFilter has false positives</td>
+<td>Must verify with full column scan</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>6. References</h2>
+<ul>
+<li><strong>Depends on:</strong> KCM_DATA_MODEL_SPEC (KCM_DATA_MODEL_SPEC)</li>
+<li><strong>Parent specs:</strong> KCM_SPECIFICATION (KCM_SPECIFICATION)</li>
+<li><strong>Related:</strong> KCM_QUERY_EXECUTION_SPEC (KCM_QUERY_EXECUTION_SPEC), KCM_COMPRESSION_SPEC (KCM_COMPRESSION_SPEC)</li>
+</ul>
+            </article>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

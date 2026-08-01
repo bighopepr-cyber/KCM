@@ -1,0 +1,80 @@
+name: Deploy Website to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - '.github/workflows/deploy-website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Website
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate HTML
+        run: |
+          for f in website/*.html website/docs/*.html; do
+            if [ -f "$f" ]; then
+              if ! grep -q '<!DOCTYPE html>' "$f"; then
+                echo "ERROR: Missing DOCTYPE in $f"
+                exit 1
+              fi
+              if ! grep -q '<title>' "$f"; then
+                echo "ERROR: Missing <title> in $f"
+                exit 1
+              fi
+            fi
+          done
+          echo "HTML validation passed"
+
+      - name: Check for broken internal links
+        run: |
+          for f in website/*.html website/docs/*.html; do
+            if [ -f "$f" ]; then
+              grep -oP 'href="([^"#]*)"' "$f" | grep -oP '"[^"]*"' | tr -d '"' | while read -r link; do
+                if [[ "$link" != http* ]] && [[ "$link" != /* ]]; then
+                  target="website/$link"
+                  if [[ ! -f "$target" ]]; then
+                    echo "WARNING: Broken link in $f -> $link"
+                  fi
+                fi
+              done
+            fi
+          done
+          echo "Link check completed"
+
+      - name: Check CSS and JS exist
+        run: |
+          test -f website/css/style.css || { echo "ERROR: style.css missing"; exit 1; }
+          test -f website/js/main.js || { echo "ERROR: main.js missing"; exit 1; }
+          echo "Static assets verified"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
