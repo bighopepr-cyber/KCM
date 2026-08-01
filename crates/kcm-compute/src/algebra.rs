@@ -66,7 +66,7 @@ pub enum FilterPredicate {
     EqualPredicate(u8),
     EqualObject(u32),
     EqualContext(u8),
-    InSet(Vec<u32>),
+    InSet(std::collections::HashSet<u32>),
     RangeTimestamp(i64, i64),
 }
 

@@ -2,72 +2,81 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
+/// Internal metrics counters. Allocated once behind a single Arc.
+/// All 11 counters occupy 88 bytes contiguous — fits in 2 cache lines.
+pub struct MetricsInner {
+    pub queries_total: AtomicU64,
+    pub queries_failed: AtomicU64,
+    pub query_duration_sum_ms: AtomicU64,
+    pub inserts_total: AtomicU64,
+    pub inserts_failed: AtomicU64,
+    pub cache_hits: AtomicU64,
+    pub cache_misses: AtomicU64,
+    pub memory_bytes: AtomicU64,
+    pub inferences_total: AtomicU64,
+    pub facts_inferred: AtomicU64,
+    pub estimated_memory_bytes: AtomicU64,
+}
+
 pub struct Metrics {
-    pub queries_total: Arc<AtomicU64>,
-    pub queries_failed: Arc<AtomicU64>,
-    pub query_duration_sum_ms: Arc<AtomicU64>,
-    pub inserts_total: Arc<AtomicU64>,
-    pub inserts_failed: Arc<AtomicU64>,
-    pub cache_hits: Arc<AtomicU64>,
-    pub cache_misses: Arc<AtomicU64>,
-    pub memory_bytes: Arc<AtomicU64>,
-    pub inferences_total: Arc<AtomicU64>,
-    pub facts_inferred: Arc<AtomicU64>,
-    pub estimated_memory_bytes: Arc<AtomicU64>,
+    inner: Arc<MetricsInner>,
 }
 
 impl Metrics {
     pub fn new() -> Self {
         Metrics {
-            queries_total: Arc::new(AtomicU64::new(0)),
-            queries_failed: Arc::new(AtomicU64::new(0)),
-            query_duration_sum_ms: Arc::new(AtomicU64::new(0)),
-            inserts_total: Arc::new(AtomicU64::new(0)),
-            inserts_failed: Arc::new(AtomicU64::new(0)),
-            cache_hits: Arc::new(AtomicU64::new(0)),
-            cache_misses: Arc::new(AtomicU64::new(0)),
-            memory_bytes: Arc::new(AtomicU64::new(0)),
-            inferences_total: Arc::new(AtomicU64::new(0)),
-            facts_inferred: Arc::new(AtomicU64::new(0)),
-            estimated_memory_bytes: Arc::new(AtomicU64::new(0)),
+            inner: Arc::new(MetricsInner {
+                queries_total: AtomicU64::new(0),
+                queries_failed: AtomicU64::new(0),
+                query_duration_sum_ms: AtomicU64::new(0),
+                inserts_total: AtomicU64::new(0),
+                inserts_failed: AtomicU64::new(0),
+                cache_hits: AtomicU64::new(0),
+                cache_misses: AtomicU64::new(0),
+                memory_bytes: AtomicU64::new(0),
+                inferences_total: AtomicU64::new(0),
+                facts_inferred: AtomicU64::new(0),
+                estimated_memory_bytes: AtomicU64::new(0),
+            }),
         }
     }
 
     pub fn record_query(&self, duration_ms: u64, success: bool) {
-        self.queries_total.fetch_add(1, Ordering::Relaxed);
+        self.inner.queries_total.fetch_add(1, Ordering::Relaxed);
         if !success {
-            self.queries_failed.fetch_add(1, Ordering::Relaxed);
+            self.inner.queries_failed.fetch_add(1, Ordering::Relaxed);
         }
-        self.query_duration_sum_ms
+        self.inner
+            .query_duration_sum_ms
             .fetch_add(duration_ms, Ordering::Relaxed);
     }
 
     pub fn record_insert(&self, success: bool) {
-        self.inserts_total.fetch_add(1, Ordering::Relaxed);
+        self.inner.inserts_total.fetch_add(1, Ordering::Relaxed);
         if !success {
-            self.inserts_failed.fetch_add(1, Ordering::Relaxed);
+            self.inner.inserts_failed.fetch_add(1, Ordering::Relaxed);
         }
     }
 
     pub fn record_cache_hit(&self) {
-        self.cache_hits.fetch_add(1, Ordering::Relaxed);
+        self.inner.cache_hits.fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn record_cache_miss(&self) {
-        self.cache_misses.fetch_add(1, Ordering::Relaxed);
+        self.inner.cache_misses.fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn get_avg_query_latency_ms(&self) -> f64 {
-        let total = self.queries_total.load(Ordering::Relaxed);
+        let total = self.inner.queries_total.load(Ordering::Relaxed);
         if total == 0 {
             return 0.0;
         }
-        self.query_duration_sum_ms.load(Ordering::Relaxed) as f64 / total as f64
+        self.inner.query_duration_sum_ms.load(Ordering::Relaxed) as f64 / total as f64
     }
 
     pub fn get_cache_hit_ratio(&self) -> f64 {
-        let hits = self.cache_hits.load(Ordering::Relaxed);
-        let misses = self.cache_misses.load(Ordering::Relaxed);
+        let hits = self.inner.cache_hits.load(Ordering::Relaxed);
+        let misses = self.inner.cache_misses.load(Ordering::Relaxed);
         let total = hits + misses;
         if total == 0 {
             0.0
@@ -77,34 +86,36 @@ impl Metrics {
     }
 
     pub fn get_insert_error_rate(&self) -> f64 {
-        let total = self.inserts_total.load(Ordering::Relaxed);
+        let total = self.inner.inserts_total.load(Ordering::Relaxed);
         if total == 0 {
             0.0
         } else {
-            self.inserts_failed.load(Ordering::Relaxed) as f64 / total as f64
+            self.inner.inserts_failed.load(Ordering::Relaxed) as f64 / total as f64
         }
     }
 
     pub fn update_memory_estimate(&self, bytes: u64) {
-        self.estimated_memory_bytes.store(bytes, Ordering::Relaxed);
+        self.inner
+            .estimated_memory_bytes
+            .store(bytes, Ordering::Relaxed);
     }
 
     pub fn estimated_memory_mb(&self) -> f64 {
-        self.estimated_memory_bytes.load(Ordering::Relaxed) as f64 / (1024.0 * 1024.0)
+        self.inner.estimated_memory_bytes.load(Ordering::Relaxed) as f64 / (1024.0 * 1024.0)
     }
 
     pub fn snapshot(&self) -> MetricsSnapshot {
         MetricsSnapshot {
-            queries_total: self.queries_total.load(Ordering::Relaxed),
-            queries_failed: self.queries_failed.load(Ordering::Relaxed),
+            queries_total: self.inner.queries_total.load(Ordering::Relaxed),
+            queries_failed: self.inner.queries_failed.load(Ordering::Relaxed),
             avg_query_latency_ms: self.get_avg_query_latency_ms(),
-            inserts_total: self.inserts_total.load(Ordering::Relaxed),
-            inserts_failed: self.inserts_failed.load(Ordering::Relaxed),
+            inserts_total: self.inner.inserts_total.load(Ordering::Relaxed),
+            inserts_failed: self.inner.inserts_failed.load(Ordering::Relaxed),
             cache_hit_ratio: self.get_cache_hit_ratio(),
-            memory_bytes: self.memory_bytes.load(Ordering::Relaxed),
-            inferences_total: self.inferences_total.load(Ordering::Relaxed),
-            facts_inferred: self.facts_inferred.load(Ordering::Relaxed),
-            estimated_memory_bytes: self.estimated_memory_bytes.load(Ordering::Relaxed),
+            memory_bytes: self.inner.memory_bytes.load(Ordering::Relaxed),
+            inferences_total: self.inner.inferences_total.load(Ordering::Relaxed),
+            facts_inferred: self.inner.facts_inferred.load(Ordering::Relaxed),
+            estimated_memory_bytes: self.inner.estimated_memory_bytes.load(Ordering::Relaxed),
         }
     }
 }

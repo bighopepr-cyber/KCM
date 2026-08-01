@@ -70,7 +70,11 @@ pub struct RleCompressor;
 
 impl Compressor for RleCompressor {
     fn compress(&self, data: &[u8]) -> Result<Vec<u8>, KcmError> {
-        let mut result = Vec::new();
+        if data.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut runs = Vec::new();
         let mut i = 0;
         while i < data.len() {
             let value = data[i];
@@ -81,26 +85,58 @@ impl Compressor for RleCompressor {
             {
                 count += 1;
             }
-            result.push(value);
-            result.extend_from_slice(&count.to_le_bytes());
+            runs.push((value, count));
             i += count as usize;
+        }
+
+        let rle_size = runs.len() * 5 + 1;
+        if rle_size >= data.len() {
+            let mut result = Vec::with_capacity(data.len() + 1);
+            result.push(0);
+            result.extend_from_slice(data);
+            return Ok(result);
+        }
+
+        let mut result = Vec::with_capacity(rle_size + 1);
+        result.push(1);
+        for (value, count) in &runs {
+            result.push(*value);
+            result.extend_from_slice(&count.to_le_bytes());
         }
         Ok(result)
     }
 
-    fn decompress(&self, data: &[u8], _expected_size: usize) -> Result<Vec<u8>, KcmError> {
-        let mut result = Vec::new();
-        let mut i = 0;
-        while i + 5 <= data.len() {
-            let value = data[i];
-            i += 1;
-            let count = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
-            i += 4;
-            for _ in 0..count {
-                result.push(value);
-            }
+    fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError> {
+        if data.is_empty() {
+            return Ok(Vec::new());
         }
-        Ok(result)
+
+        let flag = data[0];
+        let payload = &data[1..];
+
+        match flag {
+            0 => Ok(payload.to_vec()),
+            1 => {
+                let mut result = Vec::with_capacity(expected_size);
+                let mut i = 0;
+                while i + 5 <= payload.len() {
+                    let value = payload[i];
+                    i += 1;
+                    let count = u32::from_le_bytes([
+                        payload[i],
+                        payload[i + 1],
+                        payload[i + 2],
+                        payload[i + 3],
+                    ]);
+                    i += 4;
+                    for _ in 0..count {
+                        result.push(value);
+                    }
+                }
+                Ok(result)
+            }
+            _ => Err(KcmError::Corrupted(format!("Unknown RLE flag: {}", flag))),
+        }
     }
 }
 

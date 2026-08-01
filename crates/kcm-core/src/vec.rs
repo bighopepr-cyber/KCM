@@ -141,7 +141,7 @@ impl<T: Copy> Drop for DenseVec<T> {
 impl<T: Copy> Clone for DenseVec<T> {
     fn clone(&self) -> Self {
         let mut new_vec = Self::with_alignment(self.capacity, self.alignment)
-            .expect("DenseVec::clone: allocation must succeed with same parameters as original");
+            .unwrap_or_else(|_| std::process::abort());
         new_vec.len = self.len;
         new_vec.as_mut_slice().copy_from_slice(self.as_slice());
         new_vec

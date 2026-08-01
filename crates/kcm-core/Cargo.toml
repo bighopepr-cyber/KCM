@@ -7,7 +7,6 @@ description = "Core types and data structures for KCM"
 [dependencies]
 parking_lot = "0.12"
 serde = { version = "1.0", features = ["derive"], optional = true }
-serde_json = { version = "1.0", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -15,4 +14,4 @@ proptest = "1.0"
 
 [features]
 default = []
-serialization = ["serde", "serde_json"]
+serialization = ["serde"]

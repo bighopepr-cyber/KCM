@@ -33,8 +33,8 @@ impl Dictionary {
             return Err(KcmError::OutOfMemory);
         }
         let owned = value.to_string();
-        self.reverse_map.insert(owned.clone(), id);
-        self.entries.push(owned);
+        self.entries.push(owned.clone());
+        self.reverse_map.insert(owned, id);
         Ok(id)
     }
 

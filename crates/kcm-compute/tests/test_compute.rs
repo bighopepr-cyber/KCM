@@ -104,7 +104,11 @@ fn test_filter_op_equal_predicate() {
 fn test_filter_op_in_set() {
     let schema = setup_schema();
     let rowids = ScanOp::new(&schema).execute().unwrap();
-    let filter = FilterOp::new(rowids, &schema, FilterPredicate::InSet(vec![0, 10, 20]));
+    let filter = FilterOp::new(
+        rowids,
+        &schema,
+        FilterPredicate::InSet(vec![0, 10, 20].into_iter().collect()),
+    );
     let result = filter.execute().unwrap();
     assert!(!result.is_empty());
     for &idx in &result {
