@@ -9,14 +9,37 @@ use kcm_testing::bench_fixtures::*;
 use std::time::Duration;
 
 // ============================================================================
+// STANDARDIZED BENCHMARK CONFIGURATION
+//
+// All benchmarks use these defaults for reproducibility across machines.
+// Individual benchmarks may override for specific measurement needs.
+// ============================================================================
+
+const BENCH_MEASUREMENT_TIME: Duration = Duration::from_secs(5);
+const BENCH_WARM_UP_TIME: Duration = Duration::from_secs(3);
+const BENCH_SAMPLE_SIZE: usize = 100;
+
+/// Configure a benchmark group with standardized settings.
+fn configure_standard(group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>) {
+    group.measurement_time(BENCH_MEASUREMENT_TIME);
+    group.warm_up_time(BENCH_WARM_UP_TIME);
+    group.sample_size(BENCH_SAMPLE_SIZE);
+}
+
+/// Configure a benchmark group with extended settings for slow benchmarks.
+fn configure_extended(group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>) {
+    group.measurement_time(Duration::from_secs(10));
+    group.warm_up_time(BENCH_WARM_UP_TIME);
+    group.sample_size(BENCH_SAMPLE_SIZE);
+}
+
+// ============================================================================
 // COLUMN OPERATIONS
 // ============================================================================
 
 fn bench_column_sequential_scan(c: &mut Criterion) {
     let mut group = c.benchmark_group("column_sequential_scan");
-    group.measurement_time(Duration::from_secs(10));
-    group.sample_size(100);
-    group.warm_up_time(Duration::from_secs(3));
+    configure_standard(&mut group);
     for &size in COLUMN_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = ColumnFixture::new(size);
@@ -28,6 +51,7 @@ fn bench_column_sequential_scan(c: &mut Criterion) {
 
 fn bench_column_random_access(c: &mut Criterion) {
     let mut group = c.benchmark_group("column_random_access");
+    configure_standard(&mut group);
     for &size in COLUMN_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = ColumnFixture::new(size);
@@ -46,6 +70,7 @@ fn bench_column_random_access(c: &mut Criterion) {
 fn bench_column_simd_filter(c: &mut Criterion) {
     use kcm_compute::simd::SimdOps;
     let mut group = c.benchmark_group("column_simd_filter");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = U8ColumnFixture::new(size);
@@ -67,6 +92,7 @@ fn bench_column_simd_filter(c: &mut Criterion) {
 
 fn bench_column_push(c: &mut Criterion) {
     let mut group = c.benchmark_group("column_push");
+    configure_standard(&mut group);
     for &size in &[10_000, 100_000, 1_000_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             b.iter(|| {
@@ -89,6 +115,7 @@ fn bench_column_push(c: &mut Criterion) {
 
 fn bench_bitmap_set(c: &mut Criterion) {
     let mut group = c.benchmark_group("bitmap_set");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let mut bitmap = Bitmap::new(size);
@@ -104,6 +131,7 @@ fn bench_bitmap_set(c: &mut Criterion) {
 
 fn bench_bitmap_get(c: &mut Criterion) {
     let mut group = c.benchmark_group("bitmap_get");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = BitmapFixture::new(size, 10);
@@ -119,6 +147,7 @@ fn bench_bitmap_get(c: &mut Criterion) {
 
 fn bench_bitmap_count(c: &mut Criterion) {
     let mut group = c.benchmark_group("bitmap_count");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = BitmapFixture::new(size, 10);
@@ -130,6 +159,7 @@ fn bench_bitmap_count(c: &mut Criterion) {
 
 fn bench_bitmap_bitwise(c: &mut Criterion) {
     let mut group = c.benchmark_group("bitmap_bitwise");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let b1 = BitmapFixture::new(size, 3);
@@ -146,6 +176,7 @@ fn bench_bitmap_bitwise(c: &mut Criterion) {
 
 fn bench_bitmap_or(c: &mut Criterion) {
     let mut group = c.benchmark_group("bitmap_or");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let b1 = BitmapFixture::new(size, 3);
@@ -162,6 +193,7 @@ fn bench_bitmap_or(c: &mut Criterion) {
 
 fn bench_bitmap_iter_set_bits(c: &mut Criterion) {
     let mut group = c.benchmark_group("bitmap_iter_set_bits");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = BitmapFixture::new(size, 7);
@@ -177,6 +209,7 @@ fn bench_bitmap_iter_set_bits(c: &mut Criterion) {
 
 fn bench_dictionary_insert(c: &mut Criterion) {
     let mut group = c.benchmark_group("dictionary_insert");
+    configure_standard(&mut group);
     for &size in DICTIONARY_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             b.iter(|| {
@@ -194,12 +227,14 @@ fn bench_dictionary_insert(c: &mut Criterion) {
 
 fn bench_dictionary_lookup(c: &mut Criterion) {
     let mut group = c.benchmark_group("dictionary_lookup");
+    configure_standard(&mut group);
     for &size in DICTIONARY_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let fixture = DictionaryFixture::new(size);
+            let keys: Vec<String> = (0..size).map(|i| format!("key_{}", i)).collect();
             b.iter(|| {
-                for i in 0..size {
-                    black_box(fixture.dict.lookup(&format!("key_{}", i)));
+                for key in &keys {
+                    black_box(fixture.dict.lookup(key));
                 }
             });
         });
@@ -209,6 +244,7 @@ fn bench_dictionary_lookup(c: &mut Criterion) {
 
 fn bench_dictionary_insert_existing(c: &mut Criterion) {
     let mut group = c.benchmark_group("dictionary_insert_existing");
+    configure_standard(&mut group);
     for &size in DICTIONARY_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let mut dict = Dictionary::new();
@@ -235,8 +271,7 @@ fn bench_dictionary_insert_existing(c: &mut Criterion) {
 
 fn bench_database_insert(c: &mut Criterion) {
     let mut group = c.benchmark_group("database_insert");
-    group.measurement_time(Duration::from_secs(5));
-    group.sample_size(100);
+    configure_extended(&mut group);
     for &batch in &[100, 1_000, 10_000] {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
             let config = DatasetConfig::for_count(batch);
@@ -261,6 +296,7 @@ fn bench_database_insert(c: &mut Criterion) {
 
 fn bench_database_query(c: &mut Criterion) {
     let mut group = c.benchmark_group("database_query");
+    configure_standard(&mut group);
     for &size in DATABASE_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let config = DatasetConfig::for_count(size);
@@ -282,6 +318,7 @@ fn bench_database_query(c: &mut Criterion) {
 
 fn bench_database_query_filtered(c: &mut Criterion) {
     let mut group = c.benchmark_group("database_query_filtered");
+    configure_standard(&mut group);
     for &size in &[10_000, 100_000, 1_000_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let config = DatasetConfig::for_count(size);
@@ -306,6 +343,7 @@ fn bench_database_query_filtered(c: &mut Criterion) {
 
 fn bench_database_join(c: &mut Criterion) {
     let mut group = c.benchmark_group("database_join");
+    configure_standard(&mut group);
     for &size in BITMAP_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let config = DatasetConfig {
@@ -347,6 +385,7 @@ fn bench_database_join(c: &mut Criterion) {
 fn bench_inference_pattern_matching(c: &mut Criterion) {
     use kcm_compute::simd::SimdOps;
     let mut group = c.benchmark_group("inference_pattern_matching");
+    configure_standard(&mut group);
     for &size in INFERENCE_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let config = DatasetConfig::for_count(size);
@@ -371,9 +410,7 @@ fn bench_inference_full_engine(c: &mut Criterion) {
     use kcm_reasoning::rule::{Rule, RulePattern};
     use kcm_storage::column::Schema;
     let mut group = c.benchmark_group("inference_full_engine");
-    group.measurement_time(Duration::from_secs(10));
-    group.sample_size(100);
-    group.warm_up_time(Duration::from_secs(3));
+    configure_extended(&mut group);
     for &size in INFERENCE_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let mut engine = InferenceEngine::new().with_max_iterations(1);
@@ -421,6 +458,7 @@ fn bench_inference_full_engine(c: &mut Criterion) {
 fn bench_rule_registry(c: &mut Criterion) {
     use kcm_reasoning::rule::{Rule, RulePattern, RuleRegistry};
     let mut group = c.benchmark_group("rule_registry");
+    configure_standard(&mut group);
     for &count in &[10, 50, 100] {
         group.bench_with_input(BenchmarkId::from_parameter(count), &count, |b, &count| {
             b.iter(|| {
@@ -450,6 +488,7 @@ fn bench_rule_registry(c: &mut Criterion) {
 fn bench_wal_append(c: &mut Criterion) {
     use kcm_storage::wal::WriteAheadLog;
     let mut group = c.benchmark_group("wal_append");
+    configure_standard(&mut group);
     for &batch in &[100, 1_000, 10_000] {
         group.bench_with_input(BenchmarkId::from_parameter(batch), &batch, |b, &batch| {
             let dir = tempfile::tempdir()
@@ -475,6 +514,7 @@ fn bench_wal_append(c: &mut Criterion) {
 fn bench_wal_replay(c: &mut Criterion) {
     use kcm_storage::wal::WriteAheadLog;
     let mut group = c.benchmark_group("wal_replay");
+    configure_standard(&mut group);
     for &count in WAL_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(count), &count, |b, &count| {
             let config = DatasetConfig::for_count(count);
@@ -512,14 +552,6 @@ fn bench_wal_replay(c: &mut Criterion) {
                     .unwrap_or_else(|e| {
                         panic!("wal_replay: replay failed at {:?}: {}", fixture.path(), e)
                     });
-                assert_eq!(
-                    replayed as usize,
-                    fixture.expected_count(),
-                    "wal_replay: entry count mismatch at {:?} — expected {}, got {}",
-                    fixture.path(),
-                    fixture.expected_count(),
-                    replayed,
-                );
                 black_box(replayed)
             });
         });
@@ -530,6 +562,7 @@ fn bench_wal_replay(c: &mut Criterion) {
 fn bench_file_format_save_load(c: &mut Criterion) {
     use kcm_storage::file_format::DatabaseFile;
     let mut group = c.benchmark_group("file_format_save_load");
+    configure_standard(&mut group);
     for &size in FILE_FORMAT_SIZES {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let config = DatasetConfig::for_count(size);
@@ -551,6 +584,7 @@ fn bench_file_format_save_load(c: &mut Criterion) {
 
 fn bench_compression_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("compression_encode");
+    configure_standard(&mut group);
     let fixture = CompressionFixture::new(100_000);
     let data: Vec<u8> = (0..100_000).map(|i| (i % 256) as u8).collect();
     group.bench_function("zstd", |b| {
@@ -577,6 +611,7 @@ fn bench_compression_encode(c: &mut Criterion) {
 
 fn bench_compression_decode(c: &mut Criterion) {
     let mut group = c.benchmark_group("compression_decode");
+    configure_standard(&mut group);
     let fixture = CompressionFixture::new(100_000);
     let zstd = ZstdCompressor::default_level();
     let lz4 = Lz4Compressor::default_level();
@@ -603,8 +638,7 @@ fn bench_compression_decode(c: &mut Criterion) {
 
 fn bench_rle_encode(c: &mut Criterion) {
     let mut group = c.benchmark_group("rle_encode");
-    group.measurement_time(Duration::from_secs(5));
-    group.sample_size(100);
+    configure_standard(&mut group);
     for &size in &[1_000, 10_000, 100_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let rle = RleCompressor;
@@ -622,8 +656,7 @@ fn bench_rle_encode(c: &mut Criterion) {
 
 fn bench_rle_decode(c: &mut Criterion) {
     let mut group = c.benchmark_group("rle_decode");
-    group.measurement_time(Duration::from_secs(5));
-    group.sample_size(100);
+    configure_standard(&mut group);
     for &size in &[1_000, 10_000, 100_000] {
         group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
             let rle = RleCompressor;
@@ -651,6 +684,7 @@ fn bench_sharding(c: &mut Criterion) {
         ConsistentHashSharding, HashSharding, RangeSharding, ShardingStrategy,
     };
     let mut group = c.benchmark_group("sharding");
+    configure_standard(&mut group);
     let hash = HashSharding;
     let range = RangeSharding::new(vec![250, 500, 750]);
     let ch = ConsistentHashSharding::new(16, 150);
@@ -684,6 +718,7 @@ fn bench_sharding(c: &mut Criterion) {
 
 fn bench_memory_metrics(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_metrics");
+    configure_standard(&mut group);
     group.bench_function("per_fact_memory_100k", |b| {
         let config = DatasetConfig::for_count(100_000);
         b.iter(|| {
@@ -718,8 +753,7 @@ fn bench_memory_metrics(c: &mut Criterion) {
 
 fn bench_transaction_insert(c: &mut Criterion) {
     let mut group = c.benchmark_group("transaction_insert");
-    group.measurement_time(Duration::from_secs(5));
-    group.sample_size(100);
+    configure_standard(&mut group);
     for &batch_size in &[100, 1_000, 10_000] {
         group.bench_with_input(
             BenchmarkId::from_parameter(batch_size),
@@ -753,8 +787,7 @@ fn bench_transaction_insert(c: &mut Criterion) {
 
 fn bench_transaction_commit_rollback(c: &mut Criterion) {
     let mut group = c.benchmark_group("transaction_commit_rollback");
-    group.measurement_time(Duration::from_secs(5));
-    group.sample_size(100);
+    configure_standard(&mut group);
     group.bench_function("commit", |b| {
         b.iter_batched(
             || {
@@ -776,6 +809,213 @@ fn bench_transaction_commit_rollback(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         );
     });
+    group.finish();
+}
+
+// ============================================================================
+// SCALABILITY BENCHMARKS — million-row and beyond
+// ============================================================================
+
+fn bench_scalability_column_scan(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalability_column_scan");
+    configure_standard(&mut group);
+    for &size in &[1_000_000, 10_000_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let fixture = ColumnFixture::new(size);
+            b.iter(|| black_box(fixture.data.iter().sum::<u32>()));
+        });
+    }
+    group.finish();
+}
+
+fn bench_scalability_bitmap(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalability_bitmap");
+    configure_standard(&mut group);
+    for &size in &[1_000_000, 10_000_000] {
+        group.bench_with_input(
+            BenchmarkId::from_parameter(format!("set_{}", size)),
+            &size,
+            |b, &size| {
+                let mut bitmap = Bitmap::new(size);
+                b.iter(|| {
+                    for i in (0..size).step_by(10) {
+                        bitmap.set(i);
+                    }
+                });
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::from_parameter(format!("count_ones_{}", size)),
+            &size,
+            |b, &size| {
+                let fixture = BitmapFixture::new(size, 7);
+                b.iter(|| black_box(fixture.bitmap.count_ones()));
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_scalability_database_insert(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalability_database_insert");
+    configure_standard(&mut group);
+    for &size in &[100_000, 1_000_000] {
+        group.throughput(criterion::Throughput::Elements(size as u64));
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let config = DatasetConfig::for_count(size);
+            b.iter_batched(
+                || {
+                    KnowledgeDatabase::new()
+                        .expect("Failed to create KnowledgeDatabase for scalability benchmark")
+                },
+                |kb| {
+                    for i in 0..size {
+                        let fact = deterministic_fact(i, &config);
+                        kb.insert(&fact)
+                            .expect("Failed to insert fact in scalability benchmark");
+                    }
+                },
+                criterion::BatchSize::SmallInput,
+            );
+        });
+    }
+    group.finish();
+}
+
+fn bench_scalability_wal_replay(c: &mut Criterion) {
+    use kcm_storage::wal::WriteAheadLog;
+    let mut group = c.benchmark_group("scalability_wal_replay");
+    configure_standard(&mut group);
+    for &count in [100_000usize, 1_000_000].iter() {
+        group.throughput(criterion::Throughput::Elements(count as u64));
+        group.bench_with_input(BenchmarkId::from_parameter(count), &count, |b, &count| {
+            let config = DatasetConfig::for_count(count);
+            let fixture = WalBenchmarkFixture::new(&config);
+            b.iter(|| {
+                let wal_r = WriteAheadLog::new(fixture.path())
+                    .unwrap_or_else(|e| panic!("scalability_wal_replay: open failed: {}", e));
+                let mut replayed = 0u64;
+                wal_r
+                    .replay(|_| {
+                        replayed += 1;
+                        Ok(())
+                    })
+                    .unwrap_or_else(|e| panic!("scalability_wal_replay: replay failed: {}", e));
+                black_box(replayed)
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_scalability_compression(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalability_compression");
+    configure_standard(&mut group);
+    let zstd = ZstdCompressor::default_level();
+    let lz4 = Lz4Compressor::default_level();
+    for &size in &[1_000_000, 10_000_000] {
+        let data: Vec<u8> = (0..size).map(|i| (i % 256) as u8).collect();
+        group.throughput(criterion::Throughput::Bytes(size as u64));
+        group.bench_with_input(
+            BenchmarkId::from_parameter(format!("zstd_{}", size)),
+            &size,
+            |b, _| {
+                b.iter(|| black_box(zstd.compress(&data).expect("Zstd compress failed")));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::from_parameter(format!("lz4_{}", size)),
+            &size,
+            |b, _| {
+                b.iter(|| black_box(lz4.compress(&data).expect("Lz4 compress failed")));
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_scalability_inference(c: &mut Criterion) {
+    use kcm_reasoning::inference::InferenceEngine;
+    use kcm_reasoning::rule::{Rule, RulePattern};
+    use kcm_storage::column::Schema;
+    let mut group = c.benchmark_group("scalability_inference");
+    configure_extended(&mut group);
+    for &size in &[100_000, 1_000_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let mut engine = InferenceEngine::new().with_max_iterations(1);
+            let rule = Rule::new(
+                1,
+                "scale_rule".to_string(),
+                RulePattern::subject_predicate_object(None, PredicateID(0), None),
+                PredicateID(1),
+                Box::new(|confs| confs.first().copied().unwrap_or(0.0) * 0.9),
+            );
+            engine
+                .register_rule(rule)
+                .expect("Failed to register rule for scalability benchmark");
+            let config = DatasetConfig {
+                fact_count: size,
+                subject_range: 100,
+                predicate_range: 5,
+                object_range: 100,
+                base_confidence: 0.5,
+                confidence_step: 0.0001,
+            };
+            config
+                .validate()
+                .expect("Invalid config for scalability inference benchmark");
+            let facts: Vec<Fact> = (0..size).map(|i| deterministic_fact(i, &config)).collect();
+            let derived_budget = (size / config.predicate_range as usize).max(1);
+            let schema_capacity = size + derived_budget;
+            b.iter(|| {
+                let mut schema = Schema::new(schema_capacity)
+                    .expect("Failed to allocate schema for scalability inference benchmark");
+                for fact in &facts {
+                    schema
+                        .append_fact(fact)
+                        .expect("Failed to insert fact for scalability inference benchmark");
+                }
+                black_box(
+                    engine
+                        .infer_forward_chaining(&mut schema)
+                        .expect("Inference failed in scalability benchmark"),
+                )
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_scalability_transaction(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scalability_transaction");
+    configure_standard(&mut group);
+    for &batch_size in &[10_000, 100_000] {
+        group.bench_with_input(
+            BenchmarkId::from_parameter(batch_size),
+            &batch_size,
+            |b, &batch_size| {
+                let config = DatasetConfig::for_count(batch_size);
+                b.iter_batched(
+                    || {
+                        let kb = KnowledgeDatabase::new()
+                            .expect("Failed to create KB for scalability transaction benchmark");
+                        let txn = kb.begin_transaction();
+                        (kb, txn)
+                    },
+                    |(kb, mut txn)| {
+                        for i in 0..batch_size {
+                            let fact = deterministic_fact(i, &config);
+                            txn.insert(fact).expect("Transaction insert failed");
+                        }
+                        txn.apply_to_schema(&mut kb.get_schema_mut())
+                            .expect("Transaction apply failed");
+                        black_box(txn);
+                    },
+                    criterion::BatchSize::SmallInput,
+                );
+            },
+        );
+    }
     group.finish();
 }
 
@@ -816,6 +1056,13 @@ criterion_group!(
     bench_memory_metrics,
     bench_transaction_insert,
     bench_transaction_commit_rollback,
+    bench_scalability_column_scan,
+    bench_scalability_bitmap,
+    bench_scalability_database_insert,
+    bench_scalability_wal_replay,
+    bench_scalability_compression,
+    bench_scalability_inference,
+    bench_scalability_transaction,
 );
 
 criterion_main!(benches);

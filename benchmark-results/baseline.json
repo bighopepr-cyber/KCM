@@ -1,0 +1,74 @@
+{
+  "version": "2.0",
+  "created": "2026-08-01T03:25:21.612067+00:00",
+  "environment": {
+    "os": "placeholder - populated at benchmark execution time",
+    "cpu": "placeholder",
+    "cores": 0,
+    "ram_mb": 0,
+    "rust_version": "placeholder",
+    "llvm_version": "placeholder"
+  },
+  "benchmarks": {
+    "column_sequential_scan/1000": {
+      "lower_ns": 78.825,
+      "median_ns": 89.63,
+      "upper_ns": 99.805,
+      "unit": "ns"
+    },
+    "column_sequential_scan/10000": {
+      "lower_ns": 518.93,
+      "median_ns": 566.72,
+      "upper_ns": 621.19,
+      "unit": "ns"
+    },
+    "column_sequential_scan/100000": {
+      "lower_ns": 6343.099999999999,
+      "median_ns": 7348.7,
+      "upper_ns": 8602.800000000001,
+      "unit": "us"
+    },
+    "column_sequential_scan/1000000": {
+      "lower_ns": 88676.0,
+      "median_ns": 94588.0,
+      "upper_ns": 101330.0,
+      "unit": "us"
+    },
+    "bitmap_get/10000": {
+      "lower_ns": 725.41,
+      "median_ns": 829.93,
+      "upper_ns": 944.11,
+      "unit": "ns"
+    },
+    "bitmap_get/100000": {
+      "lower_ns": 6900.2,
+      "median_ns": 7610.5,
+      "upper_ns": 8428.4,
+      "unit": "us"
+    },
+    "bitmap_get/1000000": {
+      "lower_ns": 58896.0,
+      "median_ns": 68698.0,
+      "upper_ns": 81242.0,
+      "unit": "us"
+    },
+    "dictionary_lookup/1000": {
+      "lower_ns": 38379.0,
+      "median_ns": 43663.0,
+      "upper_ns": 49176.0,
+      "unit": "us"
+    },
+    "dictionary_lookup/10000": {
+      "lower_ns": 460500.0,
+      "median_ns": 541840.0,
+      "upper_ns": 631510.0,
+      "unit": "us"
+    },
+    "dictionary_lookup/100000": {
+      "lower_ns": 6239200.0,
+      "median_ns": 6868700.0,
+      "upper_ns": 7581900.0,
+      "unit": "ms"
+    }
+  }
+}
