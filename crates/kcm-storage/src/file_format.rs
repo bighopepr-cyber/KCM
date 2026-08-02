@@ -236,6 +236,32 @@ impl DatabaseFile {
             schema.restore_tombstones(&tomb_data, tomb_len);
         }
 
+        // Verify checksum
+        let computed = Self::compute_checksum_range(
+            path,
+            0,
+            std::fs::metadata(path)
+                .map_err(|e| KcmError::Io(e.to_string()))?
+                .len()
+                - 32,
+        )?;
+        let stored_checksum = {
+            let mut f = std::fs::File::open(path).map_err(|e| KcmError::Io(e.to_string()))?;
+            let size = std::fs::metadata(path)
+                .map_err(|e| KcmError::Io(e.to_string()))?
+                .len();
+            f.seek(std::io::SeekFrom::Start(size - 32))
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+            let mut buf = [0u8; 32];
+            f.read_exact(&mut buf)
+                .map_err(|e| KcmError::Io(e.to_string()))?;
+            buf
+        };
+        if computed != stored_checksum {
+            return Err(KcmError::Corrupted(
+                "File checksum mismatch during load".to_string(),
+            ));
+        }
         Ok(schema)
     }
 

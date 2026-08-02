@@ -66,6 +66,13 @@ impl Metrics {
         self.inner.cache_misses.fetch_add(1, Ordering::Relaxed);
     }
 
+    pub fn record_inference(&self, facts_derived: u64) {
+        self.inner.inferences_total.fetch_add(1, Ordering::Relaxed);
+        self.inner
+            .facts_inferred
+            .fetch_add(facts_derived, Ordering::Relaxed);
+    }
+
     pub fn get_avg_query_latency_ms(&self) -> f64 {
         let total = self.inner.queries_total.load(Ordering::Relaxed);
         if total == 0 {

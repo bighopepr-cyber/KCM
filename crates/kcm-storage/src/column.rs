@@ -335,6 +335,18 @@ impl Schema {
         })
     }
 
+    /// Compact the schema by removing tombstoned rows and rebuilding columns.
+    /// This reclaims space but requires rebuilding all columns.
+    /// Returns a new schema with only active (non-tombstoned) rows.
+    pub fn compact(&self) -> Result<Self, KcmError> {
+        let active_count = self.active_count();
+        let mut new_schema = Schema::new(active_count.max(1))?;
+        for fact in self.iter_active().map(|(_, f)| f) {
+            new_schema.append_fact(&fact)?;
+        }
+        Ok(new_schema)
+    }
+
     pub fn compress_all_columns(&mut self) -> Result<(), KcmError> {
         self.subject_col.compress_data()?;
         self.predicate_col.compress_data()?;

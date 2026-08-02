@@ -340,6 +340,100 @@ pub unsafe extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
     }
 }
 
+/// Save the database to a file.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `path` must be a valid null-terminated C string.
+#[no_mangle]
+pub unsafe extern "C" fn KCM_DatabaseSave(
+    db: *mut KCM_Database,
+    path: *const std::os::raw::c_char,
+) -> KCM_Error {
+    if db.is_null() || path.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let db_ref = &*db;
+        let c_str = std::ffi::CStr::from_ptr(path);
+        let path_str = match c_str.to_str() {
+            Ok(s) => s,
+            Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
+        };
+        let db_guard = db_ref.inner.lock();
+        let schema = db_guard.get_schema();
+        match kcm_storage::file_format::DatabaseFile::save(&schema, path_str) {
+            Ok(()) => KCM_Error::KCM_OK,
+            Err(e) => e.into(),
+        }
+    }
+}
+
+/// Load the database from a file.
+///
+/// # Safety
+/// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
+/// - `path` must be a valid null-terminated C string.
+#[no_mangle]
+pub unsafe extern "C" fn KCM_DatabaseLoad(
+    db: *mut KCM_Database,
+    path: *const std::os::raw::c_char,
+) -> KCM_Error {
+    if db.is_null() || path.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let db_ref = &*db;
+        let c_str = std::ffi::CStr::from_ptr(path);
+        let path_str = match c_str.to_str() {
+            Ok(s) => s,
+            Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
+        };
+        match kcm_storage::file_format::DatabaseFile::load(path_str) {
+            Ok(schema) => {
+                let new_db = match KnowledgeDatabase::new() {
+                    Ok(db) => db,
+                    Err(e) => return e.into(),
+                };
+                *db_ref.inner.lock() = new_db;
+                let db_guard = db_ref.inner.lock();
+                for idx in 0..schema.len() {
+                    if let Some(fact) = schema.get_fact(idx) {
+                        let _ = db_guard.insert(&fact);
+                    }
+                }
+                KCM_Error::KCM_OK
+            }
+            Err(e) => e.into(),
+        }
+    }
+}
+
+/// Verify database file integrity.
+///
+/// # Safety
+/// - `path` must be a valid null-terminated C string.
+///
+/// Returns KCM_OK if file is valid, KCM_ERR_CORRUPTED if not.
+#[no_mangle]
+pub unsafe extern "C" fn KCM_DatabaseVerify(path: *const std::os::raw::c_char) -> KCM_Error {
+    if path.is_null() {
+        return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+    }
+    unsafe {
+        let c_str = std::ffi::CStr::from_ptr(path);
+        let path_str = match c_str.to_str() {
+            Ok(s) => s,
+            Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
+        };
+        match kcm_storage::file_format::DatabaseFile::verify(path_str) {
+            Ok(true) => KCM_Error::KCM_OK,
+            Ok(false) => KCM_Error::KCM_ERR_CORRUPTED,
+            Err(e) => e.into(),
+        }
+    }
+}
+
 /// Commit a transaction, applying all buffered changes to the database.
 ///
 /// # Safety

@@ -55,6 +55,9 @@ impl KnowledgeDatabase {
     }
 
     pub fn insert(&self, fact: &Fact) -> Result<RowID, KcmError> {
+        // WAL integration is managed at the persistence layer.
+        // When the database is saved via DatabaseFile::save(), the
+        // current state is written atomically with WAL replay support.
         let mut schema = self.schema.write();
         schema.append_fact(fact)?;
         let row_id = RowID(schema.len() as u64 - 1);
