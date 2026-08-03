@@ -80,6 +80,12 @@ impl SimdOps<u8> for [u8] {
 
 impl SimdOps<u32> for [u32] {
     fn simd_filter_eq(&self, value: u32) -> Vec<bool> {
+        #[cfg(target_arch = "x86_64")]
+        {
+            if is_x86_feature_detected!("avx2") {
+                return unsafe { avx2_filter_eq_u32(self, value) };
+            }
+        }
         self.iter().map(|&v| v == value).collect()
     }
 
@@ -90,6 +96,25 @@ impl SimdOps<u32> for [u32] {
     fn simd_count(&self) -> usize {
         self.iter().filter(|&&v| v != 0).count()
     }
+}
+
+#[cfg(target_arch = "x86_64")]
+unsafe fn avx2_filter_eq_u32(data: &[u32], value: u32) -> Vec<bool> {
+    use std::arch::x86_64::*;
+    let mut result = Vec::with_capacity(data.len());
+    let value_vec = _mm256_set1_epi32(value as i32);
+    for chunk in data.chunks_exact(8) {
+        let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+        let cmp = _mm256_cmpeq_epi32(data_vec, value_vec);
+        let mask = _mm256_movemask_ps(std::mem::transmute::<__m256i, __m256>(cmp));
+        for i in 0..8 {
+            result.push((mask & (1 << i)) != 0);
+        }
+    }
+    for &v in &data[(data.len() & !7)..] {
+        result.push(v == value);
+    }
+    result
 }
 
 impl SimdOps<f64> for [f64] {

@@ -371,7 +371,7 @@ KCM/
 │   ├── kcm-compliance/    Compliance: GDPR, data classification
 │   ├── kcm-testing/       Testing: load/stress/recovery/concurrency tests
 │   └── kcm-server/        Server: HTTP (actix-web) + gRPC (tonic) binaries
-├── docs/                   22 technical specification documents
+├── docs/                   20 technical specification documents
 ├── skills/                 16 engineering skill definitions
 ├── scripts/                Build and benchmark automation
 ├── benchmark-results/      Benchmark artifacts and metadata

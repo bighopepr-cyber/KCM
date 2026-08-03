@@ -112,6 +112,21 @@ impl KnowledgeDatabase {
     pub fn active_fact_count(&self) -> usize {
         self.schema.read().active_count()
     }
+
+    /// Compact the schema by removing tombstoned rows.
+    /// Returns a new KnowledgeDatabase with only active facts.
+    /// This is an expensive operation that rebuilds all columns.
+    pub fn compact(&self) -> Result<Self, KcmError> {
+        let compacted = {
+            let schema = self.schema.read();
+            schema.compact()?
+        };
+        let new_kb = KnowledgeDatabase {
+            schema: Arc::new(RwLock::new(compacted)),
+            dictionaries: Arc::clone(&self.dictionaries),
+        };
+        Ok(new_kb)
+    }
 }
 
 impl Default for KnowledgeDatabase {

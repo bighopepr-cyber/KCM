@@ -16,6 +16,9 @@ pub struct MetricsInner {
     pub inferences_total: AtomicU64,
     pub facts_inferred: AtomicU64,
     pub estimated_memory_bytes: AtomicU64,
+    pub total_facts: AtomicU64,
+    pub active_facts: AtomicU64,
+    pub tombstone_count: AtomicU64,
 }
 
 pub struct Metrics {
@@ -37,6 +40,9 @@ impl Metrics {
                 inferences_total: AtomicU64::new(0),
                 facts_inferred: AtomicU64::new(0),
                 estimated_memory_bytes: AtomicU64::new(0),
+                total_facts: AtomicU64::new(0),
+                active_facts: AtomicU64::new(0),
+                tombstone_count: AtomicU64::new(0),
             }),
         }
     }
@@ -107,6 +113,14 @@ impl Metrics {
             .store(bytes, Ordering::Relaxed);
     }
 
+    pub fn update_schema_stats(&self, total: u64, active: u64, tombstones: u64) {
+        self.inner.total_facts.store(total, Ordering::Relaxed);
+        self.inner.active_facts.store(active, Ordering::Relaxed);
+        self.inner
+            .tombstone_count
+            .store(tombstones, Ordering::Relaxed);
+    }
+
     pub fn estimated_memory_mb(&self) -> f64 {
         self.inner.estimated_memory_bytes.load(Ordering::Relaxed) as f64 / (1024.0 * 1024.0)
     }
@@ -123,6 +137,9 @@ impl Metrics {
             inferences_total: self.inner.inferences_total.load(Ordering::Relaxed),
             facts_inferred: self.inner.facts_inferred.load(Ordering::Relaxed),
             estimated_memory_bytes: self.inner.estimated_memory_bytes.load(Ordering::Relaxed),
+            total_facts: self.inner.total_facts.load(Ordering::Relaxed),
+            active_facts: self.inner.active_facts.load(Ordering::Relaxed),
+            tombstone_count: self.inner.tombstone_count.load(Ordering::Relaxed),
         }
     }
 }
@@ -145,12 +162,15 @@ pub struct MetricsSnapshot {
     pub inferences_total: u64,
     pub facts_inferred: u64,
     pub estimated_memory_bytes: u64,
+    pub total_facts: u64,
+    pub active_facts: u64,
+    pub tombstone_count: u64,
 }
 
 impl MetricsSnapshot {
     pub fn to_json(&self) -> String {
         format!(
-            r#"{{"queries_total":{},"queries_failed":{},"avg_query_latency_ms":{:.2},"inserts_total":{},"inserts_failed":{},"cache_hit_ratio":{:.4},"memory_bytes":{},"inferences_total":{},"facts_inferred":{},"estimated_memory_bytes":{}}}"#,
+            r#"{{"queries_total":{},"queries_failed":{},"avg_query_latency_ms":{:.2},"inserts_total":{},"inserts_failed":{},"cache_hit_ratio":{:.4},"memory_bytes":{},"inferences_total":{},"facts_inferred":{},"estimated_memory_bytes":{},"total_facts":{},"active_facts":{},"tombstone_count":{}}}"#,
             self.queries_total,
             self.queries_failed,
             self.avg_query_latency_ms,
@@ -161,6 +181,9 @@ impl MetricsSnapshot {
             self.inferences_total,
             self.facts_inferred,
             self.estimated_memory_bytes,
+            self.total_facts,
+            self.active_facts,
+            self.tombstone_count,
         )
     }
 }

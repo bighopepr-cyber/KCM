@@ -7,6 +7,7 @@ pub mod file_format;
 pub mod index;
 pub mod recovery;
 pub mod wal;
+pub mod wal_state;
 
 pub use backup::RestoreManager;
 pub use column::{Column, ColumnEncoding, CompressionCodec, Schema};

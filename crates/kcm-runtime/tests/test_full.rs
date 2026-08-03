@@ -429,3 +429,61 @@ fn test_async_fact_count() {
         .unwrap();
     assert_eq!(count, 5);
 }
+
+#[test]
+fn test_compaction_reclaims_space() {
+    let kb = KnowledgeDatabase::new().unwrap();
+
+    // Insert 100 facts
+    for i in 0..100u32 {
+        let fact = Fact::new(SubjectID(i), PredicateID(0), ObjectID(i), 0.9).unwrap();
+        kb.insert(&fact).unwrap();
+    }
+    assert_eq!(kb.active_fact_count(), 100);
+
+    // Delete 50 facts
+    for i in 0..50u64 {
+        kb.delete(RowID(i)).unwrap();
+    }
+    assert_eq!(kb.active_fact_count(), 50);
+
+    // Compact
+    let compacted = kb.compact().unwrap();
+    assert_eq!(compacted.active_fact_count(), 50);
+    assert_eq!(compacted.fact_count(), 50);
+
+    // Verify all remaining facts are accessible
+    let results = compacted.query().execute().unwrap();
+    assert_eq!(results.len(), 50);
+}
+
+#[test]
+fn test_compaction_preserves_data() {
+    let kb = KnowledgeDatabase::new().unwrap();
+
+    for i in 0..20u32 {
+        let fact = Fact::new(
+            SubjectID(i),
+            PredicateID((i % 5) as u8),
+            ObjectID(i * 3),
+            0.5 + (i as f64 * 0.02),
+        )
+        .unwrap();
+        kb.insert(&fact).unwrap();
+    }
+
+    // Delete even-indexed facts
+    for i in (0..20u64).step_by(2) {
+        kb.delete(RowID(i)).unwrap();
+    }
+
+    let compacted = kb.compact().unwrap();
+    let results = compacted.query().execute().unwrap();
+    assert_eq!(results.len(), 10);
+
+    // Verify data integrity
+    for fact in &results {
+        assert!(fact.subject.0 < 20);
+        assert!(fact.confidence >= 0.0 && fact.confidence < 1.0);
+    }
+}
