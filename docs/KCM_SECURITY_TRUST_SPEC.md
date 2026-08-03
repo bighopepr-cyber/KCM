@@ -175,10 +175,10 @@ struct AuditEvent {
 
 | Classification | Requires Encryption | Requires Audit | Max Retention |
 |---------------|--------------------|--------------|--------------|
-| Public | No | No | 7 years |
-| Internal | No | No | 3 years |
-| Confidential | Yes | No | 1 year |
-| Restricted | Yes | Yes | 6 months |
+| Public | No | No | 365 days |
+| Internal | No | Yes | 730 days |
+| Confidential | Yes | Yes | 1825 days |
+| Restricted | Yes | Yes | 2555 days |
 
 ---
 

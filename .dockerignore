@@ -8,7 +8,6 @@ skills/
 *.md
 *.yml
 *.yaml
-*.json
 *.sh
 *.py
 *.html
@@ -19,4 +18,3 @@ skills/
 .gitignore
 Dockerfile
 docker-compose.yml
-Cargo.lock

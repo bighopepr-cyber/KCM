@@ -1,0 +1,3 @@
+# Ecosystem Specifications
+
+Ecosystem specifications.

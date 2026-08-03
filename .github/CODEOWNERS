@@ -1,0 +1,17 @@
+# KCM Code Owners
+/crates/kcm-core/          @kcm/core-team
+/crates/kcm-storage/       @kcm/storage-team
+/crates/kcm-compute/       @kcm/compute-team
+/crates/kcm-reasoning/     @kcm/reasoning-team
+/crates/kcm-optimizer/     @kcm/optimizer-team
+/crates/kcm-runtime/       @kcm/runtime-team
+/crates/kcm-interface/     @kcm/interface-team
+/crates/kcm-server/        @kcm/platform-team
+/crates/kcm-security/      @kcm/security-team
+/crates/kcm-compliance/    @kcm/compliance-team
+/crates/kcm-testing/       @kcm/qa-team
+/deployment/               @kcm/devops-team
+/.github/                  @kcm/devops-team
+/scripts/                  @kcm/devops-team
+/docs/                     @kcm/documentation-team
+/website/                  @kcm/documentation-team

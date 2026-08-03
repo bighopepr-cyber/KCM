@@ -1,9 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: kcm-server
 spec:
-  replicas: 3
+  serviceName: kcm-service
+  replicas: 1
   selector:
     matchLabels:
       app: kcm-server
@@ -21,6 +22,8 @@ spec:
         env:
         - name: RUST_LOG
           value: "info"
+        - name: KCM_DATA_PATH
+          value: "/data/kcm.db"
         resources:
           requests:
             memory: "512Mi"
@@ -43,10 +46,14 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
-      volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: kcm-data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Gi
 ---
 apiVersion: v1
 kind: Service
@@ -60,14 +67,3 @@ spec:
     port: 8080
     targetPort: 8080
   type: LoadBalancer
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: kcm-data
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Gi

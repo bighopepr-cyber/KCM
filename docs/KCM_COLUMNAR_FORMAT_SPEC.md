@@ -190,7 +190,7 @@ Load → Read from disk → Decompress → Populate DenseVec
 | Fixed column count (10) | Enables zero-parse column access | PRD2.md §4.1 |
 | Little-endian encoding | x86_64 native, avoids byte-swap overhead | PRD2.md §4.1 |
 | Blake3 checksum (not CRC32) | Cryptographic integrity verification | PRD2.md §4.1 |
-| WAL entries are variable-length | Insert (34 bytes) vs Delete (9 bytes) | PRD2.md §3.1 |
+| WAL entries are variable-length | Insert (38 bytes) vs Delete (13 bytes) | PRD2.md §3.1 |
 
 ---
 
