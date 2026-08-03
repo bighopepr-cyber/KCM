@@ -43,7 +43,7 @@ description: Maintain documentation as the Single Source of Truth (SSOT) for KCM
 ## Required Context
 
 1. All files in `docs/` directory
-2. `PRD.md`, `PRD2.md`, `PRD3.md`, `PRD-TESTING& BRACHMARCK.md` (note: space before BRACHMARCK)
+2. `docs/PRD.md`, `docs/PRD2.md`, `docs/PRD3.md`, `docs/PRD-TESTING& BRACHMARCK.md` (note: space before BRACHMARCK)
 3. `README.md`
 4. The specific source code being documented
 5. `docs/KCM_DOCUMENT_AUDIT_REPORT.md` for current audit status
@@ -79,9 +79,9 @@ Every requirement flows from PRD through specification to implementation. No con
 ### Principle 5: Conflict Detection
 When specifications conflict, priority order:
 1. `PRD-TESTING& BRACHMARCK.md` — Testing and benchmarks (note: space before BRACHMARCK)
-2. `PRD3.md` — Distributed, ML, security, compliance
-3. `PRD2.md` — Persistence, optimizer, monitoring
-4. `PRD.md` — Core types and data model
+2. `docs/PRD3.md` — Distributed, ML, security, compliance
+3. `docs/PRD2.md` — Persistence, optimizer, monitoring
+4. `docs/PRD.md` — Core types and data model
 
 ---
 

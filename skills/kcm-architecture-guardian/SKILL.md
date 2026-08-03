@@ -47,9 +47,9 @@ description: Maintain architectural integrity and PRD alignment across all KCM c
 
 Before making any architectural decision, read these files in order:
 
-1. `PRD.md` — Core specification (highest priority)
-2. `PRD2.md` — Persistence, optimizer, monitoring
-3. `PRD3.md` — Distributed, ML, security, compliance
+1. `docs/PRD.md` — Core specification (highest priority)
+2. `docs/PRD2.md` — Persistence, optimizer, monitoring
+3. `docs/PRD3.md` — Distributed, ML, security, compliance
 4. `PRD-TESTING& BRACHMARCK.md` — Testing and benchmarks (note: space before BRACHMARCK)
 5. `docs/KCM_SPECIFICATION.md` — Technical constitution
 6. `docs/KCM_ARCHITECTURE.md` — System architecture

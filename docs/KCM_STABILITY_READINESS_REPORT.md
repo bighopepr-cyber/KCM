@@ -82,7 +82,7 @@ KCM has achieved **architectural convergence** as a 13-crate columnar knowledge 
 | 4 | Dockerfile uses Rust 1.75, CMD is echo | Dockerfile | 1 hr | Container non-functional |
 | 5 | No .dockerignore | Dockerfile | 5 min | Slow builds |
 | 6 | Website stale metrics (4 pages) | website/*.html | 1 hr | User confusion |
-| 7 | bench-report.sh Python format specifier bug | scripts/bench-report.sh:87-88 | 5 min | Script crashes |
+| 7 | bench-report.sh Python format specifier bug | tools/bench-report.sh:87-88 | 5 min | Script crashes |
 | 8 | docker-compose deprecated version key, no port mapping | docker-compose.yml | 15 min | Config warnings |
 | 9 | 5 specs contradicts PRDs on WAL sizes, retention, FFI count | docs/*.md | 2 hrs | Spec confusion |
 | 10 | Unused workspace.dependencies in root Cargo.toml | Cargo.toml | 30 min | Dead config |
@@ -161,7 +161,7 @@ KCM has achieved **architectural convergence** as a 13-crate columnar knowledge 
 | Property Tests | proptest | `cargo test property_tests --all` | ✅ Passes |
 | Security Tests | cargo | `cargo test security_tests --all` | ✅ Passes |
 | Benchmarks | criterion | `cargo bench --workspace` | ✅ 38 benchmarks |
-| Benchmark Regression | bench-compare.py | `python3 scripts/bench-compare.py` | ✅ Baseline comparison |
+| Benchmark Regression | bench-compare.py | `python3 tools/bench-compare.py` | ✅ Baseline comparison |
 
 ### 6.2 Test Coverage by Crate
 
@@ -247,7 +247,7 @@ KCM has achieved **architectural convergence** as a 13-crate columnar knowledge 
 | # | Action | Files | Effort | Impact |
 |---|--------|-------|--------|--------|
 | 1 | Fix benchmark.yml heredoc variable substitution | .github/workflows/benchmark.yml | 15 min | CI metadata collection works |
-| 2 | Fix bench-report.sh Python format specifier | scripts/bench-report.sh | 5 min | Script doesn't crash |
+| 2 | Fix bench-report.sh Python format specifier | tools/bench-report.sh | 5 min | Script doesn't crash |
 | 3 | Update website stale metrics (4 pages) | website/*.html | 1 hr | Accuracy |
 | 4 | Align WAL entry sizes in KCM_COLUMNAR_FORMAT_SPEC.md | docs/KCM_COLUMNAR_FORMAT_SPEC.md | 30 min | Spec consistency |
 | 5 | Align data classification in KCM_SECURITY_TRUST_SPEC.md | docs/KCM_SECURITY_TRUST_SPEC.md | 30 min | Spec consistency |

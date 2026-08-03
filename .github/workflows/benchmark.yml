@@ -63,7 +63,7 @@ jobs:
 
       - name: Detect regressions
         run: |
-          python3 scripts/bench-compare.py \
+          python3 tools/bench-compare.py \
             --threshold-warn 5 \
             --threshold-fail 10 \
             --bench-log benchmark-results/raw/bench.log \
@@ -82,7 +82,7 @@ jobs:
       - name: Save baseline (main branch only)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          python3 scripts/bench-compare.py \
+          python3 tools/bench-compare.py \
             --bench-log benchmark-results/raw/bench.log \
             --output-dir benchmark-results/reports \
             --save-baseline

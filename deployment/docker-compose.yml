@@ -1,6 +1,8 @@
 services:
   kcm:
-    build: .
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
     ports:
       - "8080:8080"
     volumes:

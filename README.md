@@ -322,7 +322,7 @@ Benchmark groups with scaling from 1K to 1M:
 ```bash
 cargo bench --workspace                           # All benchmarks
 cargo bench --workspace --no-run                  # Compile only
-scripts/bench-report.sh                           # Full report with metadata
+tools/bench-report.sh                             # Full report with metadata
 ```
 
 ---
@@ -371,18 +371,16 @@ KCM/
 │   ├── kcm-compliance/    Compliance: GDPR, data classification
 │   ├── kcm-testing/       Testing: load/stress/recovery/concurrency tests
 │   └── kcm-server/        Server: HTTP (actix-web) + gRPC (tonic) binaries
-├── docs/                   20 technical specification documents
+├── docs/                   28 technical specification documents
 ├── skills/                 16 engineering skill definitions
-├── scripts/                Build and benchmark automation
+├── tools/                  Build and benchmark automation
+├── deployment/             Docker, docker-compose, Kubernetes manifests
 ├── benchmark-results/      Benchmark artifacts and metadata
-├── k8s/                    Kubernetes deployment manifests
+├── website/                Project website and documentation pages
 ├── .github/workflows/      CI/CD pipeline
 ├── AGENTS.md               Engineering governance
 ├── kilo.json               AI agent configuration
-├── PRD.md                  Core specification
-├── PRD2.md                 Persistence, optimizer, deployment
-├── PRD3.md                 Distributed, ML, security, compliance
-└── GAP.md                  Gap analysis and tracking
+└── README.md               Repository overview
 ```
 
 ---
@@ -395,11 +393,10 @@ All engineering decisions derive from authoritative specifications.
 
 | Document | Scope |
 |----------|-------|
-| [PRD.md](PRD.md) | Core: types, storage, query, reasoning |
-| [PRD2.md](PRD2.md) | Persistence, optimizer, monitoring, deployment |
-| [PRD3.md](PRD3.md) | Distributed, ML, security, compliance |
-| [PRD-TESTING&BRACHMARCK.md](PRD-TESTING\&BRACHMARCK.md) | Testing strategy, benchmarks, quality gates |
-| [GAP.md](GAP.md) | Gap analysis and implementation tracking |
+| [PRD.md](docs/PRD.md) | Core: types, storage, query, reasoning |
+| [PRD2.md](docs/PRD2.md) | Persistence, optimizer, monitoring, deployment |
+| [PRD3.md](docs/PRD3.md) | Distributed, ML, security, compliance |
+| [PRD-TESTING&BRACHMARCK.md](docs/PRD-TESTING%26BRACHMARCK.md) | Testing strategy, benchmarks, quality gates |
 
 ### Technical Specifications
 

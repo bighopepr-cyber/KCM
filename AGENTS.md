@@ -98,11 +98,11 @@ Every external dependency must justify its existence:
 
 | Priority | Document | Authority |
 |----------|----------|-----------|
-| P1 | `PRD-TESTING& BRACHMARCK.md` | Performance targets, validation methodology, testing strategy |
-| P2 | `PRD3.md` | Distributed architecture, ML integration, security, compliance |
-| P3 | `PRD2.md` | Persistence layer, optimizer, monitoring, interfaces |
-| P4 | `PRD.md` | Core types, storage engine, compute engine, reasoning engine |
-| P5 | `docs/*.md` | Derived technical specifications (18 documents) |
+| P1 | `docs/PRD-TESTING& BRACHMARCK.md` | Performance targets, validation methodology, testing strategy |
+| P2 | `docs/PRD3.md` | Distributed architecture, ML integration, security, compliance |
+| P3 | `docs/PRD2.md` | Persistence layer, optimizer, monitoring, interfaces |
+| P4 | `docs/PRD.md` | Core types, storage engine, compute engine, reasoning engine |
+| P5 | `docs/*.md` | Derived technical specifications (23 documents) |
 
 When documents conflict, the higher-priority document wins.
 

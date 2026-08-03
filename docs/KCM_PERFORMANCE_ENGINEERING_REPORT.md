@@ -143,7 +143,7 @@ Steps:
 
 ```bash
 # Runs on every PR
-python3 scripts/bench-compare.py \
+python3 tools/bench-compare.py \
   --threshold-warn 5 \
   --threshold-fail 10 \
   --bench-log benchmark-results/raw/bench.log
@@ -206,7 +206,7 @@ python3 scripts/bench-compare.py \
 | File | Change |
 |------|--------|
 | `crates/kcm-runtime/benches/micro.rs` | Standardized timing, fixed measurement, added scalability benchmarks |
-| `scripts/bench-compare.py` | New regression detection framework |
+| `tools/bench-compare.py` | New regression detection framework |
 | `.github/workflows/benchmark.yml` | Regression gating, baseline management, artifact upload |
 
 ## 9. Remaining Opportunities

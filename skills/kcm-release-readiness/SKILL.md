@@ -47,8 +47,8 @@ description: Validate that the KCM codebase is ready for production release by v
 2. `docs/KCM_PERFORMANCE_SPEC.md` — Performance targets
 3. `docs/KCM_TESTING_SPEC.md` — Testing standards
 4. `.github/workflows/ci.yml` — CI pipeline
-5. `scripts/build.sh` — Build script
-6. `scripts/test.sh` — Test script
+5. `tools/build.sh` — Build script
+6. `tools/test.sh` — Test script
 
 ---
 

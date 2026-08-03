@@ -7,7 +7,7 @@ Generates JSON, CSV, and Markdown reports.
 Exits with code 1 if any regression exceeds the configured threshold.
 
 Usage:
-    python3 scripts/bench-compare.py [--threshold-warn 5] [--threshold-fail 10] [--baseline-path benchmark-results/baseline.json]
+    python3 tools/bench-compare.py [--threshold-warn 5] [--threshold-fail 10] [--baseline-path benchmark-results/baseline.json]
 
 Exit codes:
     0 = No regressions above threshold
