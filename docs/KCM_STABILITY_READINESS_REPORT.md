@@ -122,7 +122,7 @@ KCM has achieved **architectural convergence** as a 13-crate columnar knowledge 
 | PRD2.md §6 Indexes | index.rs | ✅ | ✅ Aligned |
 | PRD2.md §7 Optimizer | optimizer crate | ✅ | ✅ Aligned |
 | PRD2.md §8 Runtime | runtime crate | ✅ | ✅ Aligned |
-| PRD2.md §9 FFI | lib.rs (15 functions) | ✅ | ✅ Aligned |
+| PRD2.md §9 FFI | lib.rs (18 functions) | ✅ | ✅ Aligned |
 | PRD2.md §9 REST | rest_api.rs | ✅ | ✅ Aligned |
 | PRD2.md §9 KQL | kql_parser.rs | ✅ | ✅ Aligned |
 | PRD3.md §2 Sharding | sharding.rs | ✅ | ✅ Aligned |

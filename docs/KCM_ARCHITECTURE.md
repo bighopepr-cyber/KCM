@@ -163,7 +163,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | Field | Value |
 |-------|-------|
 | **Purpose** | External API surface |
-| **Responsibility** | C FFI (15 functions), Python bindings (PyO3), REST API handlers, KQL parser, example implementations |
+| **Responsibility** | C FFI (18 functions), Python bindings (PyO3), REST API handlers, KQL parser, example implementations |
 | **Input** | C types, Python objects, HTTP requests, KQL strings |
 | **Output** | C-compatible results, Python objects, HTTP responses, parsed ASTs |
 | **Dependency** | kcm-core, kcm-runtime, parking_lot, serde_json |

@@ -30,7 +30,7 @@ KCM:             Column[Subject] → Column[Predicate] → Column[Object]
 ```
 ┌────────────────────────────────────────────────────────────┐
 │                     Interface Layer                          │
-│  C FFI (15 functions) · REST API · KQL Parser · Python     │
+│  C FFI (18 functions) · REST API · KQL Parser · Python     │
 ├────────────────────────────────────────────────────────────┤
 │                     Runtime Layer                            │
 │  KnowledgeDatabase · Transactions · Metrics · Health        │

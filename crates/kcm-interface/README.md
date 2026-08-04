@@ -4,13 +4,13 @@ C FFI API, Python bindings, REST handlers, and KQL parser for KCM.
 
 ## Purpose
 
-Provides language-agnostic interfaces to KCM: a C FFI layer (15 functions) for system integration, Python bindings via PyO3, REST API handlers, and a KQL query parser.
+Provides language-agnostic interfaces to KCM: a C FFI layer (18 functions) for system integration, Python bindings via PyO3, REST API handlers, and a KQL query parser.
 
 ## Modules
 
 | Module | Purpose |
 |--------|---------|
-| `lib.rs` | C FFI exports (15 functions) |
+| `lib.rs` | C FFI exports (18 functions) |
 | `rest_api.rs` | REST API request/response handlers |
 | `kql_parser.rs` | KQL (Knowledge Query Language) parser |
 | `python.rs` | Python bindings via PyO3 |
