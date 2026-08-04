@@ -1,0 +1,17 @@
+[package]
+name = "kcm-migrate"
+version = "0.1.0"
+edition = "2021"
+description = "Schema migration tool for KCM Knowledge Columnar Model"
+license = "MIT"
+
+[[bin]]
+name = "kcm-migrate"
+path = "src/main.rs"
+
+[dependencies]
+kcm-core = { path = "../../crates/kcm-core" }
+kcm-storage = { path = "../../crates/kcm-storage" }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1.0"
+colored = "2.0"

@@ -1,0 +1,133 @@
+name: Full CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  quality:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Format check
+        run: cargo fmt --all -- --check
+      
+      - name: Clippy
+        run: cargo clippy --workspace -- -D warnings
+      
+      - name: Build
+        run: cargo build --workspace
+      
+      - name: Build release
+        run: cargo build --release --workspace
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      
+      - name: Unit tests
+        run: cargo test --workspace --lib
+      
+      - name: Integration tests
+        run: cargo test --workspace --test '*'
+      
+      - name: Property tests
+        run: cargo test property_tests --workspace -- --nocapture || true
+
+  stress:
+    name: Stress Tests
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      
+      - name: Stress tests
+        run: cargo test test_stress --workspace -- --nocapture
+      
+      - name: Soak tests
+        run: cargo test test_soak --workspace -- --nocapture
+
+  benchmark:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      
+      - name: Run benchmarks
+        run: cargo bench --workspace -- --output-format bencher | tee benchmark-results/ci-output.txt
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results/
+
+  cli-tools:
+    name: CLI Integration Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build CLI tools
+        run: cargo build --workspace --release
+      
+      - name: Test kcm-cli
+        run: cargo run --release -p kcm -- version
+      
+      - name: Test kcm-doctor
+        run: cargo run --release -p kcm-doctor -- check
+      
+      - name: Test kcm-bench
+        run: cargo run --release -p kcm-bench -- run
+      
+      - name: Test kcm-inspect
+        run: cargo run --release -p kcm-inspect -- schema
+      
+      - name: Test kcm-migrate
+        run: cargo run --release -p kcm-migrate -- status
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t kcm:test -f deployment/Dockerfile .
+      - name: Test Docker image
+        run: |
+          docker run -d --name kcm-test -p 8080:8080 kcm:test
+          sleep 3
+          curl -f http://localhost:8080/health || exit 1
+          docker stop kcm-test

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: kcm
+description: KCM Knowledge Columnar Model - A columnar storage and reasoning engine
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kcm
+  - knowledge-graph
+  - columnar-storage
+  - reasoning-engine
+maintainers:
+  - name: KCM Team
+    email: team@kcm.dev
+home: https://github.com/kcm-project/KCM
+sources:
+  - https://github.com/kcm-project/KCM

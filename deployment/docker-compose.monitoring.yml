@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  kcm:
+    build:
+      context: ../..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      - RUST_LOG=info
+      - KCM_DATA_PATH=/data/kcm.db
+    volumes:
+      - kcm_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/kcm_alerts.yml:/etc/prometheus/kcm_alerts.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/kcm-dashboard.json:/var/lib/grafana/dashboards/kcm.json
+      - grafana_data:/var/lib/grafana
+      - grafana_provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - alertmanager_data:/alertmanager
+
+volumes:
+  kcm_data:
+  prometheus_data:
+  grafana_data:
+  grafana_provisioning:
+  alertmanager_data:

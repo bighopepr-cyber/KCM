@@ -2,6 +2,8 @@
 
 pub mod examples;
 pub mod kql_parser;
+pub mod middleware;
+pub mod openapi;
 pub mod python;
 pub mod rest_api;
 

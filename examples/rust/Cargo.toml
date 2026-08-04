@@ -1,0 +1,13 @@
+[package]
+name = "kcm-examples"
+version = "0.1.0"
+edition = "2021"
+description = "Examples for KCM Knowledge Columnar Model"
+license = "MIT"
+
+[dependencies]
+kcm-core = { path = "../../crates/kcm-core" }
+kcm-storage = { path = "../../crates/kcm-storage" }
+kcm-runtime = { path = "../../crates/kcm-runtime" }
+kcm-reasoning = { path = "../../crates/kcm-reasoning" }
+anyhow = "1.0"

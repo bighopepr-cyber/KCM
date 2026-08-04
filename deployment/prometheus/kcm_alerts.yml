@@ -1,0 +1,38 @@
+groups:
+  - name: kcm_alerts
+    rules:
+      - alert: KCMHighErrorRate
+        expr: rate(kcm_queries_failed_total[5m]) + rate(kcm_inserts_failed_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "KCM error rate is high"
+          description: "Error rate is {{ $value }} errors/sec"
+
+      - alert: KCMHighLatency
+        expr: kcm_query_avg_latency_ms > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "KCM query latency is high"
+          description: "Avg latency is {{ $value }}ms"
+
+      - alert: KCMLowCacheHitRatio
+        expr: kcm_cache_hit_ratio < 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "KCM cache hit ratio is low"
+          description: "Cache hit ratio is {{ $value }}"
+
+      - alert: KCMHighMemory
+        expr: kcm_memory_bytes / 1048576 > 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "KCM memory usage is high"
+          description: "Memory usage is {{ $value }}MB"

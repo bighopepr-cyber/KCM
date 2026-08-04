@@ -1,39 +1,6 @@
 # KCM Python SDK
 
-Python bindings for KCM via PyO3.
-
-## Status: Planned
-
-## Architecture
-
-- PyO3-based bindings to `kcm-interface`
-- Feature-gated: `python` feature in `kcm-interface`
-- Package: `kcm` on PyPI
-
-## API Design
-
-```python
-import kcm
-
-# Open database
-db = kcm.Database("my_knowledge.db")
-
-# Insert fact
-db.insert(subject="planet", predicate="orbits", object="sun", confidence=0.99)
-
-# Query
-results = db.query("SELECT * FROM facts WHERE subject = 'planet'")
-for fact in results:
-    print(fact.subject, fact.predicate, fact.object, fact.confidence)
-
-# Transaction
-txn = db.begin_transaction()
-txn.insert(subject="moon", predicate="orbits", object="earth", confidence=0.999)
-txn.commit()
-
-# Close
-db.close()
-```
+Python bindings for the KCM Knowledge Columnar Model.
 
 ## Installation
 
@@ -41,6 +8,57 @@ db.close()
 pip install kcm
 ```
 
-## Examples
+## Quick Start
 
-See `examples/python/` for complete examples.
+```python
+import kcm
+
+# Create a database
+db = kcm.Database()
+
+# Insert facts
+db.insert(subject=1, predicate=0, object=2, confidence=0.95)
+db.insert(subject=2, predicate=1, object=3, confidence=0.90)
+
+# Query all facts
+facts = db.query_all()
+for subject, predicate, object, confidence in facts:
+    print(f"Subject: {subject}, Predicate: {predicate}, Object: {object}, Confidence: {confidence}")
+
+# Check statistics
+print(f"Total facts: {db.fact_count()}")
+print(f"Active facts: {db.active_fact_count()}")
+```
+
+## API Reference
+
+### Database
+
+| Method | Description |
+|--------|-------------|
+| `Database()` | Create a new in-memory database |
+| `insert(subject, predicate, object, confidence)` | Insert a fact |
+| `query_all()` | Query all facts |
+| `fact_count()` | Get total fact count |
+| `active_fact_count()` | Get active fact count |
+
+### Fact
+
+Facts are returned as tuples: `(subject, predicate, object, confidence)`
+
+## Development
+
+```bash
+# Install maturin
+pip install maturin
+
+# Build and install
+maturin develop
+
+# Run tests
+pytest tests/
+```
+
+## License
+
+MIT

@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use kcm_runtime::health::HealthCheck;
 use kcm_runtime::metrics::Metrics;
+use kcm_runtime::health::HealthCheck;
 use std::sync::Arc;
 
 pub struct ApiState {
@@ -16,51 +16,38 @@ pub struct ApiResponse {
 }
 
 impl ApiResponse {
-    fn escape_json(s: &str) -> String {
-        s.replace('\\', "\\\\")
-            .replace('"', "\\\"")
-            .replace('\n', "\\n")
-            .replace('\r', "\\r")
-            .replace('\t', "\\t")
-            .replace('\x08', "\\b")
-            .replace('\x0C', "\\f")
+    pub fn ok(body: &str) -> Self {
+        ApiResponse { status: 200, body: body.to_string() }
     }
 
-    pub fn ok(body: &str) -> Self {
-        ApiResponse {
-            status: 200,
-            body: body.to_string(),
-        }
-    }
     pub fn created(body: &str) -> Self {
-        ApiResponse {
-            status: 201,
-            body: body.to_string(),
-        }
+        ApiResponse { status: 201, body: body.to_string() }
     }
+
     pub fn bad_request(msg: &str) -> Self {
-        ApiResponse {
-            status: 400,
-            body: format!(r#"{{"error":"{}"}}"#, Self::escape_json(msg)),
-        }
+        ApiResponse { status: 400, body: format!(r#"{{"error":"{}","status":400}}"#, msg) }
     }
+
     pub fn not_found(msg: &str) -> Self {
-        ApiResponse {
-            status: 404,
-            body: format!(r#"{{"error":"{}"}}"#, Self::escape_json(msg)),
-        }
+        ApiResponse { status: 404, body: format!(r#"{{"error":"{}","status":404}}"#, msg) }
     }
+
     pub fn internal_error(msg: &str) -> Self {
-        ApiResponse {
-            status: 500,
-            body: format!(r#"{{"error":"{}"}}"#, Self::escape_json(msg)),
-        }
+        ApiResponse { status: 500, body: format!(r#"{{"error":"{}","status":500}}"#, msg) }
+    }
+
+    pub fn rate_limited() -> Self {
+        ApiResponse { status: 429, body: r#"{"error":"Rate limit exceeded","status":429}"#.to_string() }
     }
 }
 
 pub fn handle_health(state: &ApiState) -> ApiResponse {
-    let report = state.health_check.check_detailed();
-    ApiResponse::ok(&report.to_json())
+    use kcm_runtime::health::HealthStatus;
+    match state.health_check.check() {
+        HealthStatus::Healthy => ApiResponse::ok(r#"{"status":"healthy"}"#),
+        HealthStatus::Degraded => ApiResponse::ok(r#"{"status":"degraded"}"#),
+        HealthStatus::Unhealthy => ApiResponse::internal_error("Health check failed"),
+    }
 }
 
 pub fn handle_insert(
@@ -70,26 +57,43 @@ pub fn handle_insert(
     object: u32,
     confidence: f64,
 ) -> ApiResponse {
-    let fact = match Fact::new(
-        SubjectID(subject),
-        PredicateID(predicate),
-        ObjectID(object),
-        confidence,
-    ) {
+    let fact = match Fact::new(SubjectID(subject), PredicateID(predicate), ObjectID(object), confidence) {
         Ok(f) => f,
-        Err(e) => return ApiResponse::bad_request(&e.to_string()),
+        Err(e) => return ApiResponse::bad_request(&format!("Invalid fact: {}", e)),
     };
-
     match state.db.insert(&fact) {
         Ok(row_id) => {
             state.metrics.record_insert(true);
-            ApiResponse::created(&format!(r#"{{"row_id":{},"status":"OK"}}"#, row_id.0))
+            ApiResponse::created(&format!(r#"{{"row_id":{},"status":"created"}}"#, row_id.0))
         }
         Err(e) => {
             state.metrics.record_insert(false);
-            ApiResponse::internal_error(&e.to_string())
+            ApiResponse::internal_error(&format!("Insert failed: {}", e))
         }
     }
+}
+
+pub fn handle_batch_insert(
+    state: &ApiState,
+    facts: Vec<(u32, u8, u32, f64)>,
+) -> ApiResponse {
+    let mut inserted = 0u64;
+    let mut errors = 0u64;
+    for (s, p, o, c) in facts {
+        if let Ok(fact) = Fact::new(SubjectID(s), PredicateID(p), ObjectID(o), c) {
+            match state.db.insert(&fact) {
+                Ok(_) => inserted += 1,
+                Err(_) => errors += 1,
+            }
+        } else {
+            errors += 1;
+        }
+    }
+    state.metrics.record_insert(inserted > 0);
+    ApiResponse::ok(&format!(
+        r#"{{"inserted":{},"errors":{},"status":"ok"}}"#,
+        inserted, errors
+    ))
 }
 
 pub fn handle_query(
@@ -99,43 +103,24 @@ pub fn handle_query(
     object: Option<u32>,
     confidence_min: Option<f64>,
 ) -> ApiResponse {
-    let start = std::time::Instant::now();
     let mut query = state.db.query();
-
-    if let Some(s) = subject {
-        query = query.with_subject(SubjectID(s));
-    }
-    if let Some(p) = predicate {
-        query = query.with_predicate(PredicateID(p));
-    }
-    if let Some(o) = object {
-        query = query.with_object(ObjectID(o));
-    }
-    if let Some(c) = confidence_min {
-        query = query.with_confidence(c);
-    }
+    if let Some(s) = subject { query = query.with_subject(SubjectID(s)); }
+    if let Some(p) = predicate { query = query.with_predicate(PredicateID(p)); }
+    if let Some(o) = object { query = query.with_object(ObjectID(o)); }
+    if let Some(c) = confidence_min { query = query.with_confidence(c); }
 
     match query.execute() {
-        Ok(facts) => {
-            let duration_ms = start.elapsed().as_millis() as u64;
-            state.metrics.record_query(duration_ms, true);
-
-            let fact_data: Vec<String> = facts.iter().map(|f| {
-                format!(
-                    r#"{{"subject":{},"predicate":{},"object":{},"confidence":{},"timestamp":{}}}"#,
-                    f.subject.0, f.predicate.0, f.object.0, f.confidence, f.timestamp
-                )
+        Ok(results) => {
+            state.metrics.record_query(0, true);
+            let facts: Vec<String> = results.iter().map(|f| {
+                format!(r#"{{"subject":{},"predicate":{},"object":{},"confidence":{}}}"#,
+                    f.subject.0, f.predicate.0, f.object.0, f.confidence)
             }).collect();
-
-            ApiResponse::ok(&format!(
-                r#"{{"facts":[{}],"total_count":{}}}"#,
-                fact_data.join(","),
-                facts.len()
-            ))
+            ApiResponse::ok(&format!(r#"{{"facts":[{}],"count":{}}}"#, facts.join(","), results.len()))
         }
         Err(e) => {
             state.metrics.record_query(0, false);
-            ApiResponse::internal_error(&e.to_string())
+            ApiResponse::internal_error(&format!("Query failed: {}", e))
         }
     }
 }
@@ -143,11 +128,11 @@ pub fn handle_query(
 pub fn handle_get_fact(state: &ApiState, row_id: u64) -> ApiResponse {
     match state.db.get_fact(RowID(row_id)) {
         Ok(Some(fact)) => ApiResponse::ok(&format!(
-            r#"{{"subject":{},"predicate":{},"object":{},"confidence":{},"timestamp":{}}}"#,
-            fact.subject.0, fact.predicate.0, fact.object.0, fact.confidence, fact.timestamp
+            r#"{{"row_id":{},"subject":{},"predicate":{},"object":{},"confidence":{}}}"#,
+            row_id, fact.subject.0, fact.predicate.0, fact.object.0, fact.confidence
         )),
-        Ok(None) => ApiResponse::not_found("Fact not found"),
-        Err(e) => ApiResponse::internal_error(&e.to_string()),
+        Ok(None) => ApiResponse::not_found(&format!("Fact {} not found", row_id)),
+        Err(e) => ApiResponse::internal_error(&format!("Error: {}", e)),
     }
 }
 
@@ -159,30 +144,29 @@ pub fn handle_update(
     object: u32,
     confidence: f64,
 ) -> ApiResponse {
-    let fact = match Fact::new(
-        SubjectID(subject),
-        PredicateID(predicate),
-        ObjectID(object),
-        confidence,
-    ) {
+    let fact = match Fact::new(SubjectID(subject), PredicateID(predicate), ObjectID(object), confidence) {
         Ok(f) => f,
-        Err(e) => return ApiResponse::bad_request(&e.to_string()),
+        Err(e) => return ApiResponse::bad_request(&format!("Invalid fact: {}", e)),
     };
-
     match state.db.update(RowID(row_id), &fact) {
-        Ok(()) => ApiResponse::ok(r#"{"status":"updated"}"#),
-        Err(e) => ApiResponse::internal_error(&e.to_string()),
+        Ok(()) => ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"updated"}}"#, row_id)),
+        Err(e) => ApiResponse::internal_error(&format!("Update failed: {}", e)),
     }
 }
 
 pub fn handle_delete(state: &ApiState, row_id: u64) -> ApiResponse {
     match state.db.delete(RowID(row_id)) {
-        Ok(()) => ApiResponse::ok(r#"{"status":"deleted"}"#),
-        Err(e) => ApiResponse::internal_error(&e.to_string()),
+        Ok(()) => ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"deleted"}}"#, row_id)),
+        Err(e) => ApiResponse::internal_error(&format!("Delete failed: {}", e)),
     }
 }
 
 pub fn handle_stats(state: &ApiState) -> ApiResponse {
-    let snap = state.metrics.snapshot();
-    ApiResponse::ok(&snap.to_json())
+    let snapshot = state.metrics.snapshot();
+    ApiResponse::ok(&format!(
+        r#"{{"fact_count":{},"active_count":{},"total_inserts":{},"total_queries":{},"avg_latency_ms":{:.2},"memory_bytes":{}}}"#,
+        state.db.fact_count(), state.db.active_fact_count(),
+        snapshot.inserts_total, snapshot.queries_total,
+        snapshot.avg_query_latency_ms, snapshot.memory_bytes
+    ))
 }

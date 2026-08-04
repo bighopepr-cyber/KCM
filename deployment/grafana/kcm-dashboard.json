@@ -1,0 +1,107 @@
+{
+  "dashboard": {
+    "title": "KCM Knowledge Columnar Model",
+    "uid": "kcm-main",
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Query Rate (QPS)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(kcm_queries_total[1m])",
+            "legendFormat": "Queries/sec"
+          }
+        ]
+      },
+      {
+        "title": "Insert Rate (IPS)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(kcm_inserts_total[1m])",
+            "legendFormat": "Inserts/sec"
+          }
+        ]
+      },
+      {
+        "title": "Query Latency (p99)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "expr": "kcm_query_avg_latency_ms",
+            "legendFormat": "Avg Latency (ms)"
+          }
+        ]
+      },
+      {
+        "title": "Cache Hit Ratio",
+        "type": "gauge",
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "expr": "kcm_cache_hit_ratio",
+            "legendFormat": "Hit Ratio"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 0.5, "color": "yellow" },
+                { "value": 0.8, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Memory Usage",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+        "targets": [
+          {
+            "expr": "kcm_memory_bytes / 1048576",
+            "legendFormat": "MB"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "decmbytes"
+          }
+        }
+      },
+      {
+        "title": "Error Rate",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 18, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(kcm_queries_failed_total[1m]) + rate(kcm_inserts_failed_total[1m])",
+            "legendFormat": "Errors/sec"
+          }
+        ]
+      },
+      {
+        "title": "Facts Overview",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 12 },
+        "targets": [
+          {
+            "expr": "kcm_inserts_total - kcm_inserts_failed_total",
+            "legendFormat": "Total Facts"
+          }
+        ]
+      }
+    ],
+    "time": { "from": "now-1h", "to": "now" },
+    "refresh": "10s"
+  },
+  "overwrite": true
+}

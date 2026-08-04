@@ -516,3 +516,28 @@ fn test_ffi_rollback_null_txn() {
     let result = unsafe { KCM_TransactionRollback(std::ptr::null_mut()) };
     assert_eq!(result, KCM_Error::KCM_ERR_INVALID_ARGUMENT);
 }
+
+#[cfg(feature = "python")]
+#[test]
+fn test_python_bindings() {
+    use kcm_interface::python::bindings::PyKnowledgeBase;
+    use pyo3::Python;
+
+    Python::with_gil(|py| {
+        let kb = PyKnowledgeBase::new().unwrap();
+
+        // Test insert
+        kb.insert(1, 0, 2, 0.9).unwrap();
+        kb.insert(2, 1, 3, 0.8).unwrap();
+
+        // Test query_all
+        let facts = kb.query_all().unwrap();
+        assert_eq!(facts.len(), 2);
+
+        // Test fact_count
+        assert_eq!(kb.fact_count(), 2);
+
+        // Test active_count
+        assert_eq!(kb.active_count(), 2);
+    });
+}

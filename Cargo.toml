@@ -13,6 +13,26 @@ members = [
     "crates/kcm-compliance",
     "crates/kcm-testing",
     "crates/kcm-server",
+    "tools/kcm-cli",
+    "tools/kcm-backup",
+    "tools/kcm-doctor",
+    "tools/kcm-restore",
+    "tools/kcm-inspect",
+    "tools/kcm-migrate",
+    "tools/kcm-bench",
+    "tools/kcm-export",
+    "tools/kcm-import",
+    "tools/kcm-compact",
+    "tools/kcm-diagnose",
+    "tools/kcm-snapshot",
+    "tools/kcm-schema",
+    "tools/kcm-cluster",
+    "tools/kcm-perf",
+    "tools/kcm-profile",
+    "tools/kcm-docs",
+]
+exclude = [
+    "examples/rust",
 ]
 
 resolver = "2"
