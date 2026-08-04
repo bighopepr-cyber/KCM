@@ -58,7 +58,7 @@ jobs:
         run: cargo test --workspace --test '*'
       
       - name: Property tests
-        run: cargo test property_tests --workspace -- --nocapture || true
+        run: cargo test property_tests --workspace -- --nocapture
 
   stress:
     name: Stress Tests

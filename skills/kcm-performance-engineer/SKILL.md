@@ -219,3 +219,36 @@ PASS / FAIL
 ## Required Optimizations
 [List of required changes]
 ```
+
+## SSOT-First Performance Protocol
+
+Every performance change MUST follow this protocol:
+
+1. **Baseline**: Run benchmarks to establish current performance
+2. **SSOT Target**: Verify performance target exists in SSOT
+3. **Profile**: Identify bottleneck using CPU/memory profiling
+4. **Optimize**: Implement optimization matching SSOT target
+5. **Measure**: Verify improvement with benchmarks
+6. **Validate**: Ensure no correctness regressions
+7. **Document**: Update SSOT if behavior changed
+
+## Performance Targets (from SSOT)
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Column scan 1M facts | < 10ms | Criterion benchmark |
+| Dictionary lookup | < 100ns | Criterion benchmark |
+| Bitmap AND 1M bits | < 1ms | Criterion benchmark |
+| Insert throughput | > 50K facts/sec | Load test |
+| Query latency P99 | < 100ms | Load test |
+| Memory per fact | < 100 bytes | Memory profiling |
+
+## Benchmark Validation Rules
+
+| Rule | Description |
+|------|-------------|
+| B-01 | Every benchmark must measure real workload |
+| B-02 | Every benchmark must have reproducible results |
+| B-03 | Benchmark regression > 5% triggers warning |
+| B-04 | Benchmark regression > 10% blocks merge |
+| B-05 | New features must include benchmarks |

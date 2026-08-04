@@ -161,3 +161,16 @@ APPROVE / REQUEST CHANGES / NEEDS DISCUSSION
 ## Required Changes
 [Must-fix items before merge]
 ```
+
+## SSOT-First Review Protocol
+
+Every code review MUST verify:
+
+1. **SSOT Traceability**: Every change traces to an SSOT requirement
+2. **Specification Match**: Implementation matches specification exactly
+3. **No Stubs**: Zero placeholder implementations
+4. **Error Handling**: All public APIs return Result<T, KcmError>
+5. **Thread Safety**: All shared types are Send + Sync
+6. **Test Coverage**: New code has corresponding tests
+7. **Benchmark Coverage**: Performance-critical code has benchmarks
+8. **Documentation**: SSOT updated if behavior changed

@@ -273,3 +273,40 @@ PASS / FAIL
 ## Security Vulnerabilities
 [List of vulnerabilities found]
 ```
+
+## SSOT-First Security Protocol
+
+Every security change MUST follow this protocol:
+
+1. **Identify SSOT Requirement**: Find the requirement in PRD3.md §4 or KCM_SECURITY_TRUST_SPEC
+2. **Verify Current Implementation**: Check if current code matches SSOT
+3. **Threat Assessment**: Assess security impact of change
+4. **Implement**: Write code matching security specification exactly
+5. **Test**: Write security tests validating against specification
+6. **Audit**: Run security test suite
+7. **Validate**: Full quality gate suite
+
+## Security Engine Quality Standards
+
+| Standard | Requirement | Verification |
+|----------|-------------|-------------|
+| RBAC | 5 permission levels enforced | Security tests |
+| Encryption | AES-256-GCM with 12-byte nonce | Encryption tests |
+| Key Derivation | BLAKE3 with context string | Key tests |
+| Key Zeroization | write_volatile in Drop | Code review |
+| Audit Log | Hash-chained integrity | Audit tests |
+| GDPR | Consent management, right to deletion | Compliance tests |
+| Data Classification | 4 tiers with retention policies | Classification tests |
+
+## Security Invariants
+
+These invariants MUST be maintained in all changes:
+
+| Invariant | Enforcement |
+|-----------|-------------|
+| Key never logged or persisted | Code review |
+| Nonce never reused | Random generation |
+| Audit chain integrity maintained | Hash verification |
+| RBAC checked before every operation | Authorization tests |
+| Sensitive data zeroized on drop | Drop implementation |
+| No timing side channels | Constant-time operations |

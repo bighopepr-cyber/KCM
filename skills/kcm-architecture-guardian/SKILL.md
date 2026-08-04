@@ -240,3 +240,27 @@ APPROVED / REJECTED / NEEDS DISCUSSION
 ## Rationale
 [Why this verdict]
 ```
+
+## SSOT-First Architecture Protocol
+
+Every architecture change MUST follow this protocol:
+
+1. **Identify SSOT Requirement**: Find the architecture requirement
+2. **Verify Current Architecture**: Check if current code matches SSOT
+3. **Assess Impact**: Evaluate impact on system architecture
+4. **Plan Change**: Define how change maintains architecture integrity
+5. **Implement**: Write code matching architecture specification
+6. **Validate**: Verify architecture consistency maintained
+
+## Architecture Invariants
+
+These invariants MUST be maintained in all changes:
+
+| Invariant | Enforcement |
+|-----------|-------------|
+| Single responsibility | Each crate has one responsibility |
+| Dependency direction | Dependencies flow upward only |
+| No circular dependencies | Enforced by Cargo |
+| Interface segregation | Public APIs are minimal |
+| Encapsulation | Internal details not exposed |
+| Consistency | Similar operations have similar interfaces |

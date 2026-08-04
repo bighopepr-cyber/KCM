@@ -198,7 +198,7 @@ python3 tools/bench-compare.py \
 | `cargo fmt --all -- --check` | ✓ CLEAN |
 | `cargo clippy --workspace --all-targets -- -D warnings` | ✓ CLEAN |
 | `cargo build --release --workspace` | ✓ SUCCESS |
-| `cargo test --workspace` | ✓ 534 passed, 0 failed |
+| `cargo test --workspace` | ✓ 559 passed, 0 failed |
 | `cargo bench --workspace --no-run` | ✓ All benchmarks compile |
 | `bench-compare.py --save-baseline` | ✓ Creates baseline |
 | `bench-compare.py` (comparison) | ✓ No regressions |

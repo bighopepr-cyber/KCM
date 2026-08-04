@@ -184,3 +184,13 @@ PASS / FAIL
 ## Required Documentation Changes
 [List of required changes]
 ```
+
+## SSOT-First Documentation Protocol
+
+Every documentation change MUST:
+
+1. **Verify Accuracy**: Ensure documentation matches current implementation
+2. **Check Cross-References**: All links resolve to existing files
+3. **Validate Metadata**: Document has Document ID, Version, Status
+4. **Ensure Consistency**: Terminology matches KCM_GLOSSARY.md
+5. **Trace to Code**: Every documented behavior has corresponding implementation

@@ -131,3 +131,13 @@ Each record must include:
 ## Affected Crates
 - [list of crates affected]
 ```
+
+## SSOT-First Decision Protocol
+
+Every architecture decision MUST:
+
+1. **Identify SSOT Impact**: Determine which SSOT documents are affected
+2. **Document Rationale**: Explain why this decision was made
+3. **Record Alternatives**: Document alternatives considered
+4. **Assess Consequences**: Document positive and negative consequences
+5. **Update SSOT**: If decision changes behavior, update SSOT first

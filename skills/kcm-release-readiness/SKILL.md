@@ -237,3 +237,27 @@ READY / NOT READY
 ## Blocking Issues
 [List of blocking issues]
 ```
+
+## SSOT-First Release Protocol
+
+Every release MUST follow this protocol:
+
+1. **SSOT Validation**: `bash scripts/validate-ssot.sh` passes
+2. **All CI Jobs Pass**: format, clippy, build, tests, benchmarks
+3. **API Audit**: All public APIs match SSOT
+4. **FFI Audit**: All FFI functions match SSOT
+5. **REST Audit**: All REST endpoints match SSOT
+6. **gRPC Audit**: All gRPC RPCs match SSOT
+7. **Benchmark Validation**: No regressions from baseline
+8. **Documentation Review**: All SSOT documents current
+9. **Changelog Updated**: All changes documented
+10. **Version Bump**: Appropriate version increment
+
+## Version Bumping Rules
+
+| Change Type | Version Bump | Example |
+|-------------|-------------|---------|
+| Bug fix | Patch (0.0.x) | WAL replay fix |
+| New feature | Minor (0.x.0) | New codec, new index |
+| Breaking API change | Major (x.0.0) | Remove FFI function |
+| Format change | Major (x.0.0) | Header layout change |

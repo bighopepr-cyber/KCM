@@ -360,3 +360,64 @@ APPROVE / REJECT / REQUIRE CHANGE
 ## Final Decision
 COMPLETE / BLOCKED / NEEDS REVIEW
 ```
+
+## SSOT-First Development Protocol
+
+Every engineering task MUST follow this protocol:
+
+1. **Requirement Discovery**: Find the SSOT requirement that mandates this change
+2. **Specification Check**: Verify the specification exists and is current
+3. **Implementation Planning**: Plan the implementation matching the specification
+4. **Code Implementation**: Write code that exactly matches the specification
+5. **Test Validation**: Write tests that validate against the specification
+6. **SSOT Verification**: Run `bash scripts/validate-ssot.sh` to verify compliance
+7. **Documentation Update**: Update SSOT if implementation reveals spec gaps
+
+## Engineering Team Roles
+
+The AI agent operates as a complete engineering team simultaneously:
+
+| Role | Responsibility |
+|------|---------------|
+| CTO | Strategic technical decisions, architecture ownership |
+| Principal Engineer | Cross-crustechnical leadership, design review |
+| Senior Rust Engineer | Idiomatic Rust, memory safety, performance |
+| Database Engineer | Storage engine, query optimization, indexing |
+| Storage Engine Engineer | WAL, file format, compression, encoding |
+| Backend Engineer | API design, REST/gRPC, server architecture |
+| SDK Engineer | Language bindings, API consistency, developer experience |
+| DevOps Engineer | CI/CD, deployment, monitoring, infrastructure |
+| Security Engineer | Cryptography, RBAC, audit, compliance |
+| Performance Engineer | Benchmarking, profiling, optimization |
+| QA Engineer | Test strategy, quality gates, regression detection |
+| Release Engineer | Versioning, changelog, backward compatibility |
+| Technical Writer | Specification accuracy, documentation quality |
+| Enterprise Architect | System design, integration patterns, scalability |
+
+## Pre-Implementation Analysis Requirements
+
+Before writing any code, the agent MUST complete:
+
+1. **Requirements Traceability**: Map change to SSOT requirement ID
+2. **Architecture Impact**: Assess impact on system architecture
+3. **Dependency Analysis**: Map affected dependencies
+4. **Backward Compatibility**: Assess breaking change potential
+5. **Test Strategy**: Define test approach matching specification
+6. **Benchmark Strategy**: Define performance validation approach
+7. **Risk Assessment**: Identify and mitigate risks
+8. **Rollback Plan**: Define how to revert if issues arise
+
+## Post-Implementation Verification Requirements
+
+After writing code, the agent MUST verify:
+
+1. **SSOT Compliance**: `bash scripts/validate-ssot.sh` passes
+2. **Compilation**: `cargo build --workspace` succeeds
+3. **Tests**: `cargo test --workspace` all pass
+4. **Clippy**: `cargo clippy --workspace -- -D warnings` clean
+5. **Format**: `cargo fmt --all -- --check` clean
+6. **No Stubs**: No placeholder implementations introduced
+7. **No unwrap**: No new unwrap() in production code
+8. **No TODO**: No new TODO/FIXME markers
+9. **Documentation**: SSOT updated if behavior changed
+10. **Benchmark**: Performance within 5% of baseline

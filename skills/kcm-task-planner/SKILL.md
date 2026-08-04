@@ -119,3 +119,13 @@ Risks Identified: [count]
 
 Ready for Implementation: YES / NO
 ```
+
+## SSOT-First Planning Protocol
+
+Every task plan MUST:
+
+1. **Identify SSOT Requirements**: Map task to specific SSOT requirements
+2. **Verify Specification**: Ensure specification exists and is current
+3. **Assess Impact**: Use change impact analysis for affected components
+4. **Define Success Criteria**: SSOT compliance is the success criterion
+5. **Plan Validation**: Include SSOT validation in the task checklist

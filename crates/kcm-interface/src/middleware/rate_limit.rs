@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::Mutex;
+use parking_lot::Mutex;
 use std::time::{Duration, Instant};
 
 /// Token bucket rate limiter per client IP.
@@ -24,7 +24,7 @@ impl RateLimiter {
     }
 
     pub fn allow(&self, client_id: &str) -> bool {
-        let mut buckets = self.buckets.lock().unwrap();
+        let mut buckets = self.buckets.lock();
         let now = Instant::now();
         let bucket = buckets
             .entry(client_id.to_string())

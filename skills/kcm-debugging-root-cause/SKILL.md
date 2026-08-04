@@ -180,3 +180,13 @@ Test: [name]
 ## Prevention
 [How to prevent similar issues in the future]
 ```
+
+## SSOT-First Debugging Protocol
+
+Every debugging session MUST:
+
+1. **Identify Expected Behavior**: Find the SSOT specification for the failing component
+2. **Verify Current Behavior**: Confirm the deviation from specification
+3. **Root Cause Analysis**: Identify why implementation deviates from SSOT
+4. **Fix Strategy**: Plan fix that brings implementation back to SSOT compliance
+5. **Regression Prevention**: Write test that validates SSOT compliance

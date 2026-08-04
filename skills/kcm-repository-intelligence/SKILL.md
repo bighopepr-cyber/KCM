@@ -176,3 +176,13 @@ Validation:
 ## Code Impact
 [files]
 ```
+
+## SSOT-First Intelligence Protocol
+
+Every repository analysis MUST:
+
+1. **Map SSOT Documents**: Identify all authoritative specification documents
+2. **Verify Implementation**: Check if code matches specifications
+3. **Identify Gaps**: Find areas where implementation diverges from SSOT
+4. **Assess Completeness**: Rate implementation completeness per component
+5. **Report Drift**: Document any SSOT-to-code drift found

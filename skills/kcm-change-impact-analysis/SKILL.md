@@ -169,3 +169,14 @@ kcm-change-impact-analysis
 ## Recommendation
 PROCEED / NEEDS MORE ANALYSIS / BLOCKED
 ```
+
+## SSOT-First Impact Protocol
+
+Every change impact analysis MUST:
+
+1. **Identify SSOT Requirements**: Map change to all affected SSOT requirements
+2. **Check Document Hierarchy**: Verify no higher-priority document conflicts
+3. **Assess Backward Compatibility**: Identify breaking changes
+4. **Map Affected Components**: List all crates, modules, APIs, tests affected
+5. **Estimate Risk**: Rate impact as Low/Medium/High/Critical
+6. **Recommend Mitigation**: Suggest how to minimize impact

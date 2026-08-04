@@ -233,3 +233,45 @@ PASS / FAIL
 ## Required Fixes
 [List of required changes with file:line references]
 ```
+
+## SSOT-First Storage Engine Protocol
+
+Every storage engine change MUST follow this protocol:
+
+1. **Identify SSOT Requirement**: Find the requirement in PRD.md §3-4 or PRD2.md §2-5
+2. **Verify Current Implementation**: Check if current code matches SSOT
+3. **Plan Change**: Define how change maintains SSOT compliance
+4. **Implement**: Write code matching specification exactly
+5. **Test**: Write tests validating against specification
+6. **Benchmark**: Verify performance meets SSOT targets
+7. **Validate**: Run `bash scripts/validate-ssot.sh`
+
+## Storage Engine Quality Standards
+
+| Standard | Requirement | Verification |
+|----------|-------------|-------------|
+| WAL Durability | fsync on every flush | Code review |
+| WAL Integrity | CRC32 on every entry | Test validation |
+| WAL Recovery | Idempotent replay | Recovery tests |
+| File Format | 31-byte header, 10 columns | Format tests |
+| Column Encoding | Per-column codec assignment | Encoding tests |
+| Compression | Roundtrip compress/decompress | Property tests |
+| Dictionary | ID 0 = NULL, bidirectional | Unit tests |
+| Bitmap | O(1) set/get, O(n/64) bulk | Unit tests |
+| DenseVec | 64-byte alignment, no realloc | Memory tests |
+| Index | Bitmap, ZoneMap, BloomFilter | Index tests |
+
+## Storage Engine Invariants
+
+These invariants MUST be maintained in all changes:
+
+| Invariant | Enforcement |
+|-----------|-------------|
+| Column lengths equal | Schema enforces all columns same length |
+| Row IDs monotonically increasing | append_fact increments row_count |
+| Tombstone bitmap consistent | delete_fact sets tombstone, clear_fact clears |
+| WAL entries self-contained | Each entry has complete fact data |
+| File checksum covers entire file | Blake3 over all preceding bytes |
+| Dictionary ID 0 always NULL | Reserved at construction |
+| Confidence ∈ [0.0, 1.0] | Confidence::new validates |
+| No unwrap in production | Clippy + code review |

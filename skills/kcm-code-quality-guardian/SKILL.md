@@ -211,3 +211,32 @@ PASS / FAIL
 ## Required Fixes
 [List of required changes]
 ```
+
+## SSOT-First Quality Protocol
+
+Every quality check MUST verify:
+
+1. **SSOT Compliance**: Implementation matches specification
+2. **No Stubs**: Zero placeholder implementations
+3. **No unwrap**: Zero unwrap() in production code
+4. **No TODO/FIXME**: Zero markers in production code
+5. **Error Handling**: All public APIs return Result<T, KcmError>
+6. **Thread Safety**: All shared types are Send + Sync
+7. **Memory Safety**: No unsafe without documented justification
+8. **Determinism**: Identical input produces identical output
+
+## Automated Quality Checks
+
+```bash
+# Check for stubs/placeholders
+grep -r "todo!\|unimplemented!\|FIXME\|TODO" crates/ --include="*.rs"
+
+# Check for unwrap in production
+grep -r "\.unwrap()" crates/ --include="*.rs" | grep -v tests/ | grep -v benches/
+
+# Check for panic in production
+grep -r "panic!" crates/ --include="*.rs" | grep -v tests/ | grep -v benches/
+
+# Run SSOT validation
+bash scripts/validate-ssot.sh
+```

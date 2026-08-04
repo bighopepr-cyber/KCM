@@ -299,6 +299,12 @@ cargo test -p kcm-testing --test test_concurrent    # Concurrency tests
 cargo test -p kcm-testing --test test_crash_recovery # Recovery tests
 ```
 
+### SSOT Validation
+
+```bash
+bash scripts/validate-ssot.sh                       # 13 automated checks
+```
+
 ---
 
 ## Benchmarks

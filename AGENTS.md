@@ -235,12 +235,18 @@ Single testing strategy: 4-tier pyramid.
 
 | Tier | Count | Speed | Purpose |
 |------|-------|-------|---------|
-| Unit | 90+ | < 100ms | Single function correctness |
-| Integration | 108+ | 1s-5s | Cross-component correctness |
+| Unit | 89+ | < 100ms | Single function correctness |
+| Integration | 470+ | 1s-5s | Cross-component correctness |
 | Property | 8+ | 1-5min | Invariant verification |
 | Security | 29+ | varies | Attack surface validation |
 
 Quality gates: ≥95% coverage, 0 clippy warnings, 0 unwrap in production, benchmarks within 5% of baseline.
+
+### Automated Validation
+
+```bash
+bash scripts/validate-ssot.sh  # 13 automated checks
+```
 
 ## Build and Test Commands
 
@@ -296,3 +302,333 @@ cargo bench --workspace
 - **Change Impact Analysis (P3)** answers "What will break?"
 - **Code Quality Guardian (P10)** = automated prevention. Runs FIRST.
 - **Code Review Auditor (P13)** = senior review. Runs AFTER CQG.
+
+---
+
+## SSOT-First Development Rules
+
+**The SSOT (Single Source of Truth) documentation is the absolute technical contract for the KCM project. No implementation may deviate from the SSOT without an approved SSOT update.**
+
+### SSOT Authority
+
+| Rule | Description |
+|------|-------------|
+| SSOT-01 | All public APIs, data structures, formats, algorithms, and behaviors are defined in SSOT documents |
+| SSOT-02 | Implementation MUST match SSOT specifications exactly |
+| SSOT-03 | No code change is permitted that deviates from SSOT without first updating the SSOT |
+| SSOT-04 | SSOT updates require approval from the Specification Lock (P4) skill |
+| SSOT-05 | When SSOT and code diverge, the SSOT is the reference — fix the code, not the SSOT |
+| SSOT-06 | Every code change must trace back to a requirement in the SSOT |
+| SSOT-07 | New features require SSOT specification before implementation begins |
+| SSOT-08 | API changes require backward compatibility analysis before SSOT update |
+
+### Requirement Traceability
+
+Every implementation must be traceable to an SSOT requirement:
+
+```
+SSOT Requirement → Specification Document → Implementation File → Test File → Benchmark
+```
+
+| Traceability Level | Description |
+|-------------------|-------------|
+| L1 | Requirement exists in SSOT |
+| L2 | Specification defines behavior |
+| L3 | Implementation matches specification |
+| L4 | Test validates implementation |
+| L5 | Benchmark measures performance |
+
+### SSOT Documents (Authoritative Sources)
+
+| Document | Scope | Priority |
+|----------|-------|----------|
+| `docs/PRD.md` | Core types, storage, compute, reasoning | P4 |
+| `docs/PRD2.md` | Storage, runtime, interfaces | P3 |
+| `docs/PRD3.md` | Distributed, ML, security, compliance | P2 |
+| `docs/PRD-TESTING& BRACHMARCK.md` | Testing, benchmarks, quality gates | P1 |
+| `AGENTS.md` | Engineering constitution | P5 |
+
+---
+
+## Codebase Audit Procedures
+
+### Pre-Implementation Audit
+
+Before any code change, perform this audit:
+
+| Step | Action | Output |
+|------|--------|--------|
+| 1 | Identify affected crates and modules | Affected file list |
+| 2 | Map SSOT requirements for affected area | Requirement IDs |
+| 3 | Verify current implementation matches SSOT | Drift report |
+| 4 | Check dependency impact | Dependency graph |
+| 5 | Assess backward compatibility | Compatibility report |
+| 6 | Identify affected tests | Test list |
+| 7 | Identify affected benchmarks | Benchmark list |
+
+### Post-Implementation Audit
+
+After any code change, perform this audit:
+
+| Step | Action | Command |
+|------|--------|---------|
+| 1 | Verify compilation | `cargo build --workspace` |
+| 2 | Run all tests | `cargo test --workspace` |
+| 3 | Run clippy | `cargo clippy --workspace -- -D warnings` |
+| 4 | Check formatting | `cargo fmt --all -- --check` |
+| 5 | Verify SSOT compliance | `bash scripts/validate-ssot.sh` |
+| 6 | Check for stubs/placeholders | `grep -r "todo!\|unimplemented!\|FIXME\|TODO" crates/ --include="*.rs"` |
+| 7 | Check for unwrap in production | `grep -r "\.unwrap()" crates/ --include="*.rs" \| grep -v tests/ \| grep -v benches/` |
+
+### Continuous Audit Schedule
+
+| Audit Type | Frequency | Owner |
+|------------|-----------|-------|
+| SSOT compliance | Every PR | CI pipeline |
+| Stub/placeholder detection | Every PR | CI pipeline |
+| Benchmark regression | Weekly | benchmark.yml |
+| Dependency audit | Monthly | Manual |
+| Full codebase audit | Quarterly | kcm-engineering-orchestrator |
+
+---
+
+## Implementation Quality Standards
+
+### Code Quality Requirements
+
+| Requirement | Standard | Enforcement |
+|-------------|----------|-------------|
+| Error handling | All public APIs return `Result<T, KcmError>` | Compiler + clippy |
+| No unwrap | Zero `unwrap()` in production code paths | CI gate |
+| No panic | Zero `panic!()` in production code | CI gate |
+| No TODO/FIXME | Zero markers in production code | CI gate |
+| No placeholders | Every function has real implementation | Code review |
+| No fake returns | Every return value is computed, not hardcoded | Code review |
+| Thread safety | All shared types are `Send + Sync` | Compiler |
+| Memory safety | No unsafe without documented justification | Code review |
+| Determinism | Identical input produces identical output | Tests |
+
+### Architecture Consistency
+
+| Rule | Description |
+|------|-------------|
+| Single responsibility | Each crate has exactly one responsibility |
+| Dependency direction | Dependencies flow upward only (no cycles) |
+| Interface segregation | Public APIs are minimal and focused |
+| Encapsulation | Internal details are not exposed through public API |
+| Consistency | Similar operations have similar interfaces |
+
+### Backward Compatibility
+
+| Change Type | Compatibility Requirement |
+|-------------|-------------------------|
+| New public method | Additive, no breaking change |
+| New crate | Additive, no breaking change |
+| New dependency | Must justify existence per Dependency Policy |
+| API signature change | Breaking — requires version bump |
+| Remove public API | Breaking — requires version bump + migration |
+| Format change | Breaking — requires version bump + migration |
+| FFI change | Breaking — requires SDK version bump |
+
+---
+
+## Engineering Analysis Requirements
+
+### Before Implementation
+
+Every implementation task must complete this analysis:
+
+1. **Requirements Analysis**: What SSOT requirements does this address?
+2. **Architecture Analysis**: How does this fit the existing architecture?
+3. **Dependency Analysis**: What dependencies are affected?
+4. **Impact Analysis**: What other components are affected?
+5. **Risk Analysis**: What could go wrong?
+6. **Test Analysis**: What tests are needed?
+7. **Benchmark Analysis**: What performance targets apply?
+8. **Compatibility Analysis**: Is this backward compatible?
+
+### During Implementation
+
+Every implementation must follow:
+
+1. **SSOT Alignment**: Implementation matches specification exactly
+2. **Error Handling**: All error paths return `Result<T, KcmError>`
+3. **Thread Safety**: All shared types are `Send + Sync`
+4. **Memory Safety**: No unsafe without documented justification
+5. **Determinism**: No randomness in query/inference paths
+6. **Observability**: Metrics and logging where appropriate
+7. **Testability**: Code is structured for testability
+
+### After Implementation
+
+Every implementation must verify:
+
+1. **Correctness**: All tests pass
+2. **Performance**: Benchmarks within 5% of baseline
+3. **Quality**: No clippy warnings
+4. **Format**: Code passes fmt check
+5. **SSOT**: Automated validation passes
+6. **Documentation**: Changes reflected in SSOT
+
+---
+
+## Refactoring Standards
+
+### Safe Refactoring Rules
+
+| Rule | Description |
+|------|-------------|
+| R-01 | Refactoring must not change external behavior |
+| R-02 | All tests must pass before and after refactoring |
+| R-03 | No new features during refactoring |
+| R-04 | Refactoring must be verifiable by SSOT validation |
+| R-05 | Refactoring must not break backward compatibility |
+| R-06 | Refactoring must be reversible (git revert) |
+
+### Refactoring Checklist
+
+- [ ] SSOT requirements still met
+- [ ] All tests pass
+- [ ] No new stubs/placeholders introduced
+- [ ] No new unwrap() in production code
+- [ ] No new TODO/FIXME markers
+- [ ] Clippy clean
+- [ ] Format clean
+- [ ] SSOT validation passes
+- [ ] Benchmarks within 5% of baseline
+- [ ] No dependency changes
+
+---
+
+## CI/CD and Release Validation
+
+### CI Pipeline Requirements
+
+| Job | Trigger | Blocks Merge |
+|-----|---------|-------------|
+| Format Check | Every push | Yes |
+| Clippy Lint | Every push | Yes |
+| Build | Every push | Yes |
+| Unit Tests | Every push | Yes |
+| Integration Tests | Every push | Yes |
+| Property Tests | Every push | Yes |
+| Security Tests | After unit tests | Yes |
+| Benchmarks (compile) | After unit tests | Yes |
+| SSOT Validation | Every push | Yes |
+| Quality Gate | All above pass | Yes |
+
+### Release Validation
+
+Before any release:
+
+| Step | Action | Gate |
+|------|--------|------|
+| 1 | All CI jobs pass | `ci.yml` |
+| 2 | SSOT validation passes | `validate-ssot.sh` |
+| 3 | No regressions from baseline | Benchmark comparison |
+| 4 | All public APIs match SSOT | API audit |
+| 5 | All FFI functions match SSOT | FFI audit |
+| 6 | All REST endpoints match SSOT | REST audit |
+| 7 | All gRPC RPCs match SSOT | gRPC audit |
+| 8 | Deployment configs valid | Docker/K8s build |
+| 9 | Documentation up to date | SSOT review |
+| 10 | Changelog updated | Manual review |
+
+### Version Bumping Rules
+
+| Change Type | Version Bump | Example |
+|-------------|-------------|---------|
+| Bug fix | Patch (0.0.x) | WAL replay fix |
+| New feature | Minor (0.x.0) | New codec, new index |
+| Breaking API change | Major (x.0.0) | Remove FFI function |
+| Format change | Major (x.0.0) | Header layout change |
+| Dependency change | Patch or Minor | Depends on impact |
+
+---
+
+## Development Playbooks
+
+### New Feature Playbook
+
+```
+1. SSOT: Define requirement in appropriate PRD document
+2. SSOT: Define specification in appropriate KCM_*_SPEC document
+3. Plan: Identify affected crates, files, tests, benchmarks
+4. Implement: Write code matching SSOT specification
+5. Test: Write tests validating implementation
+6. Benchmark: Write/verify benchmarks for performance
+7. Validate: Run full quality gate suite
+8. SSOT: Update documentation if implementation differs from spec
+9. Review: Code review against SSOT
+10. Release: Version bump, changelog, release
+```
+
+### Bug Fix Playbook
+
+```
+1. Reproduce: Write a test that demonstrates the bug
+2. Root Cause: Identify the exact cause using debugging skills
+3. Fix: Implement minimal fix matching SSOT behavior
+4. Verify: Ensure fix resolves the bug without regressions
+5. Validate: Run full quality gate suite
+6. Review: Code review focusing on fix correctness
+7. Release: Patch version bump, changelog
+```
+
+### Performance Optimization Playbook
+
+```
+1. Baseline: Run benchmarks to establish current performance
+2. Profile: Identify bottleneck using CPU/memory profiling
+3. SSOT: Verify performance target exists in SSOT
+4. Optimize: Implement optimization matching SSOT target
+5. Measure: Verify improvement with benchmarks
+6. Validate: Ensure no correctness regressions
+7. Document: Update SSOT if behavior changed
+8. Review: Performance engineer review
+```
+
+### Security Fix Playbook
+
+```
+1. Assess: Determine severity and impact
+2. SSOT: Verify security requirement in SSOT
+3. Fix: Implement fix matching security specification
+4. Test: Write security test validating fix
+5. Audit: Run security test suite
+6. Validate: Full quality gate suite
+7. Review: Security engineer review
+8. Release: Immediate patch if critical
+```
+
+---
+
+## Monitoring and Observability
+
+### Metrics Requirements
+
+| Component | Required Metrics |
+|-----------|-----------------|
+| KnowledgeDatabase | queries_total, inserts_total, cache_hit_ratio, memory_bytes |
+| Transaction | commit_count, rollback_count, abort_count |
+| WAL | append_count, replay_count, flush_count |
+| Inference | inference_count, facts_inferred, rule_execution_count |
+| Security | permission_check_count, encryption_count, audit_event_count |
+
+### Logging Standards
+
+| Level | Usage |
+|-------|-------|
+| ERROR | Unrecoverable errors requiring immediate attention |
+| WARN | Recoverable errors that may indicate issues |
+| INFO | Significant state changes (startup, shutdown, recovery) |
+| DEBUG | Detailed operational information |
+| TRACE | Most detailed, lowest priority |
+
+### Health Check Requirements
+
+| Status | Condition |
+|--------|-----------|
+| Healthy | error_rate < 5%, latency < 100ms, cache_hit_ratio > 50% |
+| Degraded | latency > 100ms OR cache_hit_ratio < 50% |
+| Unhealthy | error_rate > 5% |

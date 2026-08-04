@@ -138,3 +138,14 @@ kcm-specification-lock
 ## Decision
 APPROVED / BLOCKED / NEEDS MIGRATION PLAN
 ```
+
+## SSOT-First Lock Protocol
+
+Every specification change MUST:
+
+1. **Verify Authority**: Confirm this document is the authoritative source for the change
+2. **Check Hierarchy**: Ensure no higher-priority document conflicts
+3. **Backward Compatibility**: Assess if change breaks existing implementations
+4. **Update All References**: Ensure all dependent documents are updated
+5. **Version Bump**: Increment document version for any behavioral change
+6. **Notify Stakeholders**: Alert affected skill owners of the change

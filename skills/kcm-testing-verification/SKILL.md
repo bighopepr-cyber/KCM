@@ -277,3 +277,32 @@ PASS / FAIL
 ## Missing Tests
 [List of required tests]
 ```
+
+## SSOT-First Testing Protocol
+
+Every test change MUST follow this protocol:
+
+1. **Identify SSOT Requirement**: Find the requirement being tested
+2. **Verify Test Coverage**: Ensure requirement has corresponding test
+3. **Write Test**: Write test matching specification behavior
+4. **Validate Test**: Ensure test passes and is deterministic
+5. **Check Coverage**: Ensure test covers edge cases and error paths
+
+## Test Pyramid (from SSOT)
+
+| Tier | Count | Speed | Purpose |
+|------|-------|-------|---------|
+| Unit | 89+ | < 100ms | Single function correctness |
+| Integration | 470+ | 1s-5s | Cross-component correctness |
+| Property | 8+ | 1-5min | Invariant verification |
+| Security | 29+ | varies | Attack surface validation |
+
+## Test Quality Standards
+
+| Standard | Requirement | Verification |
+|----------|-------------|-------------|
+| Determinism | Identical input produces identical output | Test execution |
+| Isolation | Tests don't depend on each other | Test execution |
+| Completeness | Tests cover happy path, error path, edge cases | Code review |
+| Performance | Tests complete within time budget | CI timeout |
+| Maintenance | Tests are readable and maintainable | Code review |
