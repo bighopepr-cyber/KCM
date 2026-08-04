@@ -73,7 +73,8 @@ fn main() -> Result<()> {
             };
 
             let final_path = if let Some(ref requested) = output {
-                std::fs::copy(&backup_path, requested).context("Failed to copy backup to output path")?;
+                std::fs::copy(&backup_path, requested)
+                    .context("Failed to copy backup to output path")?;
                 requested.clone()
             } else {
                 backup_path
@@ -102,10 +103,7 @@ fn main() -> Result<()> {
             println!("Backup verification:");
             println!("  Path:           {}", path.display());
             println!("  File size:      {} bytes", metadata.len());
-            println!(
-                "  Integrity:      {}",
-                if valid { "PASS" } else { "FAIL" }
-            );
+            println!("  Integrity:      {}", if valid { "PASS" } else { "FAIL" });
 
             if !valid {
                 anyhow::bail!("Backup integrity verification failed");
@@ -119,11 +117,8 @@ fn main() -> Result<()> {
             Ok(())
         }
         Commands::List { dir } => {
-            let manager =
-                BackupManager::new(dir).context("Failed to initialize BackupManager")?;
-            let backups = manager
-                .list_backups()
-                .context("Failed to list backups")?;
+            let manager = BackupManager::new(dir).context("Failed to initialize BackupManager")?;
+            let backups = manager.list_backups().context("Failed to list backups")?;
 
             if backups.is_empty() {
                 println!("No backups found");

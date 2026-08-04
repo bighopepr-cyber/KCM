@@ -128,6 +128,12 @@ impl Transaction {
         Ok(())
     }
 
+    pub fn abort(mut self) -> Result<(), KcmError> {
+        self.state = TransactionState::Aborted;
+        self.changes.clear();
+        Ok(())
+    }
+
     pub fn state(&self) -> TransactionState {
         self.state
     }

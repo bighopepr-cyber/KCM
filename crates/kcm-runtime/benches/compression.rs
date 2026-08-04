@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use kcm_storage::compress::{Compressor, Lz4Compressor, RleCompressor, ZstdCompressor};
 
 fn bench_compression(c: &mut Criterion) {
@@ -8,23 +8,17 @@ fn bench_compression(c: &mut Criterion) {
     for &size in &data_sizes {
         let data: Vec<u8> = (0..size).map(|i| (i % 256) as u8).collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("zstd_compress", size),
-            &data,
-            |b, data| b.iter(|| ZstdCompressor::default_level().compress(data).unwrap()),
-        );
+        group.bench_with_input(BenchmarkId::new("zstd_compress", size), &data, |b, data| {
+            b.iter(|| ZstdCompressor::default_level().compress(data).unwrap())
+        });
 
-        group.bench_with_input(
-            BenchmarkId::new("lz4_compress", size),
-            &data,
-            |b, data| b.iter(|| Lz4Compressor::default_level().compress(data).unwrap()),
-        );
+        group.bench_with_input(BenchmarkId::new("lz4_compress", size), &data, |b, data| {
+            b.iter(|| Lz4Compressor::default_level().compress(data).unwrap())
+        });
 
-        group.bench_with_input(
-            BenchmarkId::new("rle_compress", size),
-            &data,
-            |b, data| b.iter(|| RleCompressor::default_level().compress(data).unwrap()),
-        );
+        group.bench_with_input(BenchmarkId::new("rle_compress", size), &data, |b, data| {
+            b.iter(|| RleCompressor::default_level().compress(data).unwrap())
+        });
     }
 
     group.finish();

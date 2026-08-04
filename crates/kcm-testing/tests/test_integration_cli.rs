@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use kcm_runtime::metrics::Metrics;
 use kcm_runtime::health::HealthCheck;
+use kcm_runtime::metrics::Metrics;
 use std::sync::Arc;
 
 #[test]
@@ -10,13 +10,15 @@ fn test_database_full_lifecycle() {
     assert_eq!(db.fact_count(), 0);
 
     for i in 0..1000 {
-        db.insert(&Fact::new(
-            SubjectID((i % 100) as u32),
-            PredicateID((i % 10) as u8),
-            ObjectID((i % 200) as u32),
-            (i as f64 % 100.0) / 100.0,
+        db.insert(
+            &Fact::new(
+                SubjectID((i % 100) as u32),
+                PredicateID((i % 10) as u8),
+                ObjectID((i % 200) as u32),
+                (i as f64 % 100.0) / 100.0,
+            )
+            .unwrap(),
         )
-        .unwrap())
         .unwrap();
     }
     assert_eq!(db.fact_count(), 1000);
@@ -96,13 +98,15 @@ fn test_optimized_query_pipeline() {
     let db = KnowledgeDatabase::new().unwrap();
 
     for i in 0..500 {
-        db.insert(&Fact::new(
-            SubjectID((i % 10) as u32),
-            PredicateID((i % 5) as u8),
-            ObjectID((i % 50) as u32),
-            (i as f64 % 100.0) / 100.0,
+        db.insert(
+            &Fact::new(
+                SubjectID((i % 10) as u32),
+                PredicateID((i % 5) as u8),
+                ObjectID((i % 50) as u32),
+                (i as f64 % 100.0) / 100.0,
+            )
+            .unwrap(),
         )
-        .unwrap())
         .unwrap();
     }
 

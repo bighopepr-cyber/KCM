@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
 
@@ -37,13 +37,15 @@ fn bench_filtered_query(c: &mut Criterion) {
     let mut group = c.benchmark_group("filtered_query");
     let db = KnowledgeDatabase::new().unwrap();
     for i in 0..10_000 {
-        db.insert(&Fact::new(
-            SubjectID((i % 1000) as u32),
-            PredicateID((i % 10) as u8),
-            ObjectID((i % 500) as u32),
-            (i as f64 % 1000.0) / 1000.0,
+        db.insert(
+            &Fact::new(
+                SubjectID((i % 1000) as u32),
+                PredicateID((i % 10) as u8),
+                ObjectID((i % 500) as u32),
+                (i as f64 % 1000.0) / 1000.0,
+            )
+            .unwrap(),
         )
-        .unwrap())
         .unwrap();
     }
 
@@ -75,13 +77,15 @@ fn bench_concurrent_ops(c: &mut Criterion) {
             || KnowledgeDatabase::new().unwrap(),
             |db| {
                 for i in 0..1000 {
-                    db.insert(&Fact::new(
-                        SubjectID((i % 100) as u32),
-                        PredicateID(0),
-                        ObjectID(i as u32),
-                        0.95,
-                    )
-                    .unwrap());
+                    db.insert(
+                        &Fact::new(
+                            SubjectID((i % 100) as u32),
+                            PredicateID(0),
+                            ObjectID(i as u32),
+                            0.95,
+                        )
+                        .unwrap(),
+                    );
                 }
             },
             criterion::BatchSize::SmallInput,
@@ -91,13 +95,15 @@ fn bench_concurrent_ops(c: &mut Criterion) {
     group.bench_function("single_thread_query_1000", |b| {
         let db = KnowledgeDatabase::new().unwrap();
         for i in 0..1000 {
-            db.insert(&Fact::new(
-                SubjectID((i % 100) as u32),
-                PredicateID(0),
-                ObjectID(i as u32),
-                0.95,
+            db.insert(
+                &Fact::new(
+                    SubjectID((i % 100) as u32),
+                    PredicateID(0),
+                    ObjectID(i as u32),
+                    0.95,
+                )
+                .unwrap(),
             )
-            .unwrap())
             .unwrap();
         }
         b.iter(|| {

@@ -43,7 +43,7 @@ fn main() -> Result<()> {
         Commands::Create { count } => {
             let db = KnowledgeDatabase::new()?;
             println!("Created new database");
-            
+
             for i in 0..*count {
                 let fact = Fact::new(
                     SubjectID((i % 100) as u32),
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
                 )?;
                 db.insert(&fact)?;
             }
-            
+
             println!("Inserted {} facts", count);
             println!("Total facts: {}", db.fact_count());
             Ok(())
@@ -77,7 +77,7 @@ fn main() -> Result<()> {
         Commands::Benchmark { ops } => {
             let db = KnowledgeDatabase::new()?;
             let start = std::time::Instant::now();
-            
+
             for i in 0..*ops {
                 let fact = Fact::new(
                     SubjectID((i % 100) as u32),
@@ -87,12 +87,15 @@ fn main() -> Result<()> {
                 )?;
                 db.insert(&fact)?;
             }
-            
+
             let elapsed = start.elapsed();
             println!("Benchmark Results:");
             println!("  Operations: {}", ops);
             println!("  Elapsed: {:?}", elapsed);
-            println!("  Throughput: {:.2} ops/sec", *ops as f64 / elapsed.as_secs_f64());
+            println!(
+                "  Throughput: {:.2} ops/sec",
+                *ops as f64 / elapsed.as_secs_f64()
+            );
             Ok(())
         }
         Commands::Version => {

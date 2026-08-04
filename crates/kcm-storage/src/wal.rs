@@ -268,7 +268,7 @@ impl WriteAheadLog {
 
             match op_type {
                 1 => {
-                    if offset + 34 > data.len() {
+                    if offset + 37 > data.len() {
                         return Err(KcmError::Corrupted(format!(
                             "Truncated INSERT entry at offset {}",
                             offset - 1

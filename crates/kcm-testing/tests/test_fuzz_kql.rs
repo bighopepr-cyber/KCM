@@ -1,7 +1,7 @@
-use kcm_core::types::*;
-use kcm_core::vec::DenseVec;
 use kcm_core::bitmap::Bitmap;
 use kcm_core::dictionary::Dictionary;
+use kcm_core::types::*;
+use kcm_core::vec::DenseVec;
 
 #[test]
 fn test_fuzz_densevec_various_sizes() {
@@ -48,7 +48,14 @@ fn test_fuzz_dictionary_various_sizes() {
 
 #[test]
 fn test_fuzz_fact_creation() {
-    let invalid_confs = [-1.0, -0.001, 1.001, f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
+    let invalid_confs = [
+        -1.0,
+        -0.001,
+        1.001,
+        f64::NAN,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+    ];
     for c in invalid_confs {
         let result = Fact::new(SubjectID(1), PredicateID(0), ObjectID(1), c);
         assert!(result.is_err(), "Should reject confidence {}", c);

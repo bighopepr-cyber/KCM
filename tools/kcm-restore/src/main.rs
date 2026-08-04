@@ -41,8 +41,9 @@ fn main() -> Result<()> {
 
             println!("Restoring from backup: {}", backup.display());
 
-            let valid = DatabaseFile::verify(backup)
-                .with_context(|| format!("Failed to verify backup integrity: {}", backup.display()))?;
+            let valid = DatabaseFile::verify(backup).with_context(|| {
+                format!("Failed to verify backup integrity: {}", backup.display())
+            })?;
 
             if !valid {
                 anyhow::bail!("Backup integrity check failed; file may be corrupted");
@@ -69,8 +70,7 @@ fn main() -> Result<()> {
             Ok(())
         }
         Commands::List { dir } => {
-            let manager =
-                BackupManager::new(dir).context("Failed to initialize BackupManager")?;
+            let manager = BackupManager::new(dir).context("Failed to initialize BackupManager")?;
             let backups = manager
                 .list_backups()
                 .context("Failed to list restore points")?;
@@ -105,10 +105,7 @@ fn main() -> Result<()> {
             println!("Restore point verification:");
             println!("  Path:           {}", path.display());
             println!("  File size:      {} bytes", metadata.len());
-            println!(
-                "  Integrity:      {}",
-                if valid { "PASS" } else { "FAIL" }
-            );
+            println!("  Integrity:      {}", if valid { "PASS" } else { "FAIL" });
 
             if !valid {
                 anyhow::bail!("Restore point integrity verification failed");

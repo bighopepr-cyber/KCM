@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use colored::Colorize;
 use std::time::Instant;
 
 #[derive(Parser)]
@@ -31,7 +31,7 @@ fn main() -> Result<()> {
         Commands::Analyze => {
             println!("{}", "Performance Analysis".bold());
             println!();
-            
+
             // Insert benchmark
             let db = KnowledgeDatabase::new()?;
             let start = Instant::now();
@@ -44,32 +44,38 @@ fn main() -> Result<()> {
                 )?)?;
             }
             let insert_elapsed = start.elapsed();
-            
+
             // Query benchmark
             let start = Instant::now();
             for _ in 0..10000 {
                 let _ = db.query().execute()?;
             }
             let query_elapsed = start.elapsed();
-            
+
             // Filtered query benchmark
             let start = Instant::now();
             for _ in 0..10000 {
                 let _ = db.query().with_subject(SubjectID(1)).execute()?;
             }
             let filtered_elapsed = start.elapsed();
-            
+
             println!("  Operation           | Throughput      | Latency");
             println!("  --------------------|-----------------|----------");
-            println!("  Insert (10K)        | {:.0} ops/sec    | {:.2} us", 
+            println!(
+                "  Insert (10K)        | {:.0} ops/sec    | {:.2} us",
                 10000.0 / insert_elapsed.as_secs_f64(),
-                insert_elapsed.as_micros() as f64 / 10000.0);
-            println!("  Query (10K)         | {:.0} ops/sec    | {:.2} us",
+                insert_elapsed.as_micros() as f64 / 10000.0
+            );
+            println!(
+                "  Query (10K)         | {:.0} ops/sec    | {:.2} us",
                 10000.0 / query_elapsed.as_secs_f64(),
-                query_elapsed.as_micros() as f64 / 10000.0);
-            println!("  Filtered (10K)      | {:.0} ops/sec    | {:.2} us",
+                query_elapsed.as_micros() as f64 / 10000.0
+            );
+            println!(
+                "  Filtered (10K)      | {:.0} ops/sec    | {:.2} us",
                 10000.0 / filtered_elapsed.as_secs_f64(),
-                filtered_elapsed.as_micros() as f64 / 10000.0);
+                filtered_elapsed.as_micros() as f64 / 10000.0
+            );
             Ok(())
         }
         Commands::Baseline => {
@@ -79,7 +85,10 @@ fn main() -> Result<()> {
         }
         Commands::Compare => {
             println!("{}", "Comparing Against Baseline".bold());
-            println!("  Status: {}", "No baseline found - run 'kcm-perf baseline' first".yellow());
+            println!(
+                "  Status: {}",
+                "No baseline found - run 'kcm-perf baseline' first".yellow()
+            );
             Ok(())
         }
     }

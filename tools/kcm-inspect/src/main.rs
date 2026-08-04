@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use colored::Colorize;
 
 #[derive(Parser)]
 #[command(name = "kcm-inspect")]
@@ -63,13 +63,18 @@ fn main() -> Result<()> {
             let db = KnowledgeDatabase::new()?;
             for i in 0..*count {
                 db.insert(&Fact::new(
-                    SubjectID((i % 1000) as u32), PredicateID((i % 10) as u8),
-                    ObjectID((i % 500) as u32), (i as f64 % 1000.0) / 1000.0,
+                    SubjectID((i % 1000) as u32),
+                    PredicateID((i % 10) as u8),
+                    ObjectID((i % 500) as u32),
+                    (i as f64 % 1000.0) / 1000.0,
                 )?)?;
             }
             println!("  Total facts:   {}", db.fact_count());
             println!("  Active facts:  {}", db.active_fact_count());
-            println!("  Memory est:    {:.2} MB", db.fact_count() as f64 * 34.0 / 1_048_576.0);
+            println!(
+                "  Memory est:    {:.2} MB",
+                db.fact_count() as f64 * 34.0 / 1_048_576.0
+            );
             Ok(())
         }
         Commands::Dictionary => {

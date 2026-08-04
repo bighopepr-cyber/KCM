@@ -30,13 +30,13 @@ fn main() -> Result<()> {
         Commands::Check => {
             println!("{}", "KCM Health Check".bold());
             println!();
-            
+
             print!("  Database creation... ");
             match kcm_runtime::database::KnowledgeDatabase::new() {
                 Ok(_) => println!("{}", "OK".green()),
                 Err(e) => println!("{} ({})", "FAILED".red(), e),
             }
-            
+
             print!("  Fact insertion... ");
             let db = kcm_runtime::database::KnowledgeDatabase::new()?;
             let fact = kcm_core::types::Fact::new(
@@ -49,13 +49,13 @@ fn main() -> Result<()> {
                 Ok(_) => println!("{}", "OK".green()),
                 Err(e) => println!("{} ({})", "FAILED".red(), e),
             }
-            
+
             print!("  Fact query... ");
             match db.query().execute() {
                 Ok(_) => println!("{}", "OK".green()),
                 Err(e) => println!("{} ({})", "FAILED".red(), e),
             }
-            
+
             print!("  Metrics... ");
             let metrics = kcm_runtime::metrics::Metrics::new();
             metrics.record_insert(true);
@@ -65,7 +65,7 @@ fn main() -> Result<()> {
             } else {
                 println!("{}", "FAILED".red());
             }
-            
+
             println!();
             println!("{}", "Health check complete".bold());
             Ok(())

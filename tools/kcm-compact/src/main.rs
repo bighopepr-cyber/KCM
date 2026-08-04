@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use colored::Colorize;
 use std::time::Instant;
 
 #[derive(Parser)]
@@ -41,7 +41,7 @@ fn main() -> Result<()> {
     match &cli.command {
         Commands::Run { count } => {
             println!("{}", "Storage Compaction".bold());
-            
+
             let db = KnowledgeDatabase::new()?;
             for i in 0..*count {
                 db.insert(&Fact::new(
@@ -52,11 +52,11 @@ fn main() -> Result<()> {
                 )?)?;
             }
             println!("  Populated {} facts", count);
-            
+
             let start = Instant::now();
             let compacted = db.compact()?;
             let elapsed = start.elapsed();
-            
+
             println!("  Compacted in {:?}", elapsed);
             println!("  Facts after: {}", compacted.fact_count());
             println!("  {}", "Compaction complete".green());
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
         }
         Commands::Analyze { count } => {
             println!("{}", "Storage Analysis".bold());
-            
+
             let db = KnowledgeDatabase::new()?;
             for i in 0..*count {
                 db.insert(&Fact::new(
@@ -74,12 +74,15 @@ fn main() -> Result<()> {
                     (i as f64 % 1000.0) / 1000.0,
                 )?)?;
             }
-            
+
             println!("  Total facts:      {}", db.fact_count());
             println!("  Active facts:     {}", db.active_fact_count());
             let fact_count = db.fact_count() as u64;
             let _memory_bytes = fact_count * 34;
-            println!("  Estimated memory: {:.2} MB", (db.fact_count() as f64 * 34.0) / 1_048_576.0);
+            println!(
+                "  Estimated memory: {:.2} MB",
+                (db.fact_count() as f64 * 34.0) / 1_048_576.0
+            );
             println!("  {}", "Analysis complete".green());
             Ok(())
         }
@@ -94,14 +97,17 @@ fn main() -> Result<()> {
                     (i as f64 % 1000.0) / 1000.0,
                 )?)?;
             }
-            
+
             let start = Instant::now();
             let _compacted = db.compact()?;
             let elapsed = start.elapsed();
-            
+
             println!("  Facts compacted: {}", count);
             println!("  Compaction time:  {:?}", elapsed);
-            println!("  Throughput:       {:.0} facts/sec", *count as f64 / elapsed.as_secs_f64());
+            println!(
+                "  Throughput:       {:.0} facts/sec",
+                *count as f64 / elapsed.as_secs_f64()
+            );
             Ok(())
         }
     }

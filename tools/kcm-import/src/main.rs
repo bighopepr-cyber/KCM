@@ -1,9 +1,9 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
 use std::path::PathBuf;
-use colored::Colorize;
 
 #[derive(Parser)]
 #[command(name = "kcm-import")]
@@ -45,40 +45,53 @@ enum Commands {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match &cli.command {
-        Commands::Csv { input, subject_col, predicate_col, object_col, confidence_col } => {
+        Commands::Csv {
+            input,
+            subject_col,
+            predicate_col,
+            object_col,
+            confidence_col,
+        } => {
             println!("{}", "CSV Import".bold());
             println!("  File: {:?}", input);
-            
+
             let data = std::fs::read_to_string(input)?;
             let lines: Vec<&str> = data.lines().collect();
             if lines.is_empty() {
                 println!("  {}", "Empty file".red());
                 return Ok(());
             }
-            
+
             // Detect header
-            let (header_line, data_lines) = if lines[0].contains(',') && !lines[0].chars().all(|c| c.is_ascii_digit() || c == '.' || c == '-' || c == ',') {
+            let (header_line, data_lines) = if lines[0].contains(',')
+                && !lines[0]
+                    .chars()
+                    .all(|c| c.is_ascii_digit() || c == '.' || c == '-' || c == ',')
+            {
                 (Some(lines[0]), &lines[1..])
             } else {
                 (None, &lines[..])
             };
-            
+
             if let Some(h) = header_line {
                 println!("  Header: {}", h);
             }
-            
+
             let db = KnowledgeDatabase::new()?;
             let mut count = 0;
             let mut errors = 0;
-            
-            for (_line_num, line) in data_lines.iter().enumerate() {
+
+            for line in data_lines.iter() {
                 let parts: Vec<&str> = line.split(',').collect();
-                let max_col = *subject_col.max(predicate_col).max(object_col).max(confidence_col);
+                let max_col = *subject_col
+                    .max(predicate_col)
+                    .max(object_col)
+                    .max(confidence_col);
                 if parts.len() <= max_col + 1 {
                     errors += 1;
                     continue;
                 }
-                
+
                 match (
                     parts[*subject_col].trim().parse::<u32>(),
                     parts[*predicate_col].trim().parse::<u8>(),
@@ -93,41 +106,58 @@ fn main() -> Result<()> {
                             errors += 1;
                         }
                     }
-                    _ => { errors += 1; }
+                    _ => {
+                        errors += 1;
+                    }
                 }
             }
-            
+
             println!("  Imported: {} facts", count);
             if errors > 0 {
                 println!("  Errors:   {} rows skipped", errors);
             }
-            println!("  Database: {} total, {} active", db.fact_count(), db.active_fact_count());
+            println!(
+                "  Database: {} total, {} active",
+                db.fact_count(),
+                db.active_fact_count()
+            );
             println!("  {}", "Import complete".green());
             Ok(())
         }
         Commands::Json { input } => {
             println!("{}", "JSON Import".bold());
             println!("  File: {:?}", input);
-            
+
             let data = std::fs::read_to_string(input)?;
             let json: serde_json::Value = serde_json::from_str(&data)?;
-            
+
             let db = KnowledgeDatabase::new()?;
             let mut count = 0;
-            
+
             if let Some(facts) = json.as_array() {
                 for fact in facts {
-                    let s = fact["subject"].as_u64().unwrap_or(fact.get("s").and_then(|v| v.as_u64()).unwrap_or(0)) as u32;
-                    let p = fact["predicate"].as_u64().unwrap_or(fact.get("p").and_then(|v| v.as_u64()).unwrap_or(0)) as u8;
-                    let o = fact["object"].as_u64().unwrap_or(fact.get("o").and_then(|v| v.as_u64()).unwrap_or(0)) as u32;
-                    let c = fact["confidence"].as_f64().unwrap_or(fact.get("c").and_then(|v| v.as_f64()).unwrap_or(0.5));
+                    let s = fact["subject"]
+                        .as_u64()
+                        .unwrap_or(fact.get("s").and_then(|v| v.as_u64()).unwrap_or(0))
+                        as u32;
+                    let p = fact["predicate"]
+                        .as_u64()
+                        .unwrap_or(fact.get("p").and_then(|v| v.as_u64()).unwrap_or(0))
+                        as u8;
+                    let o = fact["object"]
+                        .as_u64()
+                        .unwrap_or(fact.get("o").and_then(|v| v.as_u64()).unwrap_or(0))
+                        as u32;
+                    let c = fact["confidence"]
+                        .as_f64()
+                        .unwrap_or(fact.get("c").and_then(|v| v.as_f64()).unwrap_or(0.5));
                     if let Ok(f) = Fact::new(SubjectID(s), PredicateID(p), ObjectID(o), c) {
                         let _ = db.insert(&f);
                         count += 1;
                     }
                 }
             }
-            
+
             println!("  Imported: {} facts", count);
             println!("  Database: {} total", db.fact_count());
             println!("  {}", "Import complete".green());
@@ -136,7 +166,7 @@ fn main() -> Result<()> {
         Commands::Schema { input } => {
             println!("{}", "Schema Inference".bold());
             println!("  File: {:?}", input);
-            let data = std::fs::read_to_string(&input)?;
+            let data = std::fs::read_to_string(input)?;
             let lines: Vec<&str> = data.lines().collect();
             println!("  Lines: {}", lines.len());
             if let Some(header) = lines.first() {

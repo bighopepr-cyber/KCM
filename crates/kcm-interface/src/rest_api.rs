@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use kcm_runtime::metrics::Metrics;
 use kcm_runtime::health::HealthCheck;
+use kcm_runtime::metrics::Metrics;
 use std::sync::Arc;
 
 pub struct ApiState {
@@ -17,27 +17,45 @@ pub struct ApiResponse {
 
 impl ApiResponse {
     pub fn ok(body: &str) -> Self {
-        ApiResponse { status: 200, body: body.to_string() }
+        ApiResponse {
+            status: 200,
+            body: body.to_string(),
+        }
     }
 
     pub fn created(body: &str) -> Self {
-        ApiResponse { status: 201, body: body.to_string() }
+        ApiResponse {
+            status: 201,
+            body: body.to_string(),
+        }
     }
 
     pub fn bad_request(msg: &str) -> Self {
-        ApiResponse { status: 400, body: format!(r#"{{"error":"{}","status":400}}"#, msg) }
+        ApiResponse {
+            status: 400,
+            body: format!(r#"{{"error":"{}","status":400}}"#, msg),
+        }
     }
 
     pub fn not_found(msg: &str) -> Self {
-        ApiResponse { status: 404, body: format!(r#"{{"error":"{}","status":404}}"#, msg) }
+        ApiResponse {
+            status: 404,
+            body: format!(r#"{{"error":"{}","status":404}}"#, msg),
+        }
     }
 
     pub fn internal_error(msg: &str) -> Self {
-        ApiResponse { status: 500, body: format!(r#"{{"error":"{}","status":500}}"#, msg) }
+        ApiResponse {
+            status: 500,
+            body: format!(r#"{{"error":"{}","status":500}}"#, msg),
+        }
     }
 
     pub fn rate_limited() -> Self {
-        ApiResponse { status: 429, body: r#"{"error":"Rate limit exceeded","status":429}"#.to_string() }
+        ApiResponse {
+            status: 429,
+            body: r#"{"error":"Rate limit exceeded","status":429}"#.to_string(),
+        }
     }
 }
 
@@ -57,7 +75,12 @@ pub fn handle_insert(
     object: u32,
     confidence: f64,
 ) -> ApiResponse {
-    let fact = match Fact::new(SubjectID(subject), PredicateID(predicate), ObjectID(object), confidence) {
+    let fact = match Fact::new(
+        SubjectID(subject),
+        PredicateID(predicate),
+        ObjectID(object),
+        confidence,
+    ) {
         Ok(f) => f,
         Err(e) => return ApiResponse::bad_request(&format!("Invalid fact: {}", e)),
     };
@@ -73,10 +96,7 @@ pub fn handle_insert(
     }
 }
 
-pub fn handle_batch_insert(
-    state: &ApiState,
-    facts: Vec<(u32, u8, u32, f64)>,
-) -> ApiResponse {
+pub fn handle_batch_insert(state: &ApiState, facts: Vec<(u32, u8, u32, f64)>) -> ApiResponse {
     let mut inserted = 0u64;
     let mut errors = 0u64;
     for (s, p, o, c) in facts {
@@ -104,19 +124,36 @@ pub fn handle_query(
     confidence_min: Option<f64>,
 ) -> ApiResponse {
     let mut query = state.db.query();
-    if let Some(s) = subject { query = query.with_subject(SubjectID(s)); }
-    if let Some(p) = predicate { query = query.with_predicate(PredicateID(p)); }
-    if let Some(o) = object { query = query.with_object(ObjectID(o)); }
-    if let Some(c) = confidence_min { query = query.with_confidence(c); }
+    if let Some(s) = subject {
+        query = query.with_subject(SubjectID(s));
+    }
+    if let Some(p) = predicate {
+        query = query.with_predicate(PredicateID(p));
+    }
+    if let Some(o) = object {
+        query = query.with_object(ObjectID(o));
+    }
+    if let Some(c) = confidence_min {
+        query = query.with_confidence(c);
+    }
 
     match query.execute() {
         Ok(results) => {
             state.metrics.record_query(0, true);
-            let facts: Vec<String> = results.iter().map(|f| {
-                format!(r#"{{"subject":{},"predicate":{},"object":{},"confidence":{}}}"#,
-                    f.subject.0, f.predicate.0, f.object.0, f.confidence)
-            }).collect();
-            ApiResponse::ok(&format!(r#"{{"facts":[{}],"count":{}}}"#, facts.join(","), results.len()))
+            let facts: Vec<String> = results
+                .iter()
+                .map(|f| {
+                    format!(
+                        r#"{{"subject":{},"predicate":{},"object":{},"confidence":{}}}"#,
+                        f.subject.0, f.predicate.0, f.object.0, f.confidence
+                    )
+                })
+                .collect();
+            ApiResponse::ok(&format!(
+                r#"{{"facts":[{}],"count":{}}}"#,
+                facts.join(","),
+                results.len()
+            ))
         }
         Err(e) => {
             state.metrics.record_query(0, false);
@@ -144,7 +181,12 @@ pub fn handle_update(
     object: u32,
     confidence: f64,
 ) -> ApiResponse {
-    let fact = match Fact::new(SubjectID(subject), PredicateID(predicate), ObjectID(object), confidence) {
+    let fact = match Fact::new(
+        SubjectID(subject),
+        PredicateID(predicate),
+        ObjectID(object),
+        confidence,
+    ) {
         Ok(f) => f,
         Err(e) => return ApiResponse::bad_request(&format!("Invalid fact: {}", e)),
     };
@@ -165,8 +207,11 @@ pub fn handle_stats(state: &ApiState) -> ApiResponse {
     let snapshot = state.metrics.snapshot();
     ApiResponse::ok(&format!(
         r#"{{"fact_count":{},"active_count":{},"total_inserts":{},"total_queries":{},"avg_latency_ms":{:.2},"memory_bytes":{}}}"#,
-        state.db.fact_count(), state.db.active_fact_count(),
-        snapshot.inserts_total, snapshot.queries_total,
-        snapshot.avg_query_latency_ms, snapshot.memory_bytes
+        state.db.fact_count(),
+        state.db.active_fact_count(),
+        snapshot.inserts_total,
+        snapshot.queries_total,
+        snapshot.avg_query_latency_ms,
+        snapshot.memory_bytes
     ))
 }

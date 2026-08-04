@@ -150,6 +150,10 @@ The `compact()` method creates a new database with only active (non-deleted) fac
 
 This operation is O(n) where n = total rows. Tombstone entries are eliminated.
 
+### 5.4 WAL Evidence Field Handling
+
+Evidence fields are intentionally not persisted in the WAL. On WAL replay, the evidence field defaults to `UNKNOWN` (value `0`). This aligns with PRD2.md §3.1, which specifies that evidence is a runtime-only field derived from the query context at insert time, not a durable property of the fact.
+
 ---
 
 ## 6. Metrics

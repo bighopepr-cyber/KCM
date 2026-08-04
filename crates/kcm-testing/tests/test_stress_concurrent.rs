@@ -97,22 +97,26 @@ fn test_concurrent_transactions() {
                 for i in 0..50 {
                     // Use begin_transaction -> insert -> apply -> commit per API contract
                     let mut txn = db.begin_transaction();
-                    let _ = txn.insert(Fact::new(
-                        SubjectID((t * 1000 + i) as u32),
-                        PredicateID(0),
-                        ObjectID(i as u32),
-                        0.9,
-                    )
-                    .unwrap());
+                    let _ = txn.insert(
+                        Fact::new(
+                            SubjectID((t * 1000 + i) as u32),
+                            PredicateID(0),
+                            ObjectID(i as u32),
+                            0.9,
+                        )
+                        .unwrap(),
+                    );
                     // Transaction is a change buffer; commit marks completion
                     // For testing concurrent inserts, use direct insert which is thread-safe
-                    let _ = db.insert(&Fact::new(
-                        SubjectID((t * 1000 + i) as u32),
-                        PredicateID(0),
-                        ObjectID(i as u32),
-                        0.9,
-                    )
-                    .unwrap());
+                    let _ = db.insert(
+                        &Fact::new(
+                            SubjectID((t * 1000 + i) as u32),
+                            PredicateID(0),
+                            ObjectID(i as u32),
+                            0.9,
+                        )
+                        .unwrap(),
+                    );
                     txn.commit().unwrap();
                 }
             })
@@ -130,13 +134,15 @@ fn test_concurrent_transactions() {
 fn test_stress_insert_100k() {
     let db = KnowledgeDatabase::new().unwrap();
     for i in 0..100_000 {
-        db.insert(&Fact::new(
-            SubjectID((i % 10_000) as u32),
-            PredicateID((i % 10) as u8),
-            ObjectID((i % 5000) as u32),
-            (i as f64 % 10000.0) / 10000.0,
+        db.insert(
+            &Fact::new(
+                SubjectID((i % 10_000) as u32),
+                PredicateID((i % 10) as u8),
+                ObjectID((i % 5000) as u32),
+                (i as f64 % 10000.0) / 10000.0,
+            )
+            .unwrap(),
         )
-        .unwrap())
         .unwrap();
     }
     assert_eq!(db.fact_count(), 100_000);
@@ -146,13 +152,15 @@ fn test_stress_insert_100k() {
 fn test_stress_query_10k() {
     let db = KnowledgeDatabase::new().unwrap();
     for i in 0..10_000 {
-        db.insert(&Fact::new(
-            SubjectID((i % 1000) as u32),
-            PredicateID((i % 10) as u8),
-            ObjectID((i % 500) as u32),
-            0.95,
+        db.insert(
+            &Fact::new(
+                SubjectID((i % 1000) as u32),
+                PredicateID((i % 10) as u8),
+                ObjectID((i % 500) as u32),
+                0.95,
+            )
+            .unwrap(),
         )
-        .unwrap())
         .unwrap();
     }
     for _ in 0..10_000 {

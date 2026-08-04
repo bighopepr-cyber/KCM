@@ -31,6 +31,7 @@ impl Default for CorsConfig {
 
 impl CorsConfig {
     pub fn is_origin_allowed(&self, origin: &str) -> bool {
-        self.allowed_origins.contains(&"*".to_string()) || self.allowed_origins.iter().any(|o| o == origin)
+        self.allowed_origins.contains(&"*".to_string())
+            || self.allowed_origins.iter().any(|o| o == origin)
     }
 }

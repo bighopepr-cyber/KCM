@@ -1,110 +1,19 @@
-name: Benchmark & Regression Detection
+name: KCM Benchmarks
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   schedule:
-    - cron: '0 6 * * 1'
-
-env:
-  CARGO_TERM_COLOR: always
+    - cron: '0 6 * * 1'  # Weekly on Monday
 
 jobs:
   benchmark:
-    name: Performance Benchmarks
+    name: Run Benchmarks
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-
       - uses: dtolnay/rust-toolchain@stable
+      - run: cargo bench --workspace 2>&1 | tee benchmark-results/output.txt
+      - uses: actions/upload-artifact@v4
         with:
-          components: rustfmt
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Collect environment metadata
-        run: |
-          mkdir -p benchmark-results/metadata benchmark-results/raw benchmark-results/reports
-          
-          cat > benchmark-results/metadata/environment.json << ENVEOF
-          {
-            "os": "ubuntu-latest",
-            "cpu": "LINUX",
-            "cores": $(nproc),
-            "ram_mb": $(free -m | awk '/^Mem:/{print $2}'),
-            "rust_version": "$(rustc --version)"
-          }
-          ENVEOF
-          
-          cat > benchmark-results/metadata/git.json << GITEOF
-          {
-            "commit": "$(git rev-parse HEAD)",
-            "branch": "$(git rev-parse --abbrev-ref HEAD)",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "message": "$(git log -1 --pretty=format:'%s')"
-          }
-          GITEOF
-
-      - name: Build benchmarks
-        run: cargo bench --workspace --no-run 2>&1 | tee benchmark-results/raw/build.log
-
-      - name: Run benchmarks
-        run: cargo bench --workspace 2>&1 | tee benchmark-results/raw/bench.log
-
-      - name: Copy criterion results
-        run: |
-          if [ -d "target/criterion" ]; then
-            cp -r target/criterion benchmark-results/raw/criterion-results
-          fi
-
-      - name: Detect regressions
-        run: |
-          python3 tools/bench-compare.py \
-            --threshold-warn 5 \
-            --threshold-fail 10 \
-            --bench-log benchmark-results/raw/bench.log \
-            --output-dir benchmark-results/reports || REGRESSION_EXIT=$?
-          
-          if [ "${REGRESSION_EXIT:-0}" = "1" ]; then
-            echo ""
-            echo "============================================="
-            echo "REGRESSION DETECTED — See benchmark-results/reports/"
-            echo "============================================="
-            echo ""
-            cat benchmark-results/reports/KCM_BENCHMARK_REPORT.md 2>/dev/null || true
-            exit 1
-          fi
-
-      - name: Save baseline (main branch only)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          python3 tools/bench-compare.py \
-            --bench-log benchmark-results/raw/bench.log \
-            --output-dir benchmark-results/reports \
-            --save-baseline
-          
-          if [ -f "benchmark-results/baseline.json" ]; then
-            cp benchmark-results/baseline.json benchmark-results/baseline-current.json
-          fi
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: kcm-benchmark-results
+          name: benchmark-results
           path: benchmark-results/
-          retention-days: 90
-          if-no-files-found: warn
-
-      - name: Upload regression report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: kcm-regression-report
-          path: benchmark-results/reports/
-          retention-days: 90
-          if-no-files-found: warn

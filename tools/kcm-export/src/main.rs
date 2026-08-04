@@ -50,7 +50,7 @@ fn main() -> Result<()> {
     match &cli.command {
         Commands::Json { output, count } => {
             let db = KnowledgeDatabase::new()?;
-            
+
             for i in 0..*count {
                 let fact = Fact::new(
                     SubjectID((i % 100) as u32),
@@ -60,7 +60,7 @@ fn main() -> Result<()> {
                 )?;
                 db.insert(&fact)?;
             }
-            
+
             let mut facts = Vec::new();
             let results = db.query().execute()?;
             for fact in &results {
@@ -71,16 +71,16 @@ fn main() -> Result<()> {
                     "confidence": fact.confidence,
                 }));
             }
-            
+
             let json = serde_json::to_string_pretty(&facts)?;
             std::fs::write(output, &json)?;
-            
+
             println!("Exported {} facts to {:?}", facts.len(), output);
             Ok(())
         }
         Commands::Csv { output, count } => {
             let db = KnowledgeDatabase::new()?;
-            
+
             for i in 0..*count {
                 let fact = Fact::new(
                     SubjectID((i % 100) as u32),
@@ -90,13 +90,16 @@ fn main() -> Result<()> {
                 )?;
                 db.insert(&fact)?;
             }
-            
+
             let results = db.query().execute()?;
             let mut csv = String::from("subject,predicate,object,confidence\n");
             for fact in &results {
-                csv.push_str(&format!("{},{},{},{}\n", fact.subject.0, fact.predicate.0, fact.object.0, fact.confidence));
+                csv.push_str(&format!(
+                    "{},{},{},{}\n",
+                    fact.subject.0, fact.predicate.0, fact.object.0, fact.confidence
+                ));
             }
-            
+
             std::fs::write(output, &csv)?;
             println!("Exported {} facts to {:?}", results.len(), output);
             Ok(())

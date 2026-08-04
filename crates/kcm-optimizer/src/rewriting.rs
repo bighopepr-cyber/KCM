@@ -228,7 +228,7 @@ impl Default for OptimizerPipeline {
 impl PlanNode {
     pub fn estimated_cost_rows(&self) -> usize {
         match self {
-            PlanNode::Scan { .. } => 1000,
+            PlanNode::Scan { .. } => 10000,
             PlanNode::Filter { child, .. } => child.estimated_cost_rows() / 2,
             PlanNode::Join { left, right, .. } => {
                 left.estimated_cost_rows().max(right.estimated_cost_rows())

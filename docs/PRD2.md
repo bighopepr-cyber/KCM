@@ -67,7 +67,7 @@ Six shared dictionaries in `KnowledgeDatabase`:
 | Insert | 38 bytes | op(1) + subject(4) + predicate(1) + object(4) + confidence(8) + timestamp(8) + context(1) + version(4) + priority(1) + owner(2) + crc32(4) |
 | Delete | 13 bytes | op(1) + row_id(8) + crc32(4) |
 
-Note: `evidence` is not stored in WAL entries. On replay, `evidence` defaults to `EvidenceID::UNKNOWN`.
+Note: `evidence` is intentionally not stored in WAL entries. On replay, `evidence` defaults to `EvidenceID::UNKNOWN`. This is a design decision to minimize WAL entry size — evidence provenance is reconstructed from the source system, not from WAL replay. See KCM_COLUMNAR_FORMAT_SPEC §3 for the complete WAL entry layout.
 
 ### 3.2 WAL Properties
 
