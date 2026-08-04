@@ -100,7 +100,7 @@ kcm-interface, kcm-testing, kcm-server
 | metrics.rs | kcm-runtime | AtomicU64 metrics |
 | health.rs | kcm-runtime | Health checks |
 | logging.rs | kcm-runtime | Structured logging |
-| lib.rs | kcm-interface | C FFI (15 functions) |
+| lib.rs | kcm-interface | C FFI (18 functions) |
 | rest_api.rs | kcm-interface | REST handlers |
 | kql_parser.rs | kcm-interface | KQL lexer/parser |
 | python.rs | kcm-interface | PyO3 bindings |

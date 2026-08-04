@@ -37,8 +37,8 @@ Testing proves correctness, not just absence of failures. Every test must valida
 
 | Category | Scope | Speed | Count Target | Framework |
 |----------|-------|-------|-------------|-----------|
-| Unit | Single function/module | < 100ms | 90+ | #[test] |
-| Integration | Cross-crate | 1s-5s | 108+ | #[test] |
+| Unit | Single function/module | < 100ms | 89+ | #[test] |
+| Integration | Cross-crate | 1s-5s | 470+ | #[test] |
 | Property | Invariant verification | 1-5min | 8+ | proptest |
 | Security | Attack surface | varies | 29+ | #[test] |
 | Load | Concurrency/throughput | 5min+ | 6 scenarios | custom |
@@ -47,22 +47,24 @@ Testing proves correctness, not just absence of failures. Every test must valida
 
 ### 3.2 Test Distribution by Crate
 
-| Crate | Unit | Integration | Property | Security |
-|-------|------|-------------|----------|----------|
-| kcm-core | 43 | 14 | 4 | 8 |
-| kcm-storage | 14 | 22 | 2 | 4 |
-| kcm-compute | 8 | 3 | 0 | 2 |
-| kcm-reasoning | 0 | 17 | 2 | 3 |
-| kcm-optimizer | 7 | 5 | 0 | 0 |
-| kcm-runtime | 0 | 14 | 0 | 4 |
-| kcm-interface | 0 | 10 | 0 | 3 |
-| kcm-distributed | 0 | 7 | 0 | 2 |
-| kcm-ml | 0 | 5 | 0 | 1 |
-| kcm-security | 0 | 4 | 0 | 2 |
-| kcm-compliance | 0 | 3 | 0 | 0 |
-| kcm-testing | 18 | 5 | 0 | 0 |
-| kcm-server | 0 | 0 | 0 | 0 |
-| **Total** | **90** | **108** | **8** | **29** |
+Actual `#[test]` annotation counts (as of 2026-08-04):
+
+| Crate | src/ | tests/ | Total |
+|-------|------|--------|-------|
+| kcm-core | 6 | 59 | 65 |
+| kcm-storage | 19 | 80 | 99 |
+| kcm-compute | 7 | 23 | 30 |
+| kcm-reasoning | 0 | 21 | 21 |
+| kcm-optimizer | 8 | 16 | 24 |
+| kcm-runtime | 0 | 62 | 62 |
+| kcm-interface | 6 | 61 | 67 |
+| kcm-distributed | 0 | 18 | 18 |
+| kcm-ml | 0 | 14 | 14 |
+| kcm-security | 0 | 22 | 22 |
+| kcm-compliance | 0 | 7 | 7 |
+| kcm-testing | 43 | 87 | 130 |
+| kcm-server | 0 | 0 | 0 |
+| **Total** | **89** | **470** | **559** |
 
 ## 4. Quality Gates
 

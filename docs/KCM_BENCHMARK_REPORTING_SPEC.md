@@ -2,6 +2,8 @@
 
 **Document ID:** KCM-BENCH-001
 **Version:** 1.0.0
+**Status:** Derived
+**Depends on:** PRD-TESTING&BRACHMARCK.md
 
 ---
 
@@ -183,12 +185,6 @@ The benchmark CI job:
 - Executes all benchmarks
 - Generates reports
 - Uploads artifacts
-
-The job:
-- Builds benchmarks in release mode
-- Executes all benchmarks
-- Generates reports
-- Uploads artifacts
 - **Fails CI** if regression > 10% (per Regression Policy §4.2)
 - **Warns** if regression > 5% (per Regression Policy §4.2)
 
@@ -200,18 +196,16 @@ The job fails unconditionally only if:
 
 ## 6. Benchmark Inventory
 
+Per PRD-TESTING&BRACHMARCK.md §5.1 (authoritative), 34 benchmarks:
+
 | Category | Count | Coverage |
 |----------|-------|----------|
-| Column Operations | 4 | Sequential, random, SIMD filter, push |
-| Bitmap Operations | 6 | Set, get, count, AND, OR, iter_set_bits |
-| Dictionary Operations | 3 | Insert, lookup, insert_existing |
-| Database Operations | 4 | Insert, query, filtered query, join |
-| Reasoning Operations | 4 | Inference engine, pattern matching, confidence calc, rule registry |
-| Storage I/O | 5 | WAL append, WAL replay, file save/load, compression encode/decode |
-| Codec Operations | 3 | Delta, Gorilla, RLE encode |
-| Distributed | 1 | Sharding routing |
-| Memory | 2 | Per-fact, bitmap |
-| **Total** | **29** | |
+| Column Operations | 11 | Sequential scan (4 scales), random access (4 scales), SIMD filter (3 scales) |
+| Bitmap Operations | 8 | Set (3 scales), count_ones (3 scales), bitwise (2 scales) |
+| Dictionary Operations | 6 | Insert (3 scales), lookup (3 scales) |
+| Database Operations | 6 | Insert (3 scales), query (3 scales) |
+| Inference Operations | 3 | Pattern matching (3 scales) |
+| **Total** | **34** | |
 
 ---
 

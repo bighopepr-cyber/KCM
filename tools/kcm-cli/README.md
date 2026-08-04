@@ -2,17 +2,15 @@
 
 Main command-line interface for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm serve | Start HTTP server |
-| kcm query <kql> | Execute KQL query |
-| kcm insert <fact> | Insert a fact |
-| kcm schema | Show database schema |
+| kcm create | Create a new database |
 | kcm stats | Show database statistics |
+| kcm benchmark | Run benchmark suite |
 | kcm version | Show version |
 
 ## Options
@@ -20,7 +18,6 @@ Main command-line interface for KCM.
 | Option | Description |
 |--------|-------------|
 | --db <path> | Database path (default: kcm.db) |
-| --port <port> | Server port (default: 8080) |
 | --format <fmt> | Output format (json, table, csv) |
 
 ## Installation
@@ -32,12 +29,12 @@ cargo install kcm-cli
 ## Usage
 
 ```bash
-# Start server
-kcm serve --db my_knowledge.db
+# Create database
+kcm create
 
-# Execute query
-kcm query "SELECT * FROM facts WHERE subject = 'planet'"
+# Show statistics
+kcm stats
 
-# Insert fact
-kcm insert --subject planet --predicate orbits --object sun --confidence 0.99
+# Run benchmarks
+kcm benchmark
 ```

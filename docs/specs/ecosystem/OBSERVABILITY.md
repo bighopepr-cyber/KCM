@@ -93,7 +93,7 @@ let _guard = span.enter();
 | Query Performance | Query latency and throughput |
 | Storage | Disk usage and I/O |
 | Memory | Heap and allocation tracking |
-| WAL | Write-ahead log statistics |
+| WAL | Write-Ahead Log statistics |
 
 ## 6. Alerting Rules
 

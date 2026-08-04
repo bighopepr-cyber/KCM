@@ -2,7 +2,8 @@
 
 **Document ID:** KCM-DATA-001  
 **Version:** 1.0.0  
-**Depends on:** KCM-SPEC-001, KCM_ARCHITECTURE-001  
+**Status:** Derived  
+**Depends on:** KCM-SPEC-001, KCM-ARCHDETAIL-001  
 **Authoritative Source:** PRD.md §3 (Type System), PRD.md §4 (Data Structures)
 
 > **Authority Notice:** The canonical definitions for Fact, type system, KcmError, Dictionary, and DenseVec are defined in PRD.md §3–4. This document provides the detailed derivation and operational semantics. Where conflicts exist, PRD.md §3 definitions win. See AGENTS.md §Error Model for the authoritative error hierarchy.
@@ -185,7 +186,6 @@ Column<T: Copy> {
 | Dictionary | u32, u8 | Maps to dictionary IDs |
 | Delta | i64, i32 | Stores differences between consecutive values |
 | Gorilla | f64 | XOR-based floating-point encoding |
-| FrameOfReference | Any | Block-relative encoding |
 | RLE | u8 | Run-length encoding for repeated values |
 
 ### 5.3 Column Type Aliases
@@ -240,6 +240,6 @@ All public API methods return `Result<T, KcmError>`. `StorageError` converts via
 ## 8. References
 
 - **Authoritative sources:** PRD.md §3 (Type System), PRD.md §4 (Data Structures), PRD2.md §2 (Storage Engine), AGENTS.md §Error Model
-- **Depends on:** PRD.md (P4 authority), PRD2.md (P3 authority), KCM-SPEC-001, KCM_ARCHITECTURE-001
+- **Depends on:** PRD.md (P4 authority), PRD2.md (P3 authority), KCM-SPEC-001, KCM-ARCHDETAIL-001
 - **Parent specs:** KCM_SPECIFICATION (KCM_SPECIFICATION)
 - **Related:** KCM_COLUMNAR_FORMAT_SPEC, KCM_COMPRESSION_SPEC, KCM_QUERY_EXECUTION_SPEC, KCM_INDEXING_SPEC

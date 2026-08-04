@@ -2,7 +2,7 @@
 
 Data import tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
@@ -10,7 +10,6 @@ Data import tool for KCM.
 |---------|-------------|
 | kcm-import csv <db> <file> | Import from CSV |
 | kcm-import json <db> <file> | Import from JSON |
-| kcm-import parquet <db> <file> | Import from Parquet |
 | kcm-import schema <file> | Infer schema from file |
 
 ## Usage

@@ -16,11 +16,11 @@ Step-by-step tutorials for learning KCM.
 
 | Tutorial | Level | Duration | Description |
 |----------|-------|----------|-------------|
-| 06-performance.md | Advanced | 45 min | Optimize queries |
-| 07-security.md | Advanced | 30 min | Enable encryption |
-| 08-distributed.md | Advanced | 60 min | Set up clustering |
-| 09-custom-operators.md | Advanced | 45 min | Build custom operators |
-| 10-production.md | Advanced | 60 min | Deploy to production |
+| 06-performance.md | Advanced | 45 min | Optimize queries (Planned) |
+| 07-security.md | Advanced | 30 min | Enable encryption (Planned) |
+| 08-distributed.md | Advanced | 60 min | Set up clustering (Planned) |
+| 09-custom-operators.md | Advanced | 45 min | Build custom operators (Planned) |
+| 10-production.md | Advanced | 60 min | Deploy to production (Planned) |
 
 ## Prerequisites
 

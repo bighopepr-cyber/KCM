@@ -1,6 +1,15 @@
 # Contributor Handbook
 
-Welcome to the KCM contributor community!
+**Document ID:** HANDBOOK-CONTRIB-001
+**Version:** 1.0.0
+**Status:** Active
+**Owner:** KCM Engineering Team
+**Last Reviewed:** 2026-08-04
+**Depends on:** KCM_SPECIFICATION
+
+## Purpose
+
+This handbook provides guidelines and instructions for contributors to the KCM project, including setup, coding standards, and pull request process.
 
 ## Getting Started
 

@@ -1,6 +1,6 @@
 # kcm-core
 
-Core types, dense vectors, bitmap engine, and dictionary encoding for the KCM knowledge columnar model engine.
+Core types, dense vectors, bitmap engine, and dictionary encoding for the KCM Knowledge Columnar Model engine.
 
 ## Purpose
 

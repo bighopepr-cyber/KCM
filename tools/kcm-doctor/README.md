@@ -2,16 +2,16 @@
 
 Health check tool for KCM.
 
-## Status: Planned
+## Status: Partially Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | kcm-doctor check <db> | Run full health check |
-| kcm-doctor integrity <db> | Verify data integrity |
-| kcm-doctor wal <db> | Check WAL consistency |
-| kcm-doctor repair <db> | Attempt automatic repair |
+| kcm-doctor integrity <db> | Verify data integrity (Not Yet Implemented) |
+| kcm-doctor wal <db> | Check WAL consistency (Not Yet Implemented) |
+| kcm-doctor repair <db> | Attempt automatic repair (Not Yet Implemented) |
 
 ## Usage
 

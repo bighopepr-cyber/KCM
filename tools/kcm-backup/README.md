@@ -2,16 +2,15 @@
 
 Database backup tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-backup create <db> | Create full backup |
+| kcm-backup create | Create full backup |
+| kcm-backup verify -p <path> | Verify backup integrity |
 | kcm-backup list | List available backups |
-| kcm-backup verify <backup> | Verify backup integrity |
-| kcm-backup delete <backup> | Delete a backup |
 
 ## Usage
 

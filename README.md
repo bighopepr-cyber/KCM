@@ -65,7 +65,7 @@ KCM:             Column[Subject] → Column[Predicate] → Column[Object]
 | `kcm-reasoning` | Rule engine, forward-chaining inference, confidence calculus | InferenceEngine, ConfidenceCalculator |
 | `kcm-optimizer` | Cost model, query planner, statistics, adaptive execution | Planner, CostModel, Statistics |
 | `kcm-runtime` | Database lifecycle, transactions, metrics, health checks | KnowledgeDatabase, Transaction, Metrics |
-| `kcm-interface` | C FFI, Python bindings, REST API, KQL parser | 15 C functions, 8 REST handlers |
+| `kcm-interface` | C FFI, Python bindings, REST API, KQL parser | 18 C functions, 8 REST handlers |
 | `kcm-distributed` | Sharding (Hash/Range/Consistent Hash), 2PC coordinator | ShardMap, TransactionCoordinator |
 | `kcm-ml` | Learned index models, confidence learner, rule discovery | LearnedIndex, ConfidenceLearner |
 | `kcm-security` | RBAC, AES-256-GCM encryption, audit logging | ACLManager, EncryptedStorage, AuditLog |
@@ -278,15 +278,15 @@ Rule: IF subject_2(X, Y) AND subject_3(Y, Z) THEN subject_1(X, Z)
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| Unit | 200+ | Single function correctness |
-| Integration | 108+ | Cross-crate interaction |
+| Unit | 89 | Single function correctness |
+| Integration | 470 | Cross-crate interaction |
 | Property | 31 | Roundtrip invariants, bounds checking |
 | Security | 29 | Encryption, RBAC, GDPR, corruption |
 | Concurrency | 6 | Thread safety under contention |
 | Recovery | 12 | WAL replay, crash recovery, backup/restore |
 | Server/HTTP | 19 | REST endpoint validation |
 | KQL Parser | 27 | Lexer/parser edge cases |
-| **Total** | **534** | **0 failures** |
+| **Total** | **559** | **0 failures** |
 
 ### Run Tests
 
@@ -371,7 +371,7 @@ KCM/
 │   ├── kcm-compliance/    Compliance: GDPR, data classification
 │   ├── kcm-testing/       Testing: load/stress/recovery/concurrency tests
 │   └── kcm-server/        Server: HTTP (actix-web) + gRPC (tonic) binaries
-├── docs/                   28 technical specification documents
+├── docs/                   41 technical specification documents and subdirectories
 ├── skills/                 16 engineering skill definitions
 ├── tools/                  Build and benchmark automation
 ├── deployment/             Docker, docker-compose, Kubernetes manifests
@@ -396,7 +396,7 @@ All engineering decisions derive from authoritative specifications.
 | [PRD.md](docs/PRD.md) | Core: types, storage, query, reasoning |
 | [PRD2.md](docs/PRD2.md) | Persistence, optimizer, monitoring, deployment |
 | [PRD3.md](docs/PRD3.md) | Distributed, ML, security, compliance |
-| [PRD-TESTING&BRACHMARCK.md](docs/PRD-TESTING%26BRACHMARCK.md) | Testing strategy, benchmarks, quality gates |
+| [PRD-TESTING& BRACHMARCK.md](docs/PRD-TESTING%26%20BRACHMARCK.md) | Testing strategy, benchmarks, quality gates |
 
 ### Technical Specifications
 

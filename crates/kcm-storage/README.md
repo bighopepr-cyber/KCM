@@ -4,7 +4,7 @@ Columnar storage engine for KCM. Handles persistence, compression, indexing, WAL
 
 ## Purpose
 
-Provides the on-disk storage layer for KCM's columnar knowledge model. Supports multiple compression codecs, write-ahead logging for crash recovery, B-tree indexing, and backup/restore.
+Provides the on-disk storage layer for KCM's columnar knowledge model. Supports multiple compression codecs, Write-Ahead Logging for crash recovery, B-tree indexing, and backup/restore.
 
 ## Modules
 
@@ -14,7 +14,7 @@ Provides the on-disk storage layer for KCM's columnar knowledge model. Supports 
 | `compress` | Compression dispatcher (Zstd, LZ4) |
 | `dict_codec` | Dictionary-encoded column codec |
 | `file_format` | Binary file format with headers and block layout |
-| `wal` | Write-ahead log for crash recovery |
+| `wal` | Write-Ahead Log for crash recovery |
 | `wal_state` | WAL state tracking |
 | `index` | B-tree index for fast lookups |
 | `backup` | Full and incremental backup |

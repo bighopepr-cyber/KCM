@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-INDEX-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-DATA-001
 
 ---

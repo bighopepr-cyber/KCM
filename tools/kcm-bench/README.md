@@ -2,7 +2,7 @@
 
 Benchmarking tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
@@ -11,7 +11,7 @@ Benchmarking tool for KCM.
 | kcm-bench run <db> | Run full benchmark suite |
 | kcm-bench query <db> | Benchmark query performance |
 | kcm-bench insert <db> | Benchmark insert performance |
-| kcm-bench compare <base> <current> | Compare results |
+| kcm-bench batch <db> | Run batch operations |
 
 ## Usage
 
@@ -19,6 +19,6 @@ Benchmarking tool for KCM.
 # Run benchmarks
 kcm-bench run my_knowledge.db
 
-# Compare results
-kcm-bench compare baseline.json current.json
+# Run batch operations
+kcm-bench batch my_knowledge.db
 ```

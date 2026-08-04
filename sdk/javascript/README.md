@@ -2,6 +2,10 @@
 
 JavaScript/TypeScript bindings for the KCM Knowledge Columnar Model.
 
+## Status
+
+**Planned** — This SDK is not yet published. Installation via `npm install @kcm/js` is not currently available.
+
 ## Installation
 
 ```bash

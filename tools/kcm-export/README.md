@@ -2,16 +2,15 @@
 
 Data export tool for KCM.
 
-## Status: Planned
+## Status: Partially Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-export csv <db> <output> | Export to CSV |
 | kcm-export json <db> <output> | Export to JSON |
-| kcm-export parquet <db> <output> | Export to Parquet |
-| kcm-export query <db> <kql> <out> | Export query results |
+| kcm-export csv <db> <output> | Export to CSV |
+| kcm-export query <db> <kql> <out> (Not Yet Implemented) | Export query results |
 
 ## Usage
 

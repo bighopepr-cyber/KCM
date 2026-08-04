@@ -198,12 +198,21 @@ pub struct KnowledgeDatabase {
 
 Public API:
 - `new() → Result<Self>`
+- `get_schema() → RwLockReadGuard<Schema>`
+- `get_schema_mut() → RwLockWriteGuard<Schema>`
 - `insert(&Fact) → Result<RowID>`
 - `insert_batch(&[Fact]) → Result<Vec<RowID>>`
+- `update(RowID, &Fact) → Result<()>`
+- `delete(RowID) → Result<()>`
 - `query() → QueryBuilder`
 - `get_fact(RowID) → Result<Option<Fact>>`
+- `dict_insert_subject(&str) → Result<DictID>`
+- `dict_get_subject(DictID) → Option<String>`
+- `dict_lookup_subject(&str) → Option<DictID>`
 - `begin_transaction() → Transaction`
 - `fact_count() → usize`
+- `active_fact_count() → usize`
+- `compact() → Result<Self>`
 
 ### 8.2 QueryBuilder
 
@@ -227,7 +236,7 @@ Buffering transaction system:
 
 ### 8.4 Metrics
 
-11 atomic counters (lock-free):
+14 atomic counters (lock-free):
 
 | Metric | Type | Purpose |
 |--------|------|---------|
@@ -242,6 +251,9 @@ Buffering transaction system:
 | inferences_total | AtomicU64 | Inference operations |
 | facts_inferred | AtomicU64 | Facts derived from inference |
 | estimated_memory_bytes | AtomicU64 | Estimated memory footprint |
+| total_facts | AtomicU64 | Total fact count |
+| active_facts | AtomicU64 | Active (non-deleted) fact count |
+| tombstone_count | AtomicU64 | Deleted row count |
 
 ### 8.5 Health Check
 
@@ -267,7 +279,7 @@ Tokio runtime bridge:
 
 ### 9.1 C FFI
 
-15 `extern "C"` functions:
+18 `extern "C"` functions:
 
 | Function | Purpose |
 |----------|---------|
@@ -283,6 +295,9 @@ Tokio runtime bridge:
 | `KCM_QueryFree` | Free query |
 | `KCM_DatabaseBeginTransaction` | Start transaction |
 | `KCM_TransactionFree` | Free transaction |
+| `KCM_DatabaseSave` | Save database to file |
+| `KCM_DatabaseLoad` | Load database from file |
+| `KCM_DatabaseVerify` | Verify database integrity |
 | `KCM_TransactionCommit` | Commit transaction |
 | `KCM_TransactionRollback` | Rollback transaction |
 | `KCM_ErrorMessage` | Get error string |
@@ -290,6 +305,8 @@ Tokio runtime bridge:
 All functions check null pointers before dereferencing. Opaque types prevent direct struct access.
 
 ### 9.2 REST API
+
+8 endpoints (no prefix, served by kcm-server):
 
 | Method | Endpoint | Handler |
 |--------|----------|---------|

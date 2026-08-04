@@ -2,23 +2,22 @@
 
 Performance analyzer for KCM.
 
-## Status: Planned
+## Status: Partially Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-perf benchmark <db> | Run benchmarks |
-| kcm-perf compare <base> <target> | Compare performance |
-| kcm-perf regression <db> | Check for regressions |
-| kcm-perf report <results> | Generate report |
+| kcm-perf analyze <db> | Analyze performance |
+| kcm-perf baseline <db> | Create performance baseline (Not Yet Implemented) |
+| kcm-perf compare <base> <target> | Compare performance (Not Yet Implemented) |
 
 ## Usage
 
 ```bash
 # Run performance analysis
-kcm-perf benchmark my_knowledge.db
+kcm-perf analyze my_knowledge.db
 
-# Compare against baseline
+# Compare against baseline (Not Yet Implemented)
 kcm-perf compare baseline.json current.json
 ```

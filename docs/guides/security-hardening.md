@@ -1,6 +1,15 @@
 # Security Hardening Guide
 
-Security configuration for production KCM deployments.
+**Document ID:** GUIDE-SECURITY-001
+**Version:** 1.0.0
+**Status:** Active
+**Owner:** KCM Engineering Team
+**Last Reviewed:** 2026-08-04
+**Depends on:** KCM_SPECIFICATION, KCM_SECURITY_TRUST_SPEC
+
+## Purpose
+
+This guide covers security configuration including encryption, access control, audit logging, and network security for production KCM deployments.
 
 ## Encryption at Rest
 
@@ -45,7 +54,7 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -node
 
 ## Access Control (RBAC)
 
-Configure role-based access control:
+Configure Role-Based Access Control:
 
 ```toml
 [rbac]

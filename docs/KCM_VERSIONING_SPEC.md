@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-VER-001  
 **Version:** 1.0.0
+**Status:** Derived
 
 ---
 
@@ -72,6 +73,17 @@ Current: `2`
 | New code reads old format | Yes (within MAJOR version) |
 | Old code reads new format | No (within MINOR version) |
 | Format migration tool | Provided for MAJOR version changes |
+
+### 3.4 Compatibility Rules
+
+| Change Type | Version Bump | Examples |
+|-------------|-------------|----------|
+| New feature | Minor | New codec, new index type |
+| Bug fix | Patch | WAL replay fix, checksum fix |
+| Format change | Major | Header layout change, new column |
+| API removal | Major | Removing FFI function |
+
+File format version 2 is current. Version 1 files are not supported.
 
 ---
 

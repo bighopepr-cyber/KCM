@@ -129,16 +129,18 @@ Stage 7: Quality Gate
 
 ## 5. Implementation Status
 
+> **Note:** CI/CD workflow files have not yet been created. All gates below are PLANNED.
+
 | Gate | Implemented | CI Job | Status |
 |------|-------------|--------|--------|
-| Format | Yes | ci.yml:format | ACTIVE |
-| Clippy | Yes | ci.yml:clippy | ACTIVE |
-| Build | Yes | ci.yml:build | ACTIVE |
-| Unit tests | Yes | ci.yml:unit-tests | ACTIVE |
-| Integration tests | Yes | ci.yml:integration-tests | ACTIVE |
-| Property tests | Yes | ci.yml:property-tests | ACTIVE |
-| Security tests | Yes | ci.yml:security-tests | ACTIVE |
-| Benchmarks | Yes | benchmark.yml | ACTIVE |
+| Format | No | - | PLANNED |
+| Clippy | No | - | PLANNED |
+| Build | No | - | PLANNED |
+| Unit tests | No | - | PLANNED |
+| Integration tests | No | - | PLANNED |
+| Property tests | No | - | PLANNED |
+| Security tests | No | - | PLANNED |
+| Benchmarks | No | - | PLANNED |
 | Cargo audit | No | - | PLANNED |
 | License check | No | - | PLANNED |
 | Documentation check | No | - | PLANNED |

@@ -2,7 +2,7 @@
 
 Schema generation tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
@@ -11,7 +11,6 @@ Schema generation tool for KCM.
 | kcm-schema show <db> | Show current schema |
 | kcm-schema generate <spec> | Generate schema from spec |
 | kcm-schema validate <db> | Validate schema |
-| kcm-schema diff <db1> <db2> | Compare schemas |
 
 ## Usage
 

@@ -1,6 +1,6 @@
 # KCM grpc Integration
 
-## Status: Stable
+## Status: Stub — not yet implemented
 
 ## Purpose
 
@@ -13,5 +13,5 @@ Feature-gated module in kcm-interface or standalone crate.
 ## Usage
 
 ```rust
-// See examples/ for usage patterns
+// Examples not yet available
 ```

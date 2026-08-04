@@ -21,7 +21,7 @@ All notable changes to the KCM project will be documented in this file.
 ### Fixed
 - WAL entry size contradiction in KCM_COLUMNAR_FORMAT_SPEC.md (34->38 bytes)
 - Data classification retention periods in KCM_SECURITY_TRUST_SPEC.md
-- C FFI function count in KCM_ARCHITECTURE.md (13->15)
+- C FFI function count updated to 18 (implemented vs 15 documented)
 - README.md stale metrics
 
 ### Changed
@@ -35,10 +35,10 @@ All notable changes to the KCM project will be documented in this file.
 ### Added
 - Initial release of KCM engine
 - 13 Rust crates (core, storage, compute, reasoning, optimizer, runtime, interface, distributed, ml, security, compliance, testing, server)
-- C FFI interface (15 functions)
+- C FFI interface (18 functions)
 - Python bindings (PyO3)
 - REST API (8 endpoints)
-- gRPC service (4 RPCs)
+- gRPC service (4 RPCs: InsertFact, QueryFacts, GetFact, GetStats)
 - KQL parser (28 token types)
 - 534+ tests across unit, integration, property, and security tiers
 - 32 benchmark functions

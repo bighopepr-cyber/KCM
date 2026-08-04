@@ -1,6 +1,15 @@
 # Operations Guide
 
-Day-to-day operations for KCM administrators.
+**Document ID:** GUIDE-OPS-001
+**Version:** 1.0.0
+**Status:** Active
+**Owner:** KCM Engineering Team
+**Last Reviewed:** 2026-08-04
+**Depends on:** KCM_SPECIFICATION
+
+## Purpose
+
+This guide covers day-to-day operations, health checks, and common administrative tasks for KCM administrators.
 
 ## Starting KCM
 

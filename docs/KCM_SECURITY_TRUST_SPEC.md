@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-SEC-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-SPEC-001
 
 ---
@@ -56,6 +57,7 @@ enum Permission {
 | create_role(name) | Register new role |
 | add_permission_to_role(role, perm) | Grant permission to role |
 | assign_role(user, role) | Assign role to user |
+| remove_role(user, role) | Remove role from user |
 | grant_context_permission(user, ctx, perm) | Direct context permission |
 | check_permission(user, ctx, perm) -> bool | Check: direct ACL → role permissions |
 
@@ -145,6 +147,7 @@ struct AuditEvent {
     context: String,
     timestamp: i64,  // seconds since epoch
     details: String,
+    prev_hash: [u8; 32],
 }
 ```
 

@@ -2,19 +2,25 @@
 
 Database restore tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-restore from <backup> <db> | Restore from backup |
-| kcm-restore list <db> | List restore points |
-| kcm-restore verify <backup> | Verify restore integrity |
+| kcm-restore from -b <backup> | Restore from backup |
+| kcm-restore list | List available backups |
+| kcm-restore verify -p <path> | Verify restore point integrity |
 
 ## Usage
 
 ```bash
 # Restore from backup
-kcm-restore from backups/my_knowledge_2026-08-03.kcm my_knowledge.db
+kcm-restore from -b backups/my_knowledge_2026-08-03.kcm
+
+# List restore points
+kcm-restore list
+
+# Verify restore point
+kcm-restore verify -p backups/my_knowledge_2026-08-03.kcm
 ```

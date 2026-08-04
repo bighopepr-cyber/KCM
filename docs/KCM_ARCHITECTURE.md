@@ -1,7 +1,8 @@
 # KCM Architecture Specification
 
-**Document ID:** KCM-ARCH-001  
+**Document ID:** KCM-ARCHDETAIL-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-SPEC-001  
 **Authoritative Sources:** PRD.md §2 (Design Principles), AGENTS.md §System Architecture, AGENTS.md §Crate Map
 
@@ -73,17 +74,17 @@ kcm-storage (depends on: kcm-core)
 kcm-compute (depends on: kcm-core, kcm-storage)
 kcm-reasoning (depends on: kcm-core, kcm-storage)
 kcm-optimizer (depends on: kcm-core, kcm-storage)
-kcm-distributed (depends on: kcm-core, kcm-storage)
+kcm-distributed (depends on: kcm-core)
 kcm-ml (depends on: kcm-core, kcm-reasoning)
     ↑
-kcm-runtime (depends on: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer)
+kcm-runtime (depends on: kcm-core, kcm-storage)
     ↑
-kcm-interface (depends on: kcm-core, kcm-runtime)
-kcm-security (depends on: kcm-core, kcm-storage)
-kcm-compliance (depends on: kcm-core, kcm-storage)
-kcm-testing (depends on: kcm-core, kcm-storage, kcm-runtime, kcm-security)
+kcm-interface (depends on: kcm-core, kcm-storage, kcm-runtime)
+kcm-security (depends on: kcm-core)
+kcm-compliance (depends on: kcm-core)
+kcm-testing (depends on: kcm-core, kcm-storage, kcm-runtime, kcm-reasoning, kcm-security; dev: kcm-distributed, kcm-compliance)
     ↑
-kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, kcm-security)
+kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface)
 ```
 
 ---
@@ -155,7 +156,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | **Responsibility** | KnowledgeDatabase (Insert/Query/Update/Delete), Transaction with apply_to_schema/rollback, VersionStore, Metrics, HealthCheck, Logging, AsyncExecutor (tokio), Executor (rayon) |
 | **Input** | Facts, queries, operations |
 | **Output** | Query results, metrics snapshots, health reports |
-| **Dependency** | kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, parking_lot, rayon, tokio |
+| **Dependency** | kcm-core, kcm-storage, parking_lot, rayon, tokio |
 | **Constraint** | Schema cloning per query is acceptable for current scale; future optimization needed for >10M facts |
 
 ### 4.7 kcm-interface
@@ -166,7 +167,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | **Responsibility** | C FFI (18 functions), Python bindings (PyO3), REST API handlers, KQL parser, example implementations |
 | **Input** | C types, Python objects, HTTP requests, KQL strings |
 | **Output** | C-compatible results, Python objects, HTTP responses, parsed ASTs |
-| **Dependency** | kcm-core, kcm-runtime, parking_lot, serde_json |
+| **Dependency** | kcm-core, kcm-storage, kcm-runtime, parking_lot, serde_json |
 | **Constraint** | C API must use static null-terminated strings (no dangling pointers); KQL parser must handle all token types |
 
 ### 4.8 kcm-distributed
@@ -177,7 +178,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | **Responsibility** | Hash/Range/ConsistentHash sharding, ShardMap, TransactionCoordinator (2PC) |
 | **Input** | Shard configurations, transaction requests |
 | **Output** | Shard routing decisions, transaction status |
-| **Dependency** | kcm-core, parking_lot |
+| **Dependency** | kcm-core |
 | **Constraint** | ShardingStrategy must be Send + Sync; 2PC must handle all-votes-committed-or-abort |
 
 ### 4.9 kcm-ml
@@ -210,7 +211,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | **Responsibility** | GDPR manager (consent, export, delete), data classification (Public/Internal/Confidential/Restricted with retention policies) |
 | **Input** | Subject data, consent actions |
 | **Output** | Consent status, exported data, retention decisions |
-| **Dependency** | kcm-core, parking_lot |
+| **Dependency** | kcm-core |
 | **Constraint** | GDPR delete must be irreversible within session |
 
 ### 4.12 kcm-testing
@@ -221,7 +222,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | **Responsibility** | Load test runner, stress test runner, security test suite, regression detector, metrics dashboard |
 | **Input** | Test scenarios, baselines |
 | **Output** | Test results, performance reports, regression alerts |
-| **Dependency** | kcm-core, kcm-storage, kcm-runtime, kcm-security, parking_lot |
+| **Dependency** | kcm-core, kcm-storage, kcm-runtime, kcm-reasoning, kcm-security; dev: kcm-distributed, kcm-compliance |
 | **Constraint** | All test runners must be invokable via `cargo test`; load/stress tests must be configurable for CI duration |
 
 ### 4.13 kcm-server
@@ -232,7 +233,7 @@ kcm-server (depends on: kcm-core, kcm-runtime, kcm-interface, kcm-distributed, k
 | **Responsibility** | HTTP/gRPC server, configuration loading, graceful shutdown, signal handling |
 | **Input** | Configuration files, command-line arguments |
 | **Output** | Running server process |
-| **Dependency** | kcm-core, kcm-runtime, kcm-interface, kcm-distributed, kcm-security, parking_lot |
+| **Dependency** | kcm-core, kcm-runtime, kcm-interface |
 | **Constraint** | Must support graceful shutdown on SIGTERM/SIGINT; must expose health endpoint |
 
 ---
@@ -322,8 +323,8 @@ InferenceEngine::infer_forward_chaining(&mut schema)
 | KnowledgeDatabase | Arc<RwLock<Schema>> | Write lock for insert/update/delete; read lock for query snapshot | Schema — Arc<RwLock<Schema>> |
 | SharedDictionary | Arc<RwLock<Dictionary>> | Write lock for insert; read lock for lookup | Dictionaries — Arc<RwLock<Dictionary>> |
 | WriteAheadLog | Mutex<File> | Serialized writes | WAL — Mutex<File> |
-| AuditLog | Mutex<Vec<AuditEvent>> | Serialized append | Audit Log — Mutex<Vec<AuditEvent>> |
-| Metrics | AtomicU64 counters | Lock-free atomic operations | Metrics — AtomicU64 (10 counters) |
+| AuditLog | Mutex<VecDeque<AuditEvent>> (parking_lot, Arc-wrapped) | Serialized append, FIFO eviction at 100K | Audit Log — Mutex<VecDeque<AuditEvent>> |
+| Metrics | AtomicU64 counters | Lock-free atomic operations | Metrics — AtomicU64 (14 counters) |
 | TransactionCoordinator | Mutex<HashMap> | Serial transaction management | — |
 
 ---

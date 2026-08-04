@@ -2,6 +2,10 @@
 
 Python bindings for the KCM Knowledge Columnar Model.
 
+## Status
+
+**Planned** — This SDK is not yet published. Installation via `pip install kcm` is not currently available.
+
 ## Installation
 
 ```bash

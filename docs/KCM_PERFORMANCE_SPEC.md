@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-PERF-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-SPEC-001
 
 ---
@@ -14,9 +15,9 @@ Defines performance targets, benchmark methodology, and metrics for KCM.
 
 ## 2. Performance Targets
 
-**See KCM_SPECIFICATION (Section 4.1) for authoritative performance targets.** This section defines measurement methodology for those targets.
+**See PRD.md §8 (Performance Characteristics) for authoritative performance targets.** This section defines measurement methodology for those targets.
 
-| Metric | Target (from KCM_SPECIFICATION) | Measurement |
+| Metric | Target (from PRD.md §8) | Measurement |
 |--------|--------------------------------|-------------|
 | Column sequential scan | > 100M ops/sec | Criterion benchmark |
 | Bitmap set/get | > 8M ops/sec | Criterion benchmark |

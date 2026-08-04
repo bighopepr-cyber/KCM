@@ -10,21 +10,21 @@ Operational guides for using KCM in production.
 | monitoring.md | Metrics, logging, alerting |
 | backup-recovery.md | Backup and disaster recovery |
 | security-hardening.md | Security configuration |
-| performance-tuning.md | Performance optimization |
-| troubleshooting.md | Common issues and solutions |
+| performance-tuning.md | Performance optimization (Planned) |
+| troubleshooting.md | Common issues and solutions (Planned) |
 
 ## Deployment
 
 | Guide | Description |
 |-------|-------------|
-| docker-deployment.md | Docker and Docker Compose |
-| kubernetes-deployment.md | Kubernetes and Helm |
-| cloud-deployment.md | AWS, GCP, Azure |
+| docker-deployment.md | Docker and Docker Compose (Planned) |
+| kubernetes-deployment.md | Kubernetes and Helm (Planned) |
+| cloud-deployment.md | AWS, GCP, Azure (Planned) |
 
 ## Development
 
 | Guide | Description |
 |-------|-------------|
-| contributing.md | How to contribute |
-| architecture-deep-dive.md | Internal architecture |
-| crate-guide.md | Working with crates |
+| contributing.md | How to contribute (Planned) |
+| architecture-deep-dive.md | Internal architecture (Planned) |
+| crate-guide.md | Working with crates (Planned) |

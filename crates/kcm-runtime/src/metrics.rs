@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 /// Internal metrics counters. Allocated once behind a single Arc.
-/// All 11 counters occupy 88 bytes contiguous — fits in 2 cache lines.
+/// All 14 counters occupy 112 bytes contiguous.
 pub struct MetricsInner {
     pub queries_total: AtomicU64,
     pub queries_failed: AtomicU64,

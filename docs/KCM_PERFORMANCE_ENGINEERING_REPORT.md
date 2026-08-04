@@ -1,5 +1,8 @@
 # KCM Performance Engineering Report
 
+**Document ID:** KCM-PERF-RPT-001
+**Version:** 1.0.0
+**Status:** Derived
 **Date:** 2026-08-01
 **Status:** Production-Grade Benchmark System Operational
 

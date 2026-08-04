@@ -1,7 +1,8 @@
 # KCM Testing Specification
 
-**Document ID:** KCM-TEST-001  
+**Document ID:** KCM-TESTSPEC-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-SPEC-001
 
 ---
@@ -37,12 +38,12 @@ Defines testing standards, coverage requirements, test categories, and validatio
 |----------|-------------|
 | Scope | Single function or module |
 | Speed | < 100ms each |
-| Count target | 200+ |
+| Count target | 89+ |
 | Frequency | Every commit |
 | Framework | #[test] with assert!/assert_eq! |
 | Coverage target | ≥ 95% line coverage |
 
-**Current count: 90 unit tests** across kcm-core (43), kcm-storage (14), kcm-compute (22), kcm-optimizer (8), kcm-interface (3).
+**Current count: 89 unit tests** (src/ directory annotations across all crates).
 
 ### 3.2 Integration Tests
 
@@ -50,12 +51,12 @@ Defines testing standards, coverage requirements, test categories, and validatio
 |----------|-------------|
 | Scope | Multiple components |
 | Speed | 100ms - 5s each |
-| Count target | 50+ |
+| Count target | 470+ |
 | Frequency | Every commit |
 | Location | `crates/*/tests/` |
 | Coverage target | ≥ 80% |
 
-**Current count: 108 integration tests** across kcm-core (10), kcm-storage (18), kcm-reasoning (17), kcm-optimizer (14), kcm-runtime (23), kcm-distributed (10), kcm-ml (9), kcm-compliance (7).
+**Current count: 470 integration tests** (tests/ directory annotations across all crates).
 
 ### 3.3 Property-Based Tests
 
@@ -145,23 +146,24 @@ Defines testing standards, coverage requirements, test categories, and validatio
 
 ## 4. Test Matrix
 
-| Crate | Unit | Integration | Property | Security | Total |
-|-------|------|-------------|----------|----------|-------|
-| kcm-core | 43 | 10 | 8 | — | 61 |
-| kcm-storage | 14 | 18 | — | — | 32 |
-| kcm-compute | 22 | — | — | — | 22 |
-| kcm-reasoning | — | 17 | — | — | 17 |
-| kcm-optimizer | 8 | 14 | — | — | 22 |
-| kcm-runtime | — | 23 | — | — | 23 |
-| kcm-interface | 3 | — | — | — | 3 |
-| kcm-distributed | — | 10 | — | — | 10 |
-| kcm-ml | — | 9 | — | — | 9 |
-| kcm-security | — | — | — | 11 | 11 |
-| kcm-compliance | — | 7 | — | — | 7 |
-| kcm-testing | — | — | — | 18 | 18 |
-| **TOTAL** | **90** | **108** | **8** | **29** | **235+** |
+Actual `#[test]` annotation counts by crate (as of 2026-08-04):
 
-**Actual total: 474 tests** (includes inline module tests).
+| Crate | src/ | tests/ | Total |
+|-------|------|--------|-------|
+| kcm-core | 6 | 59 | 65 |
+| kcm-storage | 19 | 80 | 99 |
+| kcm-compute | 7 | 23 | 30 |
+| kcm-reasoning | 0 | 21 | 21 |
+| kcm-optimizer | 8 | 16 | 24 |
+| kcm-runtime | 0 | 62 | 62 |
+| kcm-interface | 6 | 61 | 67 |
+| kcm-distributed | 0 | 18 | 18 |
+| kcm-ml | 0 | 14 | 14 |
+| kcm-security | 0 | 22 | 22 |
+| kcm-compliance | 0 | 7 | 7 |
+| kcm-testing | 43 | 87 | 130 |
+| kcm-server | 0 | 0 | 0 |
+| **TOTAL** | **89** | **470** | **559** |
 
 ---
 

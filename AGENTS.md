@@ -35,7 +35,7 @@ kcm-compute       → Relational algebra operators, SIMD AVX2 acceleration.
 kcm-reasoning     → Rule definitions, forward-chaining inference engine.
 kcm-optimizer     → Cost model, query planner, statistics, plan rewriting, adaptive execution.
 kcm-runtime       → KnowledgeDatabase, Transactions, Metrics, Health, Executor, AsyncExecutor.
-kcm-interface     → C FFI (15 functions), Python bindings (PyO3), REST handlers, KQL parser.
+kcm-interface     → C FFI (18 functions), Python bindings (PyO3), REST handlers, KQL parser.
 kcm-distributed   → Sharding strategies (Hash/Range/ConsistentHash), 2PC coordinator.
 kcm-ml            → Learned index (regression), confidence learner, rule discovery.
 kcm-security      → RBAC (5 permission levels), AES-256-GCM encryption, audit log (hash-chained).
@@ -49,7 +49,7 @@ kcm-server        → HTTP (actix-web) + gRPC (tonic) server binaries.
 ```
 kcm-core (zero deps)
   ↑
-kcm-storage (core + zstd + lz4 + blake3 + thiserror)
+kcm-storage (core + log + zstd + lz4 + blake3 + thiserror)
   ↑
 kcm-compute (core + storage)
 kcm-reasoning (core + storage)
@@ -65,7 +65,7 @@ kcm-distributed (core + parking_lot)
 kcm-ml (core + reasoning)
 kcm-security (core + parking_lot + blake3 + aes-gcm + getrandom)
 kcm-compliance (core + parking_lot)
-kcm-testing (core + storage + runtime + security + distributed + compliance)
+kcm-testing (core + storage + runtime + reasoning + security + distributed + compliance)
 ```
 
 ### Dependency Policy
@@ -102,7 +102,7 @@ Every external dependency must justify its existence:
 | P2 | `docs/PRD3.md` | Distributed architecture, ML integration, security, compliance |
 | P3 | `docs/PRD2.md` | Persistence layer, optimizer, monitoring, interfaces |
 | P4 | `docs/PRD.md` | Core types, storage engine, compute engine, reasoning engine |
-| P5 | `docs/*.md` | Derived technical specifications (23 documents) |
+| P5 | `docs/*.md` | Derived technical specifications (26 documents) |
 
 When documents conflict, the higher-priority document wins.
 
@@ -200,8 +200,8 @@ Storage-specific errors (`StorageError`) convert to `KcmError` via `From` impl.
 | Schema | `Arc<RwLock<Schema>>` (parking_lot) | Readers concurrent, writers exclusive |
 | Dictionaries | `Arc<RwLock<Dictionary>>` (parking_lot) | Same pattern as Schema |
 | WAL | `Mutex<File>` (parking_lot) | Serialized writes |
-| Audit Log | `Mutex<Vec<AuditEvent>>` (parking_lot) | Serialized append |
-| Metrics | `AtomicU64` (11 counters) | Lock-free counters |
+| Audit Log | `Mutex<VecDeque<AuditEvent>>` (parking_lot, wrapped in Arc) | Serialized append, FIFO eviction at 100K |
+| Metrics | `AtomicU64` (14 counters) | Lock-free counters |
 | Thread Pool | rayon ThreadPool | Work-stealing parallelism |
 | Async | tokio Runtime | I/O-bound async operations |
 

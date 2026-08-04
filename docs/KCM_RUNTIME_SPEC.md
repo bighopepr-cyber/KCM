@@ -2,7 +2,8 @@
 
 **Document ID:** KCM-RUNTIME-001  
 **Version:** 1.0.0  
-**Depends on:** KCM_ARCHITECTURE-001
+**Status:** Derived  
+**Depends on:** KCM-ARCH-001
 
 ---
 
@@ -135,9 +136,25 @@ pub struct AsyncExecutor {
 - Multi-threaded tokio runtime
 - `block_on` for synchronous bridge
 
+### 5.3 Database Compaction
+
+The `compact()` method creates a new database with only active (non-deleted) facts:
+
+| Step | Description |
+|------|-------------|
+| 1 | Acquire write lock on schema |
+| 2 | Create new empty schema |
+| 3 | Iterate all rows, skip tombstone-deleted |
+| 4 | Append active facts to new schema |
+| 5 | Return new KnowledgeDatabase |
+
+This operation is O(n) where n = total rows. Tombstone entries are eliminated.
+
 ---
 
 ## 6. Metrics
+
+14 atomic counters (lock-free):
 
 | Metric | Type | Description |
 |--------|------|-------------|
@@ -151,6 +168,10 @@ pub struct AsyncExecutor {
 | memory_bytes | AtomicU64 | Memory usage estimate |
 | inferences_total | AtomicU64 | Total inference operations |
 | facts_inferred | AtomicU64 | Facts derived by inference |
+| estimated_memory_bytes | AtomicU64 | Estimated memory footprint |
+| total_facts | AtomicU64 | Total fact count |
+| active_facts | AtomicU64 | Active (non-deleted) fact count |
+| tombstone_count | AtomicU64 | Deleted row count |
 
 ### 6.1 Snapshot
 
@@ -159,6 +180,7 @@ struct MetricsSnapshot {
     queries_total, queries_failed, avg_query_latency_ms,
     inserts_total, inserts_failed, cache_hit_ratio,
     memory_bytes, inferences_total, facts_inferred,
+    estimated_memory_bytes, total_facts, active_facts, tombstone_count,
 }
 ```
 
@@ -166,11 +188,13 @@ struct MetricsSnapshot {
 
 ## 7. Health Check
 
+Threshold-based health determination (defaults: error_threshold=0.05, latency_threshold_ms=100.0, cache_hit_threshold=0.5):
+
 | Status | Condition |
 |--------|-----------|
-| Healthy | error_rate < 5%, latency < threshold, cache_hit_ratio > 50% |
-| Degraded | latency > threshold OR cache_hit_ratio < 50% |
-| Unhealthy | error_rate > 5% |
+| Unhealthy | error_rate > 5% (when inserts_total > 0) |
+| Degraded | avg_query_latency_ms > 100ms OR cache_hit_ratio < 50% (when queries_total > 0) |
+| Healthy | None of the above |
 
 ---
 

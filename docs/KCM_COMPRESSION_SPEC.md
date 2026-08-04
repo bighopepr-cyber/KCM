@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-COMP-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-FORMAT-001
 
 ---
@@ -119,6 +120,12 @@ Read Path:
 | **Algorithm** | Custom RLE for byte arrays |
 | **Used on** | predicate, evidence, context, priority (as compression) |
 | **Format** | [u8 value, u32 LE count] pairs |
+
+### RLE Binary Format
+
+Each run: `[u8 value][u32 LE count]` = 5 bytes per run.
+
+Example: [0x01, 0x03, 0x00, 0x00, 0x00] = value 0x01 repeated 3 times.
 
 ### 4.4 Noop (Passthrough)
 

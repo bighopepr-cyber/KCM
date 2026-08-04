@@ -4,13 +4,14 @@ Documentation generator for KCM.
 
 ## Status: Planned
 
+> Not Yet Implemented. No documentation generation or HTTP server.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-docs generate <db> | Generate API docs |
-| kcm-docs schema <db> | Generate schema docs |
-| kcm-docs serve <path> | Serve docs locally |
+| kcm-docs generate <db> (Not Yet Implemented) | Generate API docs |
+| kcm-docs serve <path> (Not Yet Implemented) | Serve docs locally |
 
 ## Usage
 

@@ -2,23 +2,29 @@
 
 Point-in-time snapshot tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-snapshot create <db> | Create a snapshot |
-| kcm-snapshot list <db> | List available snapshots |
-| kcm-snapshot restore <db> <snap> | Restore from snapshot |
-| kcm-snapshot delete <db> <snap> | Delete a snapshot |
+| kcm-snapshot create | Create a snapshot (default: 1000 facts) |
+| kcm-snapshot list | List available snapshots |
+| kcm-snapshot restore -i <id> | Restore from snapshot by ID |
+| kcm-snapshot delete -i <id> | Delete a snapshot by ID |
 
 ## Usage
 
 ```bash
 # Create snapshot
-kcm-snapshot create my_knowledge.db
+kcm-snapshot create
 
 # List snapshots
-kcm-snapshot list my_knowledge.db
+kcm-snapshot list
+
+# Restore snapshot
+kcm-snapshot restore -i snap_1691234567
+
+# Delete snapshot
+kcm-snapshot delete -i snap_1691234567
 ```

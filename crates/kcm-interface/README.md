@@ -34,24 +34,28 @@ Provides language-agnostic interfaces to KCM: a C FFI layer (18 functions) for s
 
 ## C FFI API
 
-```c
-// 15 exported functions
-void* kcm_database_open(const char* path);
-void  kcm_database_close(void* db);
-int   kcm_insert(void* db, const char* fact_json);
-int   kcm_delete(void* db, const char* fact_json);
-int   kcm_query(void* db, const char* query, char** result);
-int   kcm_transaction_begin(void* db);
-int   kcm_transaction_commit(void* txn);
-int   kcm_transaction_abort(void* txn);
-int   kcm_backup(void* db, const char* path);
-int   kcm_restore(void* db, const char* path);
-int   kcm_health_check(void* db);
-int   kcm_metrics(void* db, char** result);
-int   kcm_wal_checkpoint(void* db);
-int   kcm_compact(void* db);
-int   kcm_get_fact_count(void* db, uint64_t* count);
-```
+18 exported functions in `lib.rs`:
+
+| Function | Purpose |
+|----------|---------|
+| `KCM_DatabaseNew` | Create database |
+| `KCM_DatabaseFree` | Destroy database |
+| `KCM_DatabaseInsert` | Insert fact |
+| `KCM_DatabaseUpdate` | Update fact |
+| `KCM_DatabaseDelete` | Delete fact |
+| `KCM_DatabaseFactCount` | Get fact count |
+| `KCM_DatabaseActiveCount` | Get active count |
+| `KCM_DatabaseQuery` | Start query |
+| `KCM_QueryNext` | Iterate results |
+| `KCM_QueryFree` | Free query |
+| `KCM_DatabaseBeginTransaction` | Start transaction |
+| `KCM_TransactionFree` | Free transaction |
+| `KCM_DatabaseSave` | Save database to file |
+| `KCM_DatabaseLoad` | Load database from file |
+| `KCM_DatabaseVerify` | Verify database integrity |
+| `KCM_TransactionCommit` | Commit transaction |
+| `KCM_TransactionRollback` | Rollback transaction |
+| `KCM_ErrorMessage` | Get error string |
 
 ## Python Bindings
 
@@ -75,15 +79,15 @@ LIMIT 10
 
 ## REST API
 
+8 endpoints (no prefix, implemented in `rest_api.rs`, served by `kcm-server`):
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | /api/facts | Insert fact |
-| DELETE | /api/facts | Delete fact |
-| GET | /api/facts | Query facts |
-| POST | /api/transactions | Begin transaction |
-| POST | /api/transactions/:id/commit | Commit transaction |
-| POST | /api/transactions/:id/abort | Abort transaction |
-| GET | /api/health | Health check |
-| GET | /api/metrics | Metrics |
-| POST | /api/backup | Backup database |
-| POST | /api/restore | Restore database |
+| GET | `/health` | Health check |
+| POST | `/facts` | Insert fact |
+| GET | `/facts` | Query facts |
+| GET | `/facts/{id}` | Get fact by ID |
+| PUT | `/facts/{id}` | Update fact |
+| DELETE | `/facts/{id}` | Delete fact |
+| GET | `/stats` | Metrics JSON |
+| GET | `/metrics` | Prometheus metrics |

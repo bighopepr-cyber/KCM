@@ -1,6 +1,15 @@
 # Monitoring Guide
 
-Comprehensive monitoring for KCM deployments.
+**Document ID:** GUIDE-MONITOR-001
+**Version:** 1.0.0
+**Status:** Active
+**Owner:** KCM Engineering Team
+**Last Reviewed:** 2026-08-04
+**Depends on:** KCM_SPECIFICATION
+
+## Purpose
+
+This guide covers metrics collection, dashboards, alerting rules, and log aggregation for KCM deployments.
 
 ## Metrics Collection
 

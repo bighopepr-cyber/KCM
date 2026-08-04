@@ -4,6 +4,8 @@ Schema migration tool for KCM.
 
 ## Status: Planned
 
+> Not Yet Implemented. No migration files are read or applied.
+
 ## Commands
 
 | Command | Description |

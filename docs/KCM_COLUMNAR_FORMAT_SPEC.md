@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-FORMAT-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Depends on:** KCM-DATA-001  
 **Authoritative Source:** PRD2.md §4 (Binary File Format)
 
@@ -67,17 +68,17 @@ Total header size: 31 bytes.
 | Compressed Size | 8 bytes (u64 LE) | Size of compressed data in bytes |
 | Data | variable | Compressed column data |
 
-Column order (fixed):
-1. SubjectColumn (u32) — 4 bytes/element
-2. PredicateColumn (u8) — 1 byte/element
-3. ObjectColumn (u32) — 4 bytes/element
-4. ConfidenceColumn (f64) — 8 bytes/element
-5. EvidenceColumn (u8) — 1 byte/element
-6. TimestampColumn (i64) — 8 bytes/element
-7. ContextColumn (u8) — 1 byte/element
-8. VersionColumn (i32) — 4 bytes/element
-9. PriorityColumn (i8) — 1 byte/element
-10. OwnerColumn (u16) — 2 bytes/element
+Column order, element type, and codec (fixed):
+1. SubjectColumn (u32) — 4 bytes/element — Zstd (codec_id=1)
+2. PredicateColumn (u8) — 1 byte/element — Rle (codec_id=3)
+3. ObjectColumn (u32) — 4 bytes/element — Zstd (codec_id=1)
+4. ConfidenceColumn (f64) — 8 bytes/element — Zstd (codec_id=1)
+5. EvidenceColumn (u8) — 1 byte/element — Rle (codec_id=3)
+6. TimestampColumn (i64) — 8 bytes/element — Zstd (codec_id=1)
+7. ContextColumn (u8) — 1 byte/element — Rle (codec_id=3)
+8. VersionColumn (i32) — 4 bytes/element — Lz4 (codec_id=2)
+9. PriorityColumn (i8) — 1 byte/element — Rle (codec_id=3)
+10. OwnerColumn (u16) — 2 bytes/element — Zstd (codec_id=1)
 
 ### 2.3 Checksum
 
@@ -89,10 +90,11 @@ After all 10 column blocks:
 
 | Field | Size | Description |
 |-------|------|-------------|
+| Row Count | 8 bytes (u64 LE) | Number of rows in the tombstone bitmap |
 | Bitmap Length | 8 bytes (u64 LE) | Number of bytes in bitmap |
 | Bitmap Data | variable | Packed bits (1 bit per row, LSB first) |
 
-Total tombstone block size: 8 + ceil(row_count / 8) bytes
+Total tombstone block size: 8 + 8 + ceil(row_count / 8) bytes
 
 ---
 

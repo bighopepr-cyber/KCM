@@ -4,15 +4,16 @@ Cluster management tool for KCM.
 
 ## Status: Planned
 
+> Not Yet Implemented. No cluster management or node communication.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| kcm-cluster status | Show cluster status |
-| kcm-cluster nodes | List cluster nodes |
-| kcm-cluster add-node <addr> | Add node to cluster |
-| kcm-cluster remove-node <id> | Remove node |
-| kcm-cluster rebalance | Rebalance shards |
+| kcm-cluster status (Not Yet Implemented) | Show cluster status |
+| kcm-cluster nodes (Not Yet Implemented) | List cluster nodes |
+| kcm-cluster add-node <addr> (Not Yet Implemented) | Add node to cluster |
+| kcm-cluster remove-node <id> (Not Yet Implemented) | Remove node |
 
 ## Usage
 

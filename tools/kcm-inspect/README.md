@@ -2,7 +2,7 @@
 
 Data inspection tool for KCM.
 
-## Status: Planned
+## Status: Implemented
 
 ## Commands
 
@@ -10,9 +10,8 @@ Data inspection tool for KCM.
 |---------|-------------|
 | kcm-inspect schema <db> | Show database schema |
 | kcm-inspect columns <db> | Show column metadata |
-| kcm-inspect dictionary <db> | Show dictionary contents |
 | kcm-inspect stats <db> | Show database statistics |
-| kcm-inspect row <db> <id> | Show specific row |
+| kcm-inspect dictionary <db> | Show dictionary contents |
 
 ## Usage
 

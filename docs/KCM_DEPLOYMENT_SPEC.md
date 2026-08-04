@@ -2,7 +2,8 @@
 
 **Document ID:** KCM-DEPLOY-001  
 **Version:** 1.0.0  
-**Depends on:** KCM_ARCHITECTURE-001, KCM_SECURITY_TRUST-001
+**Status:** Derived  
+**Depends on:** KCM-ARCHDETAIL-001, KCM-SEC-001
 
 ---
 
@@ -17,7 +18,7 @@ Defines deployment configurations, container specifications, and Kubernetes mani
 ### 2.1 Multi-Stage Build
 
 ```dockerfile
-FROM rust:1.75 AS builder
+FROM rust:1.85 AS builder
 WORKDIR /app
 COPY . .
 RUN cargo build --release --workspace
@@ -27,7 +28,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 COPY --from=builder /app/target/release/libkcm_interface.so /usr/local/lib/
 EXPOSE 8080
 ENV RUST_LOG=info
-CMD ["echo", "KCM Library built successfully"]
+CMD ["./target/release/kcm-server"]
 ```
 
 ### 2.2 Image Specifications
@@ -35,7 +36,7 @@ CMD ["echo", "KCM Library built successfully"]
 | Property | Value |
 |----------|-------|
 | Base image | debian:bookworm-slim |
-| Builder image | rust:1.75 |
+| Builder image | rust:1.85 |
 | Build target | release with LTO |
 | Exposed port | 8080 |
 | Required env | RUST_LOG |
@@ -66,17 +67,16 @@ volumes:
 
 ## 4. Kubernetes
 
-### 4.1 Deployment
+### 4.1 StatefulSet
 
 ```yaml
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: kcm-server
-  labels:
-    app: kcm-server
 spec:
-  replicas: 3
+  serviceName: kcm-service
+  replicas: 1
   selector:
     matchLabels:
       app: kcm-server
@@ -94,6 +94,8 @@ spec:
         env:
         - name: RUST_LOG
           value: "info"
+        - name: KCM_DATA_PATH
+          value: "/data/kcm.db"
         resources:
           requests:
             memory: "512Mi"
@@ -116,10 +118,14 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
-      volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: kcm-data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Gi
 ```
 
 ### 4.2 Service

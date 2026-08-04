@@ -6,7 +6,7 @@ C FFI bindings for KCM. Already implemented in `kcm-interface`.
 
 ## API
 
-15 FFI functions defined in `kcm-interface/src/lib.rs`:
+18 FFI functions defined in `kcm-interface/src/lib.rs`:
 
 ```c
 KCM_Database* KCM_DatabaseNew(const char* path);

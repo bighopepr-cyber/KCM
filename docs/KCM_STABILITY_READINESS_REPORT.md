@@ -1,5 +1,6 @@
 # KCM Stability and Readiness Report
 
+**Document ID:** KCM-STABILITY-001
 **Version:** 1.0.0
 **Date:** 2026-08-01
 **Scope:** Complete repository-wide consistency audit

@@ -6,12 +6,12 @@ Practical code recipes for common tasks.
 
 | Recipe | Description | Language |
 |--------|-------------|----------|
-| create-database.md | Create and configure a database | Rust |
-| insert-facts.md | Insert knowledge facts | Rust |
-| query-kql.md | Execute KQL queries | Rust |
-| use-transactions.md | Transaction management | Rust |
-| enable-encryption.md | Enable AES-256-GCM | Rust |
-| setup-monitoring.md | Configure Prometheus | YAML |
+| create-database.md | Create and configure a database (Planned) | Rust |
+| insert-facts.md | Insert knowledge facts (Planned) | Rust |
+| query-kql.md | Execute KQL queries (Planned) | Rust |
+| use-transactions.md | Transaction management (Planned) | Rust |
+| enable-encryption.md | Enable AES-256-GCM (Planned) | Rust |
+| setup-monitoring.md | Configure Prometheus (Planned) | YAML |
 | docker-compose.md | Local development setup | Docker |
 | kubernetes.md | Production K8s deployment | YAML |
 

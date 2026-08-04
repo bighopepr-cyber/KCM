@@ -19,15 +19,17 @@ Provides comprehensive testing frameworks that validate KCM's correctness, perfo
 
 ## Dependencies
 
-| Dependency | Purpose |
-|------------|---------|
-| `kcm-core` | Core types |
-| `kcm-storage` | Storage layer testing |
-| `kcm-runtime` | Runtime testing |
-| `kcm-reasoning` | Reasoning engine testing |
-| `kcm-security` | Security testing |
-| `parking_lot` | Concurrent access |
-| `tempfile` | Temporary test databases |
+| Dependency | Type | Purpose |
+|------------|------|---------|
+| `kcm-core` | dependency | Core types |
+| `kcm-storage` | dependency | Storage layer testing |
+| `kcm-runtime` | dependency | Runtime testing |
+| `kcm-reasoning` | dependency | Reasoning engine testing |
+| `kcm-security` | dependency | Security testing |
+| `kcm-distributed` | dev-dependency | Distributed testing |
+| `kcm-compliance` | dev-dependency | Compliance testing |
+| `parking_lot` | dependency | Concurrent access |
+| `tempfile` | dependency | Temporary test databases |
 
 ## Test Categories
 

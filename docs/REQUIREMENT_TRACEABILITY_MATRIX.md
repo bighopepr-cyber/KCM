@@ -4,7 +4,7 @@
 |-------|-------|
 | **Document ID** | KCM-RTM-001 |
 | **Title** | Requirement Traceability Matrix |
-| **Version** | 1.0.0 |
+| **Version** | 2.0.0 |
 | **Date** | 2026-08-04 |
 | **Status** | Authoritative |
 | **Authority** | Engineering Orchestrator (P1) |
@@ -72,7 +72,7 @@ This RTM connects every requirement from PRD documents to its implementation, te
 |--------|-------------|------|----------------|------|-----------|-----|
 | RUNT-001 | KnowledgeDatabase | KCM_RUNTIME_SPEC | kcm-runtime/src/database.rs | test_full.rs | bench_database_* | KCM_RUNTIME_SPEC.md |
 | RUNT-002 | Transactions | KCM_RUNTIME_SPEC | kcm-runtime/src/transaction.rs | test_transaction_rollback.rs | bench_transaction_* | KCM_RUNTIME_SPEC.md |
-| RUNT-003 | Metrics (11 counters) | KCM_RUNTIME_SPEC | kcm-runtime/src/metrics.rs | test_monitoring.rs | - | KCM_RUNTIME_SPEC.md |
+| RUNT-003 | Metrics (14 counters) | KCM_RUNTIME_SPEC | kcm-runtime/src/metrics.rs | test_monitoring.rs | - | KCM_RUNTIME_SPEC.md |
 | RUNT-004 | Health checks | KCM_RUNTIME_SPEC | kcm-runtime/src/health.rs | test_monitoring.rs | - | KCM_RUNTIME_SPEC.md |
 | RUNT-005 | Rayon executor | KCM_RUNTIME_SPEC | kcm-runtime/src/executor.rs | test_integration.rs | - | KCM_RUNTIME_SPEC.md |
 | RUNT-006 | Tokio async executor | KCM_RUNTIME_SPEC | kcm-runtime/src/async_executor.rs | test_integration.rs | - | KCM_RUNTIME_SPEC.md |
@@ -126,7 +126,47 @@ This RTM connects every requirement from PRD documents to its implementation, te
 | SERV-001 | HTTP server (actix-web) | KCM_API_SPEC | kcm-server/src/main.rs | test_server.rs | - | KCM_API_SPEC.md |
 | SERV-002 | gRPC server (tonic) | KCM_API_SPEC | kcm-server/src/grpc_server.rs | test_server.rs | - | KCM_API_SPEC.md |
 
-## 13. Traceability Summary
+## 13. Technical Requirements (KCM_SPECIFICATION.md §4.1)
+
+| Req ID | Requirement | Priority | Authority | Implementation | Test | Benchmark | Doc |
+|--------|-------------|----------|-----------|----------------|------|-----------|-----|
+| TR-001 | All column data stored as DenseVec with ≥64-byte alignment | Critical | PRD.md §4.1 | kcm-core/src/vec.rs | test_core.rs | bench_column_* | KCM_SPECIFICATION.md |
+| TR-002 | Dictionary encoding maps all string references to u32 IDs | Critical | PRD.md §4.3 | kcm-core/src/dictionary.rs | test_core.rs | bench_dict_* | KCM_SPECIFICATION.md |
+| TR-003 | Confidence values stored as f64, validated in [0.0, 1.0] | Critical | PRD.md §3.2 | kcm-core/src/types.rs | property_tests.rs | - | KCM_SPECIFICATION.md |
+| TR-004 | Tombstone-based soft delete with active_count tracking | High | PRD2.md §2 | kcm-storage/src/column.rs | test_storage.rs | - | KCM_SPECIFICATION.md |
+| TR-005 | WAL-based crash recovery with blake3 checksums | Critical | PRD2.md §3 | kcm-storage/src/wal.rs | test_wal_property.rs, test_crash_recovery.rs | bench_wal_* | KCM_SPECIFICATION.md |
+| TR-006 | AES-256-GCM encryption for at-rest data protection | Critical | PRD3.md §10 | kcm-security/src/encryption.rs | test_security.rs | - | KCM_SPECIFICATION.md |
+| TR-007 | RBAC with Role/User/Permission/Context ACL model | High | PRD3.md §10 | kcm-security/src/rbac.rs | test_security.rs | - | KCM_SPECIFICATION.md |
+| TR-008 | Forward-chaining inference with max iteration limit | High | PRD.md §6 | kcm-reasoning/src/inference.rs | test_reasoning.rs | bench_inference_* | KCM_SPECIFICATION.md |
+| TR-009 | All public APIs return Result<T, KcmError> | Critical | AGENTS.md §Non-Negotiable Rules | All crate src/lib.rs, src/types.rs | cargo clippy, test_full.rs | - | KCM_SPECIFICATION.md |
+| TR-010 | No unwrap() in production code paths (test-only) | High | AGENTS.md §Non-Negotiable Rules | All crate src/*.rs | cargo clippy, test_full.rs | - | KCM_SPECIFICATION.md |
+| TR-011 | Send + Sync bounds on all shared types | Critical | AGENTS.md §Concurrency Model | kcm-runtime/src/database.rs, kcm-runtime/src/transaction.rs | test_concurrent_access.rs | - | KCM_SPECIFICATION.md |
+| TR-012 | Zero runtime overhead from Rust (no GC, no reflection) | High | AGENTS.md §Engineering Philosophy | All crates (inherent Rust property) | cargo test --release | bench_* | KCM_SPECIFICATION.md |
+
+## 14. Quality Requirements (KCM_SPECIFICATION.md §4.2)
+
+| Req ID | Requirement | Threshold | Enforcement |
+|--------|-------------|-----------|-------------|
+| QR-001 | Test pass rate | 100% | Gate 6: cargo test --workspace |
+| QR-002 | Clippy warnings | 0 (style warnings excluded) | Gate 6: cargo clippy --workspace |
+| QR-003 | Unsafe code in public API | None | Gate 4: Code Quality Guardian |
+| QR-004 | Deterministic execution | Verified by regression tests | Gate 5: test_concurrent_access.rs |
+| QR-005 | Performance regression | < 5% from baseline | Gate 5: Performance Engineer |
+
+## 15. Engineering Rules (KCM_ENGINEERING_RULES.md)
+
+| Req ID | Requirement | Authority |
+|--------|-------------|-----------|
+| ER-001 | Every PR must pass `cargo test --workspace` | Gate 6 |
+| ER-002 | Every PR must pass `cargo clippy --workspace` | Gate 6 |
+| ER-003 | Every PR must pass `cargo fmt --check` | Gate 6 |
+| ER-004 | New code must have ≥ 95% test coverage | Testing Strategy |
+| ER-005 | Security-sensitive code must have security tests | Security tier |
+| ER-006 | Performance-critical code must have benchmarks | Performance tier |
+| ER-007 | Property tests required for arithmetic operations | Property tier |
+| ER-008 | Load tests run before releases | Load tier |
+
+## 16. Coverage Summary
 
 | Category | Requirements | Implemented | Tested | Documented | Coverage |
 |----------|-------------|-------------|--------|------------|----------|
@@ -141,12 +181,17 @@ This RTM connects every requirement from PRD documents to its implementation, te
 | Distributed | 4 | 4 | 4 | 4 | 100% |
 | ML | 3 | 3 | 3 | 3 | 100% |
 | Server | 2 | 2 | 2 | 2 | 100% |
-| **Total** | **56** | **56** | **55** | **56** | **99%** |
+| Technical (TR) | 12 | 12 | 11 | 12 | 97% |
+| Quality (QR) | 5 | 5 | 5 | 5 | 100% |
+| Eng. Rules (ER) | 8 | 8 | 8 | 8 | 100% |
+| **Total** | **81** | **81** | **79** | **81** | **98%** |
 
-## 14. Discrepancies Found
+## 17. Discrepancies Found
 
 | ID | Type | Description | Severity | Status |
 |----|------|-------------|----------|--------|
 | DISC-001 | Doc Gap | FFI count: 18 implemented vs 15 documented | Medium | Fix needed |
 | DISC-002 | Doc Gap | Python bindings: implemented but no tests | Low | Add tests |
 | DISC-003 | Deviation | bench_fixtures.rs has 9 panics in test infra | Low | Intentional |
+| DISC-004 | Gap | TR-011 Send+Sync: no dedicated concurrency bounds test file | Low | Covered by test_concurrent_access.rs |
+| DISC-005 | Gap | TR-012 Zero overhead: inherent Rust property, no explicit test needed | Low | Intentional |

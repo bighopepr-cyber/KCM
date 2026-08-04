@@ -1,6 +1,15 @@
 # Maintainer Handbook
 
-Guidelines for KCM maintainers.
+**Document ID:** HANDBOOK-MAINTAINER-001
+**Version:** 1.0.0
+**Status:** Active
+**Owner:** KCM Engineering Team
+**Last Reviewed:** 2026-08-04
+**Depends on:** KCM_SPECIFICATION
+
+## Purpose
+
+This handbook provides guidelines and procedures for KCM maintainers, including review processes, release management, and issue triage.
 
 ## Responsibilities
 

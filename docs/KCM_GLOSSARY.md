@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-GLOSS-001  
 **Version:** 1.0.0
+**Status:** Derived
 
 ---
 
@@ -24,6 +25,8 @@ Defines all technical terms used in KCM documentation.
 | **Evidence** | Source identifier proving the fact's origin |
 | **Context** | Domain or scope within which the fact is valid |
 | **Provenance** | Complete chain of evidence and timestamps for a fact |
+| **KnowledgeDatabase** | Central database type wrapping Schema with thread-safe CRUD operations |
+| **KcmError** | Primary error type for all KCM public APIs |
 
 ---
 
@@ -39,6 +42,7 @@ Defines all technical terms used in KCM documentation.
 | **Segment** | A block of rows within a column |
 | **Block** | Physical storage unit containing encoded column data |
 | **Column Block** | On-disk representation of a column segment |
+| **Bitmap** | 64-bit word bit-vector with O(1) set/clear/get operations |
 
 ---
 
@@ -89,6 +93,7 @@ Defines all technical terms used in KCM documentation.
 | **Cost Model** | Estimates computational cost of query plan execution |
 | **Execution Plan** | Optimized query plan ready for execution |
 | **Volcano Model** | Pull-based query execution where each operator requests rows from children |
+| **KQL** | Knowledge Query Language — SQL-like query syntax for KCM |
 
 ---
 
@@ -98,7 +103,7 @@ Defines all technical terms used in KCM documentation.
 |------|------------|
 | **Rule** | A pattern-matching template that derives new facts from existing ones |
 | **Rule Pattern** | Structural template (Triple, And, Or, Not) for matching facts |
-| **Forward Chaining** | Iterative inference that repeatedly applies rules until no new facts |
+| **Forward-Chaining** | Iterative inference that repeatedly applies rules until no new facts |
 | **Confidence Formula** | Function combining source confidences into derived confidence |
 | **Derived Fact** | A new fact produced by rule inference |
 | **Conjunction** | AND combination: P(A ∧ B) = P(A) × P(B) |

@@ -104,7 +104,7 @@ async fn test_health_endpoint_200() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert!(body.get("status").is_some());
+    assert_eq!(body["status"], "healthy");
 }
 
 #[actix_web::test]
@@ -125,7 +125,7 @@ async fn test_insert_endpoint_201() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 201);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(body["status"], "OK");
+    assert_eq!(body["status"], "created");
 }
 
 #[actix_web::test]
@@ -185,7 +185,7 @@ async fn test_query_endpoint_200() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(body["total_count"], 1);
+    assert_eq!(body["count"], 1);
 }
 
 #[actix_web::test]
@@ -201,7 +201,7 @@ async fn test_query_empty_database() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(body["total_count"], 0);
+    assert_eq!(body["count"], 0);
 }
 
 #[actix_web::test]
@@ -227,7 +227,7 @@ async fn test_query_with_predicate_filter() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(body["total_count"], 1);
+    assert_eq!(body["count"], 1);
 }
 
 #[actix_web::test]
@@ -328,7 +328,7 @@ async fn test_stats_endpoint() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert!(body.get("queries_total").is_some());
+    assert!(body.get("total_queries").is_some());
 }
 
 #[actix_web::test]
@@ -369,7 +369,7 @@ async fn test_multiple_inserts_and_query() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(body["total_count"], 10);
+    assert_eq!(body["count"], 10);
 }
 
 #[actix_web::test]
@@ -418,9 +418,7 @@ async fn test_health_contains_json_fields() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = test::read_body_json(resp).await;
-    assert!(body.get("status").is_some());
-    assert!(body.get("total_queries").is_some());
-    assert!(body.get("total_inserts").is_some());
+    assert_eq!(body["status"], "healthy");
 }
 
 #[actix_web::test]

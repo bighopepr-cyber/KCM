@@ -2,7 +2,8 @@
 
 **Document ID:** KCM-QUERY-001  
 **Version:** 1.0.0  
-**Depends on:** KCM-DATA-001, KCM_ARCHITECTURE-001
+**Status:** Derived  
+**Depends on:** KCM-DATA-001, KCM-ARCHDETAIL-001
 
 ---
 
@@ -141,7 +142,6 @@ Estimates operator cost based on:
 | JoinReorder | Join smaller relations first |
 | IndexSelection | Choose best index for predicates |
 | ColumnPruning | Read only required columns |
-| ConstantFolding | Evaluate constant expressions at plan time |
 
 ### 4.3 Adaptive Execution
 

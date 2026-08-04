@@ -2,6 +2,7 @@
 
 **Document ID:** KCM-ENG-001  
 **Version:** 1.0.0  
+**Status:** Derived  
 **Authoritative Source:** AGENTS.md §Non-Negotiable Rules
 
 > **Authority Notice:** The 12 Non-Negotiable Rules in AGENTS.md are the authoritative engineering rules for KCM. This document provides the detailed operational rules that derive from those principles. Where conflicts exist, AGENTS.md §Non-Negotiable Rules wins.
@@ -101,15 +102,15 @@ Defines mandatory engineering practices for KCM development. Derived from AGENTS
 
 ## 6. Security Rules
 
-> Security requirements: PRD3.md §10 (Security). Non-negotiable: AGENTS.md §Non-Negotiable Rules.
+> Security requirements: PRD3.md §4 (Security). Non-negotiable: AGENTS.md §Non-Negotiable Rules.
 
 | Rule | Description | Authority |
 |------|-------------|-----------|
 | SR-001 | No hardcoded secrets or keys | AGENTS.md §Non-Negotiable Rules #6 |
-| SR-002 | Encryption must use AEAD (AES-256-GCM) | PRD3.md §10 |
-| SR-003 | Key generation must use CSPRNG | PRD3.md §10 |
+| SR-002 | Encryption must use AEAD (AES-256-GCM) | PRD3.md §4 |
+| SR-003 | Key generation must use CSPRNG | PRD3.md §4 |
 | SR-004 | All user input must be validated | AGENTS.md §Non-Negotiable Rules #9 |
-| SR-005 | Audit logging for all write operations | PRD3.md §10 |
+| SR-005 | Audit logging for all write operations | PRD3.md §4 |
 
 ---
 

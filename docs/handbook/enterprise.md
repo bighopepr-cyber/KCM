@@ -1,6 +1,15 @@
 # Enterprise Handbook
 
-Guide for enterprise adoption of KCM.
+**Document ID:** HANDBOOK-ENTERPRISE-001
+**Version:** 1.0.0
+**Status:** Active
+**Owner:** KCM Engineering Team
+**Last Reviewed:** 2026-08-04
+**Depends on:** KCM_SPECIFICATION, KCM_SECURITY_TRUST_SPEC
+
+## Purpose
+
+This handbook provides guidance for enterprise adoption of KCM, including deployment, security, operations, and support.
 
 ## Getting Started
 
