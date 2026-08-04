@@ -85,7 +85,8 @@ fn bench_concurrent_ops(c: &mut Criterion) {
                             0.95,
                         )
                         .unwrap(),
-                    );
+                    )
+                    .unwrap();
                 }
             },
             criterion::BatchSize::SmallInput,

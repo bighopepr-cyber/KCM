@@ -81,7 +81,7 @@ fn test_metrics_full_coverage() {
     assert!(avg >= 0.0);
 
     let ratio = metrics.get_cache_hit_ratio();
-    assert!(ratio >= 0.0 && ratio <= 1.0);
+    assert!((0.0..=1.0).contains(&ratio));
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_health_check() {
     let health = HealthCheck::new(metrics);
 
     let result = health.check();
-    drop(result);
+    let _ = result;
 }
 
 #[test]

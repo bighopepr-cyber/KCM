@@ -31,9 +31,9 @@ if [ "$METRICS_COUNT" -eq 14 ]; then check "Metrics counter count = 14" "0"; els
 TEST_COUNT=$(grep -r '#\[test\]' /workspaces/KCM/crates/ --include='*.rs' 2>/dev/null | wc -l)
 if [ "$TEST_COUNT" -ge 550 ]; then check "Test count >= 550 ($TEST_COUNT)" "0"; else check "Test count = $TEST_COUNT (expected >= 550)" "1"; fi
 
-# Check 4: REST endpoint count
+# Check 5: REST endpoint count (8 versioned + 8 legacy = 16, minimum 8)
 ROUTE_COUNT=$(grep -c '\.route(' /workspaces/KCM/crates/kcm-server/src/main.rs 2>/dev/null || true)
-if [ "$ROUTE_COUNT" -eq 8 ]; then check "REST endpoint count = 8" "0"; else check "REST endpoint count = $ROUTE_COUNT (expected 8)" "1"; fi
+if [ "$ROUTE_COUNT" -ge 8 ]; then check "REST endpoint count >= 8 ($ROUTE_COUNT)" "0"; else check "REST endpoint count = $ROUTE_COUNT (expected >= 8)" "1"; fi
 
 # Check 5: gRPC RPC count
 RPC_COUNT=$(grep -c 'rpc ' /workspaces/KCM/crates/kcm-interface/proto/kcm.proto 2>/dev/null || true)

@@ -458,3 +458,185 @@ async fn test_insert_boundary_confidence_one() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 201);
 }
+
+// ============= BATCH INSERT TESTS =============
+
+async fn batch_insert_handler(
+    state: web::Data<Arc<ApiState>>,
+    body: web::Json<serde_json::Value>,
+) -> HttpResponse {
+    let mut tuples = Vec::new();
+    if let Some(facts) = body.as_array() {
+        for f in facts {
+            let s = f["subject"].as_u64().unwrap_or(0) as u32;
+            let p = f["predicate"].as_u64().unwrap_or(0) as u8;
+            let o = f["object"].as_u64().unwrap_or(0) as u32;
+            let c = f["confidence"].as_f64().unwrap_or(0.5);
+            tuples.push((s, p, o, c));
+        }
+    }
+    build_response(handle_batch_insert(&state, tuples))
+}
+
+async fn openapi_handler() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .body(kcm_interface::openapi::openapi_spec())
+}
+
+async fn metrics_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
+    let snap = state.metrics.snapshot();
+    let body = format!(
+        "kcm_queries_total {}\nkcm_inserts_total {}\nkcm_memory_bytes {}",
+        snap.queries_total, snap.inserts_total, snap.memory_bytes
+    );
+    HttpResponse::Ok().content_type("text/plain").body(body)
+}
+
+#[actix_web::test]
+async fn test_batch_insert() {
+    let state = create_test_state();
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(state))
+            .route("/facts", web::post().to(batch_insert_handler)),
+    )
+    .await;
+    let req = test::TestRequest::post()
+        .uri("/facts")
+        .set_json(serde_json::json!([
+            {"subject": 1, "predicate": 0, "object": 2, "confidence": 0.95},
+            {"subject": 2, "predicate": 1, "object": 3, "confidence": 0.90},
+            {"subject": 3, "predicate": 2, "object": 4, "confidence": 0.85}
+        ]))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["inserted"], 3);
+    assert_eq!(body["errors"], 0);
+}
+
+#[actix_web::test]
+async fn test_batch_insert_with_errors() {
+    let state = create_test_state();
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(state))
+            .route("/facts", web::post().to(batch_insert_handler)),
+    )
+    .await;
+    let req = test::TestRequest::post()
+        .uri("/facts")
+        .set_json(serde_json::json!([
+            {"subject": 1, "predicate": 0, "object": 2, "confidence": 0.95},
+            {"subject": 2, "predicate": 0, "object": 3, "confidence": 2.0}
+        ]))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["inserted"], 1);
+    assert_eq!(body["errors"], 1);
+}
+
+#[actix_web::test]
+async fn test_batch_insert_empty() {
+    let state = create_test_state();
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(state))
+            .route("/facts", web::post().to(batch_insert_handler)),
+    )
+    .await;
+    let req = test::TestRequest::post()
+        .uri("/facts")
+        .set_json(serde_json::json!([]))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["inserted"], 0);
+}
+
+#[actix_web::test]
+async fn test_openapi_endpoint() {
+    let app =
+        test::init_service(App::new().route("/openapi.json", web::get().to(openapi_handler))).await;
+    let req = test::TestRequest::get().uri("/openapi.json").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["openapi"], "3.1.0");
+    assert_eq!(body["info"]["title"], "KCM Knowledge Columnar Model API");
+}
+
+#[actix_web::test]
+async fn test_metrics_endpoint() {
+    let state = create_test_state();
+    state
+        .db
+        .insert(&Fact::new(SubjectID(1), PredicateID(0), ObjectID(2), 0.9).unwrap())
+        .unwrap();
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(state))
+            .route("/metrics", web::get().to(metrics_handler)),
+    )
+    .await;
+    let req = test::TestRequest::get().uri("/metrics").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body = {
+        let bytes = test::read_body(resp).await;
+        String::from_utf8(bytes.to_vec()).unwrap_or_default()
+    };
+    assert!(body.contains("kcm_queries_total"));
+    assert!(body.contains("kcm_inserts_total"));
+    assert!(body.contains("kcm_memory_bytes"));
+}
+
+#[actix_web::test]
+async fn test_insert_then_batch_query() {
+    let state = create_test_state();
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(state))
+            .route("/facts", web::post().to(batch_insert_handler))
+            .route("/facts", web::get().to(query_handler)),
+    )
+    .await;
+
+    let req = test::TestRequest::post()
+        .uri("/facts")
+        .set_json(serde_json::json!([
+            {"subject": 1, "predicate": 0, "object": 100, "confidence": 0.95},
+            {"subject": 1, "predicate": 1, "object": 200, "confidence": 0.90},
+            {"subject": 2, "predicate": 0, "object": 300, "confidence": 0.85}
+        ]))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+
+    let req = test::TestRequest::get().uri("/facts").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["count"], 3);
+
+    let req = test::TestRequest::get()
+        .uri("/facts?subject=1")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["count"], 2);
+
+    let req = test::TestRequest::get()
+        .uri("/facts?confidence_min=0.9")
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = test::read_body_json(resp).await;
+    assert_eq!(body["count"], 2);
+}

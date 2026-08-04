@@ -32,7 +32,7 @@ fn test_soak_insert_query_cycle() {
             total_queries += 1;
         }
 
-        if total_inserts % 500 == 0 {
+        if total_inserts.is_multiple_of(500) {
             for i in 0..50 {
                 let _ = db.delete(RowID(i));
             }
