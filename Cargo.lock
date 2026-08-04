@@ -1739,6 +1739,7 @@ version = "0.1.0"
 dependencies = [
  "kcm-core",
  "kcm-runtime",
+ "kcm-security",
  "kcm-storage",
  "parking_lot",
  "pyo3",
@@ -1870,6 +1871,7 @@ dependencies = [
  "kcm-core",
  "kcm-interface",
  "kcm-runtime",
+ "kcm-security",
  "log",
  "prost",
  "protoc-bin-vendored",

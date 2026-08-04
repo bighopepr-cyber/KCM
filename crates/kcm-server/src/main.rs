@@ -8,6 +8,7 @@ use kcm_interface::rest_api::{
 use kcm_runtime::database::KnowledgeDatabase;
 use kcm_runtime::health::HealthCheck;
 use kcm_runtime::metrics::Metrics;
+use kcm_security::audit::AuditLog;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -170,10 +171,12 @@ async fn main() -> std::io::Result<()> {
     let health_check = Arc::new(HealthCheck::new(metrics.clone()));
     let rate_limiter = Arc::new(RateLimiter::new(1000, 60));
 
+    let audit_log = Arc::new(AuditLog::new());
     let state = Arc::new(ApiState {
         db: Arc::new(db),
         metrics: metrics.clone(),
         health_check,
+        audit_log: Some(audit_log),
     });
 
     let bind_addr = std::env::var("KCM_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());

@@ -2,12 +2,14 @@ use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
 use kcm_runtime::health::HealthCheck;
 use kcm_runtime::metrics::Metrics;
+use kcm_security::audit::AuditLog;
 use std::sync::Arc;
 
 pub struct ApiState {
     pub db: Arc<KnowledgeDatabase>,
     pub metrics: Arc<Metrics>,
     pub health_check: Arc<HealthCheck>,
+    pub audit_log: Option<Arc<AuditLog>>,
 }
 
 pub struct ApiResponse {
@@ -87,6 +89,9 @@ pub fn handle_insert(
     match state.db.insert(&fact) {
         Ok(row_id) => {
             state.metrics.record_insert(true);
+            if let Some(ref log) = state.audit_log {
+                log.log_insert("api", row_id.0);
+            }
             ApiResponse::created(&format!(r#"{{"row_id":{},"status":"created"}}"#, row_id.0))
         }
         Err(e) => {
@@ -140,6 +145,9 @@ pub fn handle_query(
     match query.execute() {
         Ok(results) => {
             state.metrics.record_query(0, true);
+            if let Some(ref log) = state.audit_log {
+                log.log_query("api", "query");
+            }
             let facts: Vec<String> = results
                 .iter()
                 .map(|f| {
@@ -198,7 +206,12 @@ pub fn handle_update(
 
 pub fn handle_delete(state: &ApiState, row_id: u64) -> ApiResponse {
     match state.db.delete(RowID(row_id)) {
-        Ok(()) => ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"deleted"}}"#, row_id)),
+        Ok(()) => {
+            if let Some(ref log) = state.audit_log {
+                log.log_delete("api", row_id);
+            }
+            ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"deleted"}}"#, row_id))
+        }
         Err(e) => ApiResponse::internal_error(&format!("Delete failed: {}", e)),
     }
 }

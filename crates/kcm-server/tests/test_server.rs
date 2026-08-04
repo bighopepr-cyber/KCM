@@ -9,10 +9,12 @@ fn create_test_state() -> Arc<ApiState> {
     let db = KnowledgeDatabase::new().unwrap();
     let metrics = Arc::new(Metrics::new());
     let health_check = Arc::new(HealthCheck::new(metrics.clone()));
+    let audit_log = Arc::new(kcm_security::audit::AuditLog::new());
     Arc::new(ApiState {
         db: Arc::new(db),
         metrics,
         health_check,
+        audit_log: Some(audit_log),
     })
 }
 

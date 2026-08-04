@@ -8,6 +8,7 @@ description = "HTTP server for KCM REST API"
 kcm-core = { path = "../kcm-core" }
 kcm-runtime = { path = "../kcm-runtime" }
 kcm-interface = { path = "../kcm-interface" }
+kcm-security = { path = "../kcm-security" }
 actix-web = "4"
 tonic = "0.12"
 prost = "0.13"
