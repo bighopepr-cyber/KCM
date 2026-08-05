@@ -523,7 +523,7 @@ fn test_python_bindings() {
     use kcm_interface::python::bindings::PyKnowledgeBase;
     use pyo3::Python;
 
-    Python::with_gil(|py| {
+    Python::with_gil(|_py| {
         let kb = PyKnowledgeBase::new().unwrap();
 
         // Test insert

@@ -13,7 +13,7 @@ pub mod bindings {
     #[pymethods]
     impl PyKnowledgeBase {
         #[new]
-        fn new() -> PyResult<Self> {
+        pub fn new() -> PyResult<Self> {
             let kb = KnowledgeDatabase::new()
                 .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))?;
             Ok(PyKnowledgeBase {
@@ -21,7 +21,7 @@ pub mod bindings {
             })
         }
 
-        fn insert(
+        pub fn insert(
             &self,
             subject: u32,
             predicate: u8,
@@ -34,7 +34,7 @@ pub mod bindings {
                 ObjectID(object),
                 confidence,
             )
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
 
             self.kb
                 .lock()
@@ -44,7 +44,7 @@ pub mod bindings {
             Ok(())
         }
 
-        fn query_all(&self) -> PyResult<Vec<(u32, u8, u32, f64)>> {
+        pub fn query_all(&self) -> PyResult<Vec<(u32, u8, u32, f64)>> {
             let kb = self.kb.lock().unwrap_or_else(|e| e.into_inner());
             let facts = kb
                 .query()
@@ -56,11 +56,18 @@ pub mod bindings {
                 .collect())
         }
 
-        fn fact_count(&self) -> usize {
+        pub fn fact_count(&self) -> usize {
             self.kb
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .fact_count()
+        }
+
+        pub fn active_count(&self) -> usize {
+            self.kb
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .active_fact_count()
         }
     }
 
