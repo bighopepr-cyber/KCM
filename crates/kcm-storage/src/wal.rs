@@ -8,6 +8,7 @@ use std::sync::Mutex;
 const WAL_BUFFER_SIZE: usize = 65536;
 
 pub const WAL_INSERT_SIZE: usize = 38;
+pub const WAL_DELETE_SIZE: usize = 13;
 
 fn crc32(data: &[u8]) -> u32 {
     let mut crc: u32 = 0xFFFF_FFFF;

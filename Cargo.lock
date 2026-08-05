@@ -1898,6 +1898,7 @@ dependencies = [
  "kcm-core",
  "log",
  "lz4",
+ "parking_lot",
  "tempfile",
  "thiserror 1.0.69",
  "zstd",

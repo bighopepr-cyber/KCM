@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/KCM-LOGO.svg" alt="KCM Logo" width="400">
+  <img src="assets/KCM-LOGO-LIGHT.svg" alt="KCM Logo" width="400">
 </p>
 
 <h1 align="center">KCM — Knowledge Columnar Model</h1>

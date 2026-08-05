@@ -39,7 +39,8 @@ impl Lz4Compressor {
 
 impl Compressor for Lz4Compressor {
     fn compress(&self, data: &[u8]) -> Result<Vec<u8>, KcmError> {
-        lz4::block::compress(data, None, false).map_err(|e| KcmError::Io(e.to_string()))
+        lz4::block::compress(data, Some(lz4::block::CompressionMode::FAST(1)), false)
+            .map_err(|e| KcmError::Io(e.to_string()))
     }
 
     fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError> {
@@ -89,16 +90,7 @@ impl Compressor for RleCompressor {
             i += count as usize;
         }
 
-        let rle_size = runs.len() * 5 + 1;
-        if rle_size >= data.len() {
-            let mut result = Vec::with_capacity(data.len() + 1);
-            result.push(0);
-            result.extend_from_slice(data);
-            return Ok(result);
-        }
-
-        let mut result = Vec::with_capacity(rle_size + 1);
-        result.push(1);
+        let mut result = Vec::with_capacity(runs.len() * 5);
         for (value, count) in &runs {
             result.push(*value);
             result.extend_from_slice(&count.to_le_bytes());
@@ -107,36 +99,22 @@ impl Compressor for RleCompressor {
     }
 
     fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError> {
-        if data.is_empty() {
+        if expected_size == 0 {
             return Ok(Vec::new());
         }
 
-        let flag = data[0];
-        let payload = &data[1..];
-
-        match flag {
-            0 => Ok(payload.to_vec()),
-            1 => {
-                let mut result = Vec::with_capacity(expected_size);
-                let mut i = 0;
-                while i + 5 <= payload.len() {
-                    let value = payload[i];
-                    i += 1;
-                    let count = u32::from_le_bytes([
-                        payload[i],
-                        payload[i + 1],
-                        payload[i + 2],
-                        payload[i + 3],
-                    ]);
-                    i += 4;
-                    for _ in 0..count {
-                        result.push(value);
-                    }
-                }
-                Ok(result)
+        let mut result = Vec::with_capacity(expected_size);
+        let mut i = 0;
+        while result.len() < expected_size && i + 5 <= data.len() {
+            let value = data[i];
+            i += 1;
+            let count = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]);
+            i += 4;
+            for _ in 0..count {
+                result.push(value);
             }
-            _ => Err(KcmError::Corrupted(format!("Unknown RLE flag: {}", flag))),
         }
+        Ok(result)
     }
 }
 
@@ -208,5 +186,33 @@ mod tests {
         assert!(compressed.len() < data.len());
         let decompressed = compressor.decompress(&compressed, data.len()).unwrap();
         assert_eq!(data, decompressed);
+    }
+
+    #[test]
+    fn test_rle_compress_decompress() {
+        let compressor = RleCompressor;
+        let data = vec![1u8, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3];
+        let compressed = compressor.compress(&data).unwrap();
+        let decompressed = compressor.decompress(&compressed, data.len()).unwrap();
+        assert_eq!(data, decompressed);
+    }
+
+    #[test]
+    fn test_rle_single_values() {
+        let compressor = RleCompressor;
+        let data = vec![1u8, 2, 3, 4, 5];
+        let compressed = compressor.compress(&data).unwrap();
+        let decompressed = compressor.decompress(&compressed, data.len()).unwrap();
+        assert_eq!(data, decompressed);
+    }
+
+    #[test]
+    fn test_rle_empty() {
+        let compressor = RleCompressor;
+        let data: Vec<u8> = vec![];
+        let compressed = compressor.compress(&data).unwrap();
+        assert!(compressed.is_empty());
+        let decompressed = compressor.decompress(&compressed, 0).unwrap();
+        assert!(decompressed.is_empty());
     }
 }

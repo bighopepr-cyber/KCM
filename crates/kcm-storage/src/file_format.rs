@@ -1,4 +1,5 @@
 use crate::column::Schema;
+use crate::compress::{Compressor, Lz4Compressor, NoopCompressor, RleCompressor, ZstdCompressor};
 use kcm_core::types::*;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Seek, Write};
@@ -24,6 +25,15 @@ impl ColumnCodecId {
             2 => Some(Self::Lz4),
             3 => Some(Self::Rle),
             _ => None,
+        }
+    }
+
+    fn make_compressor(self) -> Box<dyn Compressor> {
+        match self {
+            ColumnCodecId::None => Box::new(NoopCompressor),
+            ColumnCodecId::Zstd => Box::new(ZstdCompressor::default_level()),
+            ColumnCodecId::Lz4 => Box::new(Lz4Compressor::default_level()),
+            ColumnCodecId::Rle => Box::new(RleCompressor),
         }
     }
 }
@@ -115,11 +125,9 @@ impl DatabaseFile {
             ),
         ];
 
-        // Column data is written as raw bytes. The codec_id field records which
-        // compression algorithm SHOULD be applied. Currently, compression is
-        // applied at the Column level via compress_all_columns(), not at the
-        // file format level. This keeps the save/load path simple.
-        for (data, elem_count, codec) in &columns {
+        for (raw_data, elem_count, codec) in &columns {
+            let compressor = codec.make_compressor();
+            let compressed_data = compressor.compress(raw_data)?;
             writer
                 .write_all(&(*elem_count as u64).to_le_bytes())
                 .map_err(|e| KcmError::Io(e.to_string()))?;
@@ -127,10 +135,10 @@ impl DatabaseFile {
                 .write_all(&[*codec as u8])
                 .map_err(|e| KcmError::Io(e.to_string()))?;
             writer
-                .write_all(&(data.len() as u64).to_le_bytes())
+                .write_all(&(compressed_data.len() as u64).to_le_bytes())
                 .map_err(|e| KcmError::Io(e.to_string()))?;
             writer
-                .write_all(data)
+                .write_all(&compressed_data)
                 .map_err(|e| KcmError::Io(e.to_string()))?;
         }
 
@@ -236,7 +244,6 @@ impl DatabaseFile {
             schema.restore_tombstones(&tomb_data, tomb_len);
         }
 
-        // Verify checksum
         let computed = Self::compute_checksum_range(
             path,
             0,
@@ -281,10 +288,6 @@ impl DatabaseFile {
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
         let codec = ColumnCodecId::from_u8(codec_byte[0])
             .ok_or_else(|| KcmError::Corrupted(format!("Unknown codec ID: {}", codec_byte[0])))?;
-        // Codec ID is stored for metadata. Raw column data is written uncompressed.
-        // Compression is applied at the Schema level via compress_all_columns().
-
-        let _codec = codec;
 
         let mut compressed_size = [0u8; 8];
         reader
@@ -292,37 +295,30 @@ impl DatabaseFile {
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
         let compressed_len = u64::from_le_bytes(compressed_size) as usize;
 
-        let mut data = vec![0u8; compressed_len];
+        let mut compressed_data = vec![0u8; compressed_len];
         reader
-            .read_exact(&mut data)
+            .read_exact(&mut compressed_data)
             .map_err(|e| KcmError::Corrupted(e.to_string()))?;
 
-        let expected_bytes = len * std::mem::size_of::<T>();
-        if compressed_len != expected_bytes {
+        let type_size = std::mem::size_of::<T>();
+        let expected_bytes = len * type_size;
+        let compressor = codec.make_compressor();
+        let raw_data = compressor.decompress(&compressed_data, expected_bytes)?;
+
+        if raw_data.len() != expected_bytes {
             return Err(KcmError::Corrupted(format!(
                 "Column size mismatch: expected {} bytes, got {}",
-                expected_bytes, compressed_len
+                expected_bytes,
+                raw_data.len()
             )));
         }
 
-        let type_size = std::mem::size_of::<T>();
         let mut values = Vec::with_capacity(len);
         for i in 0..len {
             let offset = i * type_size;
-            if offset + type_size > data.len() {
-                return Err(KcmError::Corrupted(format!(
-                    "Data too short at element {}: need {} bytes, have {}",
-                    i,
-                    offset + type_size,
-                    data.len()
-                )));
-            }
             let mut buf = [0u8; 8];
             let copy_len = type_size.min(8);
-            buf[..copy_len].copy_from_slice(&data[offset..offset + copy_len]);
-            // SAFETY: buf contains valid bytes from the serialized column data.
-            // For integer/float types (u8..u64, i8..i64, f32, f64), all bit patterns
-            // are valid values. The source data was serialized from the same type.
+            buf[..copy_len].copy_from_slice(&raw_data[offset..offset + copy_len]);
             values.push(unsafe { std::ptr::read(buf.as_ptr() as *const T) });
         }
 
@@ -402,10 +398,5 @@ impl DatabaseFile {
 }
 
 fn as_bytes<T>(slice: &[T]) -> &[u8] {
-    // SAFETY: reinterpret &[T] as &[u8]. This is safe because:
-    // 1. slice is a valid, properly aligned, initialized &[T]
-    // 2. size_of_val computes the exact byte count
-    // 3. u8 has alignment of 1, always satisfied by T alignment
-    // 4. Resulting &[u8] has same lifetime as input slice
     unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice)) }
 }

@@ -30,7 +30,7 @@ impl BackupManager {
                 "Backup verification failed after save".to_string(),
             ));
         }
-        self.write_manifest(&path, "full")?;
+        self.write_manifest(&path, "full", None)?;
         Ok(path)
     }
 
@@ -42,34 +42,52 @@ impl BackupManager {
         if !last_backup.exists() {
             return self.create_full_backup(schema);
         }
+
+        let base_schema = DatabaseFile::load(last_backup)?;
+        let base_row_count = base_schema.len();
+
         let ts = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
         let name = format!("backup_incr_{}.kcm", ts);
         let path = self.backup_dir.join(&name);
-        DatabaseFile::save(schema, &path)?;
-        let manifest_path = path.with_extension("manifest");
-        let content = format!(
-            "backup_type: incremental\ncreated: {}\nbase: {}\nactive_rows: {}\n",
-            ts,
-            last_backup.display(),
-            schema.active_count()
-        );
-        std::fs::write(manifest_path, content)
-            .map_err(|e| KcmError::Io(format!("Failed to write manifest: {}", e)))?;
+
+        let mut incremental_schema = Schema::new(schema.active_count().max(1))?;
+        for (idx, fact) in schema.iter_active() {
+            if idx >= base_row_count {
+                incremental_schema.append_fact(&fact)?;
+            }
+        }
+
+        DatabaseFile::save(&incremental_schema, &path)?;
+
+        if !DatabaseFile::verify(&path).map_err(|e| KcmError::Io(e.to_string()))? {
+            std::fs::remove_file(&path).ok();
+            return Err(KcmError::Corrupted(
+                "Incremental backup verification failed after save".to_string(),
+            ));
+        }
+
+        self.write_manifest(&path, "incremental", Some(base_row_count))?;
         Ok(path)
     }
 
-    fn write_manifest(&self, backup_path: &Path, backup_type: &str) -> Result<(), KcmError> {
+    fn write_manifest(
+        &self,
+        backup_path: &Path,
+        backup_type: &str,
+        base_row_count: Option<usize>,
+    ) -> Result<(), KcmError> {
         let manifest = backup_path.with_extension("manifest");
         let content = format!(
-            "backup_type: {}\ncreated: {}\n",
+            "backup_type: {}\ncreated: {}\nbase_rows: {}\n",
             backup_type,
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
-                .as_secs()
+                .as_secs(),
+            base_row_count.unwrap_or(0)
         );
         fs::write(manifest, content).map_err(|e| KcmError::Io(e.to_string()))?;
         Ok(())
@@ -87,6 +105,21 @@ impl BackupManager {
         }
         backups.sort();
         Ok(backups)
+    }
+
+    pub fn restore_from_incremental(
+        &self,
+        base_path: &Path,
+        incremental_paths: &[PathBuf],
+    ) -> Result<Schema, KcmError> {
+        let mut schema = DatabaseFile::load(base_path)?;
+        for incr_path in incremental_paths {
+            let incr_schema = DatabaseFile::load(incr_path)?;
+            for (_, fact) in incr_schema.iter_active() {
+                schema.append_fact(&fact)?;
+            }
+        }
+        Ok(schema)
     }
 }
 

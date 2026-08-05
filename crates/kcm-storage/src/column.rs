@@ -9,7 +9,6 @@ pub enum ColumnEncoding {
     Identity,
     Dictionary,
     Delta,
-    FrameOfReference,
     Rle,
     Gorilla,
 }
@@ -29,6 +28,203 @@ fn make_compressor(codec: CompressionCodec) -> Box<dyn Compressor> {
         CompressionCodec::Lz4 => Box::new(Lz4Compressor::default_level()),
         CompressionCodec::Rle => Box::new(crate::compress::RleCompressor),
     }
+}
+
+fn encode_delta_i64(values: &[i64]) -> Vec<u8> {
+    if values.is_empty() {
+        return Vec::new();
+    }
+    let mut result = Vec::with_capacity(values.len() * 8);
+    result.extend_from_slice(&values[0].to_le_bytes());
+    for i in 1..values.len() {
+        let delta = values[i].wrapping_sub(values[i - 1]);
+        result.extend_from_slice(&delta.to_le_bytes());
+    }
+    result
+}
+
+fn decode_delta_i64(data: &[u8], count: usize) -> Result<Vec<i64>, KcmError> {
+    if count == 0 {
+        return Ok(Vec::new());
+    }
+    if data.len() < count * 8 {
+        return Err(KcmError::Corrupted(format!(
+            "Delta decode i64: expected {} bytes, got {}",
+            count * 8,
+            data.len()
+        )));
+    }
+    let mut values = Vec::with_capacity(count);
+    let first = i64::from_le_bytes([
+        data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+    ]);
+    values.push(first);
+    for i in 1..count {
+        let offset = i * 8;
+        let delta = i64::from_le_bytes([
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+            data[offset + 3],
+            data[offset + 4],
+            data[offset + 5],
+            data[offset + 6],
+            data[offset + 7],
+        ]);
+        values.push(values[i - 1].wrapping_add(delta));
+    }
+    Ok(values)
+}
+
+fn encode_delta_i32(values: &[i32]) -> Vec<u8> {
+    if values.is_empty() {
+        return Vec::new();
+    }
+    let mut result = Vec::with_capacity(values.len() * 4);
+    result.extend_from_slice(&values[0].to_le_bytes());
+    for i in 1..values.len() {
+        let delta = values[i].wrapping_sub(values[i - 1]);
+        result.extend_from_slice(&delta.to_le_bytes());
+    }
+    result
+}
+
+fn decode_delta_i32(data: &[u8], count: usize) -> Result<Vec<i32>, KcmError> {
+    if count == 0 {
+        return Ok(Vec::new());
+    }
+    if data.len() < count * 4 {
+        return Err(KcmError::Corrupted(format!(
+            "Delta decode i32: expected {} bytes, got {}",
+            count * 4,
+            data.len()
+        )));
+    }
+    let mut values = Vec::with_capacity(count);
+    let first = i32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+    values.push(first);
+    for i in 1..count {
+        let offset = i * 4;
+        let delta = i32::from_le_bytes([
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+            data[offset + 3],
+        ]);
+        values.push(values[i - 1].wrapping_add(delta));
+    }
+    Ok(values)
+}
+
+fn encode_gorilla_f64(values: &[f64]) -> Vec<u8> {
+    if values.is_empty() {
+        return Vec::new();
+    }
+    let mut result = Vec::with_capacity(values.len() * 8);
+    result.extend_from_slice(&values[0].to_le_bytes());
+    let mut prev_bits = values[0].to_bits();
+    for &val in &values[1..] {
+        let cur_bits = val.to_bits();
+        let xor = cur_bits ^ prev_bits;
+        if xor == 0 {
+            result.push(0x00);
+        } else {
+            result.push(0x01);
+            let leading = xor.leading_zeros() as u8;
+            let trailing = xor.trailing_zeros() as u8;
+            result.push(leading);
+            let shifted = xor >> trailing;
+            let shifted_bytes = shifted.to_le_bytes();
+            result.extend_from_slice(&shifted_bytes);
+            result.push(trailing);
+        }
+        prev_bits = cur_bits;
+    }
+    result
+}
+
+fn decode_gorilla_f64(data: &[u8], count: usize) -> Result<Vec<f64>, KcmError> {
+    if count == 0 {
+        return Ok(Vec::new());
+    }
+    if data.len() < 8 {
+        return Err(KcmError::Corrupted(
+            "Gorilla decode: insufficient data for first value".to_string(),
+        ));
+    }
+    let mut values = Vec::with_capacity(count);
+    let first = f64::from_le_bytes([
+        data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+    ]);
+    values.push(first);
+    let mut prev_bits = first.to_bits();
+    let mut offset = 8;
+    for _ in 1..count {
+        if offset >= data.len() {
+            return Err(KcmError::Corrupted(format!(
+                "Gorilla decode: insufficient data at offset {}, have {}",
+                offset,
+                data.len()
+            )));
+        }
+        let flag = data[offset];
+        offset += 1;
+        if flag == 0x00 {
+            values.push(f64::from_bits(prev_bits));
+        } else {
+            if offset + 9 > data.len() {
+                return Err(KcmError::Corrupted(format!(
+                    "Gorilla decode: need 9 bytes for entry at offset {}, have {}",
+                    offset,
+                    data.len() - offset
+                )));
+            }
+            let leading = data[offset];
+            offset += 1;
+            let mut shifted_bytes = [0u8; 8];
+            shifted_bytes.copy_from_slice(&data[offset..offset + 8]);
+            offset += 8;
+            let trailing = data[offset];
+            offset += 1;
+            let shifted = u64::from_le_bytes(shifted_bytes);
+            let xor = shifted << trailing;
+            let cur_bits = prev_bits ^ xor;
+            let val = f64::from_bits(cur_bits);
+            values.push(val);
+            let _ = leading;
+            prev_bits = cur_bits;
+        }
+    }
+    Ok(values)
+}
+
+fn encode_identity<T: Copy>(values: &[T]) -> Vec<u8> {
+    let byte_slice = unsafe {
+        std::slice::from_raw_parts(values.as_ptr() as *const u8, std::mem::size_of_val(values))
+    };
+    byte_slice.to_vec()
+}
+
+fn decode_to_slice<T: Copy>(data: &[u8], count: usize) -> Result<Vec<T>, KcmError> {
+    let expected = count * std::mem::size_of::<T>();
+    if data.len() < expected {
+        return Err(KcmError::Corrupted(format!(
+            "Decode: expected {} bytes for {} elements, got {}",
+            expected,
+            count,
+            data.len()
+        )));
+    }
+    let mut values = Vec::with_capacity(count);
+    let type_size = std::mem::size_of::<T>();
+    for i in 0..count {
+        let offset = i * type_size;
+        let mut buf = [0u8; 8];
+        let copy_len = type_size.min(8);
+        buf[..copy_len].copy_from_slice(&data[offset..offset + copy_len]);
+        values.push(unsafe { std::ptr::read(buf.as_ptr() as *const T) });
+    }
+    Ok(values)
 }
 
 #[derive(Clone)]
@@ -102,15 +298,9 @@ impl<T: Copy> Column<T> {
     }
 
     pub fn compress_data(&mut self) -> Result<(), KcmError> {
-        let slice = self.data.as_slice();
-        // SAFETY: reinterpret &[T] as &[u8] for compression input.
-        // T is Copy (all integer/float types), all bit patterns are valid.
-        // size_of_val computes exact byte count. Alignment preserved.
-        let byte_slice = unsafe {
-            std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice))
-        };
+        let encoded = encode_column::<T>(self.data.as_slice(), self.encoding)?;
         let compressor = make_compressor(self.compression);
-        self.raw_bytes = compressor.compress(byte_slice)?;
+        self.raw_bytes = compressor.compress(&encoded)?;
         self.compressed = true;
         Ok(())
     }
@@ -119,23 +309,96 @@ impl<T: Copy> Column<T> {
         if !self.compressed || self.raw_bytes.is_empty() {
             return Ok(());
         }
-        let expected = self.row_count as usize * std::mem::size_of::<T>();
         let compressor = make_compressor(self.compression);
-        let decompressed = compressor.decompress(&self.raw_bytes, expected)?;
+        let decompressed = compressor.decompress(&self.raw_bytes, 0)?;
+        let values: Vec<T> =
+            decode_column::<T>(&decompressed, self.row_count as usize, self.encoding)?;
         let ptr = self.data.as_mut_slice().as_mut_ptr();
-        if decompressed.len() < expected {
+        let expected = values.len() * std::mem::size_of::<T>();
+        let raw_len = decompressed.len();
+        if raw_len < expected {
             return Err(KcmError::Corrupted(format!(
                 "Decompression size mismatch: got {} bytes, expected {} bytes",
-                decompressed.len(),
-                expected
+                raw_len, expected
             )));
         }
         unsafe {
-            std::ptr::copy_nonoverlapping(decompressed.as_ptr(), ptr as *mut u8, expected);
+            std::ptr::copy_nonoverlapping(values.as_ptr() as *const u8, ptr as *mut u8, expected);
         }
         self.compressed = false;
         self.raw_bytes.clear();
         Ok(())
+    }
+}
+
+fn encode_column<T: Copy>(values: &[T], encoding: ColumnEncoding) -> Result<Vec<u8>, KcmError> {
+    match encoding {
+        ColumnEncoding::Delta => {
+            let type_name = std::any::type_name::<T>();
+            if type_name == "i64" {
+                let typed = unsafe { &*(values as *const [T] as *const [i64]) };
+                Ok(encode_delta_i64(typed))
+            } else if type_name == "i32" {
+                let typed = unsafe { &*(values as *const [T] as *const [i32]) };
+                Ok(encode_delta_i32(typed))
+            } else {
+                Ok(encode_identity(values))
+            }
+        }
+        ColumnEncoding::Gorilla => {
+            let type_name = std::any::type_name::<T>();
+            if type_name == "f64" {
+                let typed = unsafe { &*(values as *const [T] as *const [f64]) };
+                Ok(encode_gorilla_f64(typed))
+            } else {
+                Ok(encode_identity(values))
+            }
+        }
+        ColumnEncoding::Dictionary | ColumnEncoding::Identity => Ok(encode_identity(values)),
+        ColumnEncoding::Rle => {
+            let type_name = std::any::type_name::<T>();
+            if type_name == "u8" || type_name == "i8" {
+                let typed = unsafe { &*(values as *const [T] as *const [u8]) };
+                Ok(encode_identity(typed))
+            } else {
+                Ok(encode_identity(values))
+            }
+        }
+    }
+}
+
+fn decode_column<T: Copy>(
+    data: &[u8],
+    count: usize,
+    encoding: ColumnEncoding,
+) -> Result<Vec<T>, KcmError> {
+    match encoding {
+        ColumnEncoding::Delta => {
+            let type_name = std::any::type_name::<T>();
+            if type_name == "i64" {
+                let decoded = decode_delta_i64(data, count)?;
+                let ptr = decoded.as_ptr() as *const T;
+                Ok(unsafe { std::slice::from_raw_parts(ptr, count) }.to_vec())
+            } else if type_name == "i32" {
+                let decoded = decode_delta_i32(data, count)?;
+                let ptr = decoded.as_ptr() as *const T;
+                Ok(unsafe { std::slice::from_raw_parts(ptr, count) }.to_vec())
+            } else {
+                decode_to_slice::<T>(data, count)
+            }
+        }
+        ColumnEncoding::Gorilla => {
+            let type_name = std::any::type_name::<T>();
+            if type_name == "f64" {
+                let decoded = decode_gorilla_f64(data, count)?;
+                let ptr = decoded.as_ptr() as *const T;
+                Ok(unsafe { std::slice::from_raw_parts(ptr, count) }.to_vec())
+            } else {
+                decode_to_slice::<T>(data, count)
+            }
+        }
+        ColumnEncoding::Dictionary | ColumnEncoding::Identity => decode_to_slice::<T>(data, count),
+        ColumnEncoding::Rle => decode_to_slice::<T>(data, count),
     }
 }
 
@@ -335,9 +598,6 @@ impl Schema {
         })
     }
 
-    /// Compact the schema by removing tombstoned rows and rebuilding columns.
-    /// This reclaims space but requires rebuilding all columns.
-    /// Returns a new schema with only active (non-tombstoned) rows.
     pub fn compact(&self) -> Result<Self, KcmError> {
         let active_count = self.active_count();
         let mut new_schema = Schema::new(active_count.max(1))?;

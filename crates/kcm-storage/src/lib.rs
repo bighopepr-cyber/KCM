@@ -20,4 +20,4 @@ pub use errors::StorageError;
 pub use file_format::DatabaseFile;
 pub use index::{BitmapIndex, BloomFilter, CompositeIndex, ZoneMap};
 pub use recovery::RecoveryManager;
-pub use wal::{WALEntry, WriteAheadLog};
+pub use wal::{WALEntry, WriteAheadLog, WAL_DELETE_SIZE, WAL_INSERT_SIZE};
