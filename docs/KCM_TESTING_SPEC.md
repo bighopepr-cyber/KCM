@@ -3,6 +3,7 @@
 **Document ID:** KCM-TESTSPEC-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Testing Verification (P9)  
 **Depends on:** KCM-SPEC-001
 
 ---

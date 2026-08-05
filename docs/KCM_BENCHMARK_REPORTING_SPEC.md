@@ -3,6 +3,7 @@
 **Document ID:** KCM-BENCH-001
 **Version:** 1.0.0
 **Status:** Derived
+**Owner:** Performance Engineer (P8)
 **Depends on:** PRD-TESTING&BRACHMARCK.md
 
 ---
@@ -18,7 +19,7 @@ Defines the standard for benchmark execution, reporting, and artifact management
 ### 2.1 Tool
 
 All micro-benchmarks use Criterion.rs 0.5+ with default configuration:
-- Minimum 10 iterations per sample
+- Minimum 10 iterations per measurement batch
 - 95% confidence intervals
 - Automatic outlier detection
 

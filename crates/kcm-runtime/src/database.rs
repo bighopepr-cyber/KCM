@@ -1,6 +1,8 @@
 use crate::transaction::Transaction;
 use kcm_core::dictionary::{DictID, SharedDictionary};
 use kcm_core::types::*;
+use kcm_optimizer::planner::{PlanNode, Planner, PlannerFilterPredicate};
+use kcm_optimizer::statistics::Statistics;
 use kcm_storage::column::Schema;
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -55,9 +57,6 @@ impl KnowledgeDatabase {
     }
 
     pub fn insert(&self, fact: &Fact) -> Result<RowID, KcmError> {
-        // WAL integration is managed at the persistence layer.
-        // When the database is saved via DatabaseFile::save(), the
-        // current state is written atomically with WAL replay support.
         let mut schema = self.schema.write();
         schema.append_fact(fact)?;
         let row_id = RowID(schema.len() as u64 - 1);
@@ -85,7 +84,8 @@ impl KnowledgeDatabase {
     }
 
     pub fn query(&self) -> QueryBuilder {
-        QueryBuilder::new(self.schema.clone())
+        let row_count = self.schema.read().len();
+        QueryBuilder::new(self.schema.clone(), row_count)
     }
 
     pub fn get_fact(&self, row_id: RowID) -> Result<Option<Fact>, KcmError> {
@@ -115,7 +115,6 @@ impl KnowledgeDatabase {
 
     /// Compact the schema by removing tombstoned rows.
     /// Returns a new KnowledgeDatabase with only active facts.
-    /// This is an expensive operation that rebuilds all columns.
     pub fn compact(&self) -> Result<Self, KcmError> {
         let compacted = {
             let schema = self.schema.read();
@@ -136,22 +135,65 @@ impl Default for KnowledgeDatabase {
     }
 }
 
+/// Ordered filter for cost-based execution.
+#[derive(Debug, Clone)]
+enum OrderedFilter {
+    Subject(u32),
+    Predicate(u8),
+    Object(u32),
+    Confidence(f64),
+    Noop,
+}
+
+impl OrderedFilter {
+    /// Returns estimated selectivity of this filter (lower = more selective = execute first).
+    fn selectivity(&self, planner: &Planner) -> f64 {
+        match self {
+            OrderedFilter::Subject(v) => {
+                planner.estimate_selectivity(ColumnID::Subject, *v as i64, *v as i64)
+            }
+            OrderedFilter::Predicate(v) => {
+                planner.estimate_selectivity(ColumnID::Predicate, *v as i64, *v as i64)
+            }
+            OrderedFilter::Object(v) => {
+                planner.estimate_selectivity(ColumnID::Object, *v as i64, *v as i64)
+            }
+            OrderedFilter::Confidence(v) => {
+                planner.estimate_selectivity(ColumnID::Confidence, (*v * 100.0) as i64, 100)
+            }
+            OrderedFilter::Noop => 1.0,
+        }
+    }
+
+    fn matches(&self, fact: &Fact) -> bool {
+        match self {
+            OrderedFilter::Subject(v) => fact.subject.0 == *v,
+            OrderedFilter::Predicate(v) => fact.predicate.0 == *v,
+            OrderedFilter::Object(v) => fact.object.0 == *v,
+            OrderedFilter::Confidence(threshold) => fact.confidence >= *threshold,
+            OrderedFilter::Noop => true,
+        }
+    }
+}
+
 pub struct QueryBuilder {
     schema: Arc<RwLock<Schema>>,
     subject_filter: Option<SubjectID>,
     predicate_filter: Option<PredicateID>,
     object_filter: Option<ObjectID>,
     confidence_filter: Option<f64>,
+    row_count: usize,
 }
 
 impl QueryBuilder {
-    pub fn new(schema: Arc<RwLock<Schema>>) -> Self {
+    pub fn new(schema: Arc<RwLock<Schema>>, row_count: usize) -> Self {
         QueryBuilder {
             schema,
             subject_filter: None,
             predicate_filter: None,
             object_filter: None,
             confidence_filter: None,
+            row_count,
         }
     }
 
@@ -175,38 +217,78 @@ impl QueryBuilder {
         self
     }
 
+    /// Build ordered filters using the cost-based optimizer.
+    ///
+    /// The planner estimates selectivity for each filter and orders them
+    /// from most selective to least selective. This minimizes the number
+    /// of rows that need to be checked by subsequent filters.
+    fn ordered_filters(&self) -> Vec<OrderedFilter> {
+        let planner = Planner::with_statistics(self.row_count.max(1), Statistics::new());
+
+        let mut filters = Vec::new();
+        if let Some(subj) = self.subject_filter {
+            filters.push(OrderedFilter::Subject(subj.0));
+        }
+        if let Some(pred) = self.predicate_filter {
+            filters.push(OrderedFilter::Predicate(pred.0));
+        }
+        if let Some(obj) = self.object_filter {
+            filters.push(OrderedFilter::Object(obj.0));
+        }
+        if let Some(conf) = self.confidence_filter {
+            filters.push(OrderedFilter::Confidence(conf));
+        }
+
+        // Sort by selectivity: most selective (lowest selectivity) first.
+        // This ensures we reject non-matching rows as early as possible.
+        filters.sort_by(|a, b| {
+            let sa = a.selectivity(&planner);
+            let sb = b.selectivity(&planner);
+            sa.partial_cmp(&sb).unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        filters
+    }
+
+    /// Execute the query with cost-based filter ordering.
+    ///
+    /// Strategy:
+    /// 1. Collect all active filters
+    /// 2. Use the optimizer to estimate selectivity for each
+    /// 3. Sort filters from most selective to least selective
+    /// 4. Scan rows and apply filters in optimized order
+    ///    (first non-match short-circuits the remaining filters)
     pub fn execute(self) -> Result<Vec<Fact>, KcmError> {
         let schema = self.schema.read();
-        let mut result = Vec::new();
+        let filters = self.ordered_filters();
 
+        // Fast path: no filters, return all active rows
+        if filters.is_empty() {
+            let mut result = Vec::new();
+            for idx in 0..schema.len() {
+                if !schema.is_deleted(idx) {
+                    if let Some(fact) = schema.get_fact(idx) {
+                        result.push(fact);
+                    }
+                }
+            }
+            return Ok(result);
+        }
+
+        // Optimized path: apply filters in selectivity order with short-circuit
+        let mut result = Vec::new();
         for idx in 0..schema.len() {
+            if schema.is_deleted(idx) {
+                continue;
+            }
             if let Some(fact) = schema.get_fact(idx) {
                 let mut matches = true;
-
-                if let Some(subj) = self.subject_filter {
-                    if fact.subject != subj {
+                for filter in &filters {
+                    if !filter.matches(&fact) {
                         matches = false;
+                        break; // Short-circuit: skip remaining filters
                     }
                 }
-
-                if let Some(pred) = self.predicate_filter {
-                    if fact.predicate != pred {
-                        matches = false;
-                    }
-                }
-
-                if let Some(obj) = self.object_filter {
-                    if fact.object != obj {
-                        matches = false;
-                    }
-                }
-
-                if let Some(conf_threshold) = self.confidence_filter {
-                    if fact.confidence < conf_threshold {
-                        matches = false;
-                    }
-                }
-
                 if matches {
                     result.push(fact);
                 }

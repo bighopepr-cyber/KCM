@@ -3,6 +3,7 @@
 **Document ID:** KCM-SPEC-001  
 **Version:** 1.0.0  
 **Status:** Active  
+**Owner:** Specification Lock (P4)  
 **Classification:** Technical Constitution / Single Source of Truth  
 **Authoritative Sources:** PRD.md (P4, Core), PRD2.md (P3, Storage/Runtime), PRD3.md (P2, Distributed/Security), AGENTS.md (Engineering Constitution)
 

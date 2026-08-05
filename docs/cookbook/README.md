@@ -1,21 +1,20 @@
 # KCM Cookbook
 
-Practical code recipes for common tasks.
+**Document ID:** COOKBOOK-INDEX-001
+**Version:** 2.0.0
+**Status:** Active
+**Owner:** Runtime/Interface Owner
 
-## Quick Recipes
+This cookbook is the operational recipe set for the current implementation. It provides executable examples that correspond to the server and runtime APIs present in the repository today and is limited to the current runtime surface.
 
-| Recipe | Description | Language |
-|--------|-------------|----------|
-| create-database.md | Create and configure a database (Planned) | Rust |
-| insert-facts.md | Insert knowledge facts (Planned) | Rust |
-| query-kql.md | Execute KQL queries (Planned) | Rust |
-| use-transactions.md | Transaction management (Planned) | Rust |
-| enable-encryption.md | Enable AES-256-GCM (Planned) | Rust |
-| setup-monitoring.md | Configure Prometheus (Planned) | YAML |
-| docker-compose.md | Local development setup | Docker |
-| kubernetes.md | Production K8s deployment | YAML |
+## Current Recipe Set
 
-## Rust Recipes
+| Recipe | Scope | Format |
+|--------|-------|--------|
+| docker-compose.md | Local deployment with Docker Compose | Docker |
+| kubernetes.md | Stateful deployment with Kubernetes | YAML |
+
+## Runtime Example
 
 ### Create Database
 
@@ -42,58 +41,25 @@ db.insert(&fact)?;
 ### Query
 
 ```rust
-let results = db.query("SELECT * FROM facts WHERE confidence > 0.9")?;
+let results = db.query().with_confidence(0.9).execute()?;
 ```
 
-## REST API Recipes
+## REST Example
 
 ### Insert via cURL
 
 ```bash
-curl -X POST http://localhost:8080/api/facts \
+curl -X POST http://localhost:8080/facts \
   -H "Content-Type: application/json" \
-  -d '{"subject": "a", "predicate": "b", "object": "c", "confidence": 0.9}'
+  -d '{"subject":1,"predicate":1,"object":1,"confidence":0.9}'
 ```
 
 ### Query via cURL
 
 ```bash
-curl "http://localhost:8080/api/query?kql=SELECT * FROM facts"
+curl "http://localhost:8080/facts?confidence_min=0.9"
 ```
 
-## Docker Recipes
+## Deployment Examples
 
-### Development Setup
-
-```yaml
-version: '3.8'
-services:
-  kcm:
-    build: .
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./data:/data
-    environment:
-      - RUST_LOG=debug
-```
-
-### Production Setup
-
-```yaml
-version: '3.8'
-services:
-  kcm:
-    image: kcm:latest
-    deploy:
-      replicas: 3
-    ports:
-      - "8080:8080"
-    volumes:
-      - kcm_data:/data
-    environment:
-      - RUST_LOG=info
-volumes:
-  kcm_data:
-    driver: local
-```
+The deployment examples in this directory are intentionally limited to the runtime artifacts present in the repository and reflect the current deployment surface only.

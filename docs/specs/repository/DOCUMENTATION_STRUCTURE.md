@@ -4,67 +4,50 @@
 |-------|-------|
 | **Document ID** | KCM-REPO-007 |
 | **Title** | Documentation Structure |
-| **Version** | 1.0.0 |
-| **Date** | 2026-08-03 |
+| **Version** | 2.0.0 |
+| **Date** | 2026-08-05 |
 | **Status** | Authoritative |
+| **Owner** | Documentation Guardian (P11) |
 | **Authority** | Engineering Orchestrator (P1) |
 
 ---
 
-## 1. Document Hierarchy
+## 1. Authority Model
 
-| Priority | Location | Purpose |
-|----------|----------|---------|
-| P0 | AGENTS.md | Engineering Constitution |
-| P1 | PRD-TESTING.md | Testing/Benchmark authority |
-| P2 | PRD3.md | Distributed/Security/Compliance authority |
-| P3 | PRD2.md | Storage/Runtime/Interfaces authority |
-| P4 | PRD.md | Core/Compute/Reasoning authority |
-| P5 | docs/*.md | Derived specifications |
+The documentation set is governed by a strict single-source-of-truth model.
 
-## 2. Document Categories
+| Priority | Location | Role |
+|----------|----------|------|
+| P0 | AGENTS.md | Engineering constitution and repository policy |
+| P1 | PRD-TESTING& BRACHMARCK.md | Testing and benchmark authority |
+| P2 | PRD3.md | Distributed, ML, security, and compliance authority |
+| P3 | PRD2.md | Storage, runtime, and interface authority |
+| P4 | PRD.md | Core type, compute, and reasoning authority |
+| P5 | docs/*.md | Derived implementation and operational specifications |
 
-### Authoritative Specifications (docs/)
-- PRD documents (4): PRD.md, PRD2.md, PRD3.md, PRD-TESTING.md
-- Technical specs (17): KCM_*_SPEC.md files
-- Reports (5): Audit, stability, performance, design review
+## 2. Authoritative Categories
 
-### Repository Specifications (docs/specs/repository/)
-- Architecture, workspace, folders, naming, ownership
-- Documentation structure, versioning, dependencies
-- Release, governance, evolution
+### Primary specification surface
+- PRD documents: PRD.md, PRD2.md, PRD3.md, PRD-TESTING& BRACHMARCK.md
+- Technical specifications: KCM_*_SPEC.md files
+- Repository contract documents: docs/specs/repository/*
 
-### Ecosystem Specifications (docs/specs/ecosystem/)
-- Developer, enterprise, SDK, CLI roadmaps
-- Plugin, extension, deployment, cloud strategies
-- Observability, integrations, community, vision
+### Operational reference surface
+- Guides, handbooks, tutorials, and cookbook material provide procedure-oriented context and must reference the authoritative specification set rather than restate it.
 
-### Website Documentation (website/docs/)
-- HTML versions of all technical specifications
+### Archive surface
+- Audit, review, and retrospective reports are retained for historical traceability only and are not normative for implementation.
 
-## 3. Document Template
+## 3. Structural Rules
 
-Every specification document must include:
-
-```markdown
-# Title
-
-| Field | Value |
-|-------|-------|
-| **Document ID** | KCM-XXX-NNN |
-| **Title** | Document Title |
-| **Version** | 1.0.0 |
-| **Date** | YYYY-MM-DD |
-| **Status** | Authoritative/Draft/Deprecated |
-| **Authority** | Skill Name (Priority) |
-
----
-[Content sections]
-```
+1. One topic must have one authoritative document.
+2. A derived document may reference the authoritative document; it must not redefine the same contract.
+3. Navigation pages must only enumerate current implementation-relevant content.
+4. Historical repository evolution material must not appear in the active implementation documentation path.
 
 ## 4. Validation Rules
 
-1. No document may contradict an authoritative PRD
-2. All cross-references must be valid
-3. All terminology must match the glossary
-4. All diagrams must be consistent with architecture
+1. No document may contradict an authoritative PRD.
+2. All cross-references must resolve to an existing file or location.
+3. All terminology must match the glossary.
+4. All diagrams and interface examples must align with the codebase and the active API surface.

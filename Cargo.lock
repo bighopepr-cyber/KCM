@@ -1829,6 +1829,7 @@ dependencies = [
  "kcm-compute",
  "kcm-core",
  "kcm-distributed",
+ "kcm-optimizer",
  "kcm-reasoning",
  "kcm-storage",
  "kcm-testing",

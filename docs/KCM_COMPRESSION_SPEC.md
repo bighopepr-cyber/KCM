@@ -3,6 +3,7 @@
 **Document ID:** KCM-COMP-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Database Engine Specialist (P6)  
 **Depends on:** KCM-FORMAT-001
 
 ---

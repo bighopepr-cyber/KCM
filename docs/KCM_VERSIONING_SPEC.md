@@ -3,6 +3,7 @@
 **Document ID:** KCM-VER-001  
 **Version:** 1.0.0
 **Status:** Derived
+**Owner:** Specification Lock (P4)
 
 ---
 

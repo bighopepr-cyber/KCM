@@ -1,8 +1,9 @@
-# KCM Architecture Specification
+# KCM Architecture Overview
 
 **Document ID:** KCM-ARCHDETAIL-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Architecture Guardian (P5)  
 **Depends on:** KCM-SPEC-001  
 **Authoritative Sources:** PRD.md §2 (Design Principles), AGENTS.md §System Architecture, AGENTS.md §Crate Map
 

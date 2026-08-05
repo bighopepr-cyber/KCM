@@ -3,6 +3,7 @@
 **Document ID:** KCM-ADVANCED-001
 **Version:** 2.0.0
 **Status:** Authoritative
+**Owner:** Specification Lock (P4)
 **Authority:** P2 (Architecture)
 
 ---

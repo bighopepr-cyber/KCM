@@ -3,6 +3,7 @@
 **Document ID:** KCM-API-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Specification Lock (P4)  
 **Depends on:** KCM-DATA-001, KCM-ARCH-001
 
 ---
@@ -156,18 +157,20 @@ kb.query().with_subject(SubjectID(1)).with_confidence(0.5).execute()
 
 ## 4. REST API Handlers
 
-8 endpoints (no prefix, served by kcm-server on port 8080):
+The server implementation in `crates/kcm-server/src/main.rs` exposes both the compatibility routes and the versioned API surface on port 8080. The canonical runtime contract is therefore the route table below, which is the dual-surface implementation that is actually compiled today.
 
 | Handler | Method | Endpoint | Parameters | Response |
 |---------|--------|----------|------------|----------|
-| handle_health | GET | `/health` | — | HealthReport JSON |
-| handle_insert | POST | `/facts` | subject, predicate, object, confidence | row_id |
-| handle_query | GET | `/facts` | subject?, predicate?, object?, confidence_min? | Facts array |
-| handle_get_fact | GET | `/facts/{id}` | row_id | Fact JSON |
-| handle_update | PUT | `/facts/{id}` | row_id, subject, predicate, object, confidence | status |
-| handle_delete | DELETE | `/facts/{id}` | row_id | status |
-| handle_stats | GET | `/stats` | — | MetricsSnapshot JSON |
+| handle_health | GET | `/health` | — | Health status JSON |
+| handle_insert | POST | `/facts` and `/api/v1/facts` | subject, predicate, object, confidence | row_id |
+| handle_query | GET | `/facts` and `/api/v1/facts` | subject?, predicate?, object?, confidence_min? | Facts array |
+| handle_get_fact | GET | `/facts/{id}` and `/api/v1/facts/{id}` | row_id | Fact JSON |
+| handle_update | PUT | `/facts/{id}` and `/api/v1/facts/{id}` | row_id, subject, predicate, object, confidence | status |
+| handle_delete | DELETE | `/facts/{id}` and `/api/v1/facts/{id}` | row_id | status |
+| handle_stats | GET | `/stats` and `/api/v1/stats` | — | MetricsSnapshot JSON |
 | handle_metrics | GET | `/metrics` | — | Prometheus text format |
+| openapi_handler | GET | `/openapi.json` | — | OpenAPI JSON document |
+| handle_batch_insert | POST | `/api/v1/facts/batch` | array of facts | batch status |
 
 ### 4.1 Response Formats
 

@@ -3,6 +3,7 @@
 **Document ID:** KCM-SEC-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Security Engineer (P7)  
 **Depends on:** KCM-SPEC-001
 
 ---

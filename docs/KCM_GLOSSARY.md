@@ -3,6 +3,7 @@
 **Document ID:** KCM-GLOSS-001  
 **Version:** 1.0.0
 **Status:** Derived
+**Owner:** Documentation Guardian (P11)
 
 ---
 

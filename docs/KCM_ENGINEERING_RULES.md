@@ -3,6 +3,7 @@
 **Document ID:** KCM-ENG-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Code Quality Guardian (P10)  
 **Authoritative Source:** AGENTS.md §Non-Negotiable Rules
 
 > **Authority Notice:** The 12 Non-Negotiable Rules in AGENTS.md are the authoritative engineering rules for KCM. This document provides the detailed operational rules that derive from those principles. Where conflicts exist, AGENTS.md §Non-Negotiable Rules wins.

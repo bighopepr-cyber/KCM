@@ -7,6 +7,7 @@ description = "Runtime and transaction layer for KCM"
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
+kcm-optimizer = { path = "../kcm-optimizer" }
 parking_lot = "0.12"
 rayon = "1.7"
 tokio = { version = "1.35", features = ["full"] }

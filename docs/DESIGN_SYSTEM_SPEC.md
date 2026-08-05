@@ -1,4 +1,4 @@
-# KCM Design System Specification
+# KCM Design System Redirect
 
 **Document ID:** KCM-DESIGN-001
 **Version:** 1.0.0

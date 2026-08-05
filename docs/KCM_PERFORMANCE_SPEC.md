@@ -3,6 +3,7 @@
 **Document ID:** KCM-PERF-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Performance Engineer (P8)  
 **Depends on:** KCM-SPEC-001
 
 ---
@@ -72,7 +73,7 @@ Criterion.rs with `criterion_group!` and `criterion_main!`.
 
 ### 4.2 Configuration
 
-- Minimum 10 iterations per sample
+- Minimum 10 iterations per measurement batch
 - 95% confidence interval
 - Warmup: automatic (Criterion default)
 

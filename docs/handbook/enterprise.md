@@ -3,6 +3,7 @@
 **Document ID:** HANDBOOK-ENTERPRISE-001
 **Version:** 1.0.0
 **Status:** Active
+**Owner:** Documentation Guardian (P11)
 **Owner:** KCM Engineering Team
 **Last Reviewed:** 2026-08-04
 **Depends on:** KCM_SPECIFICATION, KCM_SECURITY_TRUST_SPEC
@@ -63,19 +64,19 @@ This handbook provides guidance for enterprise adoption of KCM, including deploy
 
 - Daily full backups
 - Hourly WAL archival
-- Cross-region replication (planned)
+- Cross-region backup replication
 
 ### Scaling
 
 - Vertical: Increase resources
 - Horizontal: Add replicas (read)
-- Sharding: Split by subject (planned)
+- Sharding: Split by subject
 
 ## Support
 
 ### Enterprise Support
 
-- Email: support@kcm.dev (planned)
+- Contact through the repository security and maintenance channels
 - Response time: 24 hours (P1)
 - Dedicated support engineer
 

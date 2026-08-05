@@ -3,6 +3,7 @@
 **Document ID:** KCM-DEPLOY-001  
 **Version:** 1.0.0  
 **Status:** Derived  
+**Owner:** Release Readiness (P12)  
 **Depends on:** KCM-ARCHDETAIL-001, KCM-SEC-001
 
 ---

@@ -1,234 +1,97 @@
 # KCM Documentation Index
 
 **Document ID:** DOC-INDEX-001
-**Version:** 1.0.0
-**Status:** Active
-**Last Updated:** 2026-08-04
+**Version:** 2.0.0
+**Status:** Canonical
+**Owner:** Documentation Guardian (P11)
+**Last Updated:** 2026-08-05
 
 ## Purpose
 
-Master index of all KCM documentation. Every document in the repository must be listed here.
+This index is the repository-level navigation map for the current documentation set. It intentionally lists only documents that are part of the active Single Source of Truth surface. Historical, retrospective, and audit artifacts are retained only as archive references and are not authoritative for implementation.
 
-## Document Hierarchy
+## Canonical Documentation Hierarchy
 
-| Priority | Document | ID | Authority |
-|----------|----------|-----|-----------|
-| P1 | PRD-TESTING& BRACHMARCK.md | KCM-TEST-001 | Testing strategy, benchmarks |
-| P2 | PRD3.md | KCM-ADVANCED-001 | Distributed, ML, security, compliance |
-| P3 | PRD2.md | KCM-STORAGE-001 | Storage, runtime, interfaces |
-| P4 | PRD.md | KCM-ARCH-001 | Core types, storage, compute, reasoning |
-| P5 | AGENTS.md | — | Engineering constitution |
+| Priority | Document | Authority | Role |
+|----------|----------|-----------|------|
+| P1 | PRD-TESTING& BRACHMARCK.md | Testing strategy, benchmark and validation requirements | Authoritative testing contract |
+| P2 | PRD3.md | Distributed, ML, security, and compliance | Authoritative advanced-systems contract |
+| P3 | PRD2.md | Storage, runtime, and interface contracts | Authoritative runtime/storage contract |
+| P4 | PRD.md | Core types, storage, compute, and reasoning | Authoritative core architecture contract |
+| P5 | AGENTS.md | Engineering constitution and repository policy | Repository governance and non-negotiable rules |
 
-## Technical Specifications
+## Primary Specification Set
 
-| Document | ID | Scope | Status |
-|----------|-----|-------|--------|
-| KCM_SPECIFICATION.md | KCM-SPEC-001 | Technical constitution | Active |
-| KCM_ARCHITECTURE.md | KCM-ARCHDETAIL-001 | System architecture | Derived |
-| KCM_DATA_MODEL_SPEC.md | KCM-DATA-001 | Knowledge model, types | Derived |
-| KCM_COLUMNAR_FORMAT_SPEC.md | KCM-FORMAT-001 | Binary format, WAL | Derived |
-| KCM_QUERY_EXECUTION_SPEC.md | KCM-QUERY-001 | Query pipeline, KQL | Derived |
-| KCM_COMPRESSION_SPEC.md | KCM-COMP-001 | Encodings, codecs | Derived |
-| KCM_INDEXING_SPEC.md | KCM-INDEX-001 | Bitmap, zone map, bloom filter | Derived |
-| KCM_SECURITY_TRUST_SPEC.md | KCM-SEC-001 | RBAC, encryption, GDPR | Derived |
-| KCM_API_SPEC.md | KCM-API-001 | C FFI, REST, gRPC contracts | Derived |
-| KCM_RUNTIME_SPEC.md | KCM-RUNTIME-001 | Concurrency, metrics, health | Derived |
-| KCM_PERFORMANCE_SPEC.md | KCM-PERF-001 | Benchmark targets | Derived |
-| KCM_TESTING_SPEC.md | KCM-TESTSPEC-001 | Test standards | Derived |
-| KCM_ENGINEERING_RULES.md | KCM-ENG-001 | Development rules | Derived |
-| KCM_VERSIONING_SPEC.md | KCM-VER-001 | Versioning, compatibility | Derived |
-| KCM_DEPLOYMENT_SPEC.md | KCM-DEPLOY-001 | Docker, Kubernetes | Derived |
-| KCM_BENCHMARK_REPORTING_SPEC.md | KCM-BENCH-001 | Benchmark artifacts | Derived |
-| KCM_GLOSSARY.md | KCM-GLOSS-001 | Terminology | Active |
+| Document | Scope | Role |
+|----------|-------|------|
+| KCM_SPECIFICATION.md | Technical constitution and contract overview | Derived specification overview |
+| KCM_ARCHITECTURE.md | Derived architectural overview | Implementation architecture reference |
+| KCM_DATA_MODEL_SPEC.md | Data model and type contract | Canonical data-model reference |
+| KCM_COLUMNAR_FORMAT_SPEC.md | Binary format and WAL contract | Storage format reference |
+| KCM_QUERY_EXECUTION_SPEC.md | Query pipeline and KQL contract | Execution contract reference |
+| KCM_COMPRESSION_SPEC.md | Compression and codec model | Codec selection reference |
+| KCM_INDEXING_SPEC.md | Indexing and access path design | Indexing reference |
+| KCM_SECURITY_TRUST_SPEC.md | Security, RBAC, encryption, and trust posture | Security contract reference |
+| KCM_API_SPEC.md | Public API contract for FFI, REST, and gRPC | API contract reference |
+| KCM_RUNTIME_SPEC.md | Runtime lifecycle, concurrency, metrics, and health | Runtime operational contract |
+| KCM_PERFORMANCE_SPEC.md | Performance requirements and targets | Performance contract |
+| KCM_TESTING_SPEC.md | Test policy and expected quality gates | Verification contract |
+| KCM_ENGINEERING_RULES.md | Engineering rules and validation contract | Quality and governance reference |
+| KCM_VERSIONING_SPEC.md | Versioning and compatibility policy | Release and compatibility reference |
+| KCM_DEPLOYMENT_SPEC.md | Deployment posture and operational configuration | Deployment artifact reference |
+| KCM_BENCHMARK_REPORTING_SPEC.md | Benchmark artifact and reporting requirements | Benchmark reporting contract |
+| KCM_GLOSSARY.md | Canonical terminology | Shared vocabulary source |
 
-## Architecture Decision Records
+## Documentation Dependency Graph
 
-| ADR | Title | Status |
-|-----|-------|--------|
-| ADR-001 | Columnar Storage Architecture | Accepted |
-| ADR-002 | Volcano-Style Query Execution | Accepted |
-| ADR-003 | Forward-Chaining Inference | Accepted |
-| ADR-004 | WAL-Based Crash Recovery | Accepted |
-| ADR-005 | AES-256-GCM Encryption | Accepted |
-| ADR-006 | BLAKE3 for Hashing | Accepted |
-| ADR-007 | parking_lot for Synchronization | Accepted |
-| ADR-008 | Criterion for Benchmarking | Accepted |
-| ADR-009 | Documentation First Development | Accepted |
-| ADR-010 | 13-Crate Workspace Architecture | Accepted |
+```text
+AGENTS.md (policy)
+  └─ PRD.md (core architecture, types, compute, reasoning)
+      ├─ PRD2.md (storage/runtime/interface contract)
+      ├─ PRD3.md (distributed/security/compliance/ML contract)
+      └─ PRD-TESTING& BRACHMARCK.md (testing/benchmark contract)
 
-## Guides
+PRD.md, PRD2.md, PRD3.md, PRD-TESTING& BRACHMARCK.md
+  └─ Derived KCM_*_SPEC.md documents
+       ├─ API, runtime, deployment, performance, testing, glossary
+       └─ repository and ecosystem reference docs
 
-| Document | ID | Scope |
-|----------|-----|-------|
-| backup-recovery.md | GUIDE-BACKUP-001 | Backup and recovery procedures |
-| monitoring.md | GUIDE-MONITOR-001 | Monitoring and alerting |
-| operations.md | GUIDE-OPS-001 | Operational procedures |
-| security-hardening.md | GUIDE-SECURITY-001 | Security hardening |
+Derived KCM_*_SPEC.md and repository/ecosystem docs
+  └─ Operational guides, tutorials, handbooks, and cookbooks
+       └─ Reference the authoritative spec tree instead of redefining it
+```
 
-## Handbooks
+## Derived Reference Index
 
-| Document | ID | Scope |
-|----------|-----|-------|
-| contributor.md | HANDBOOK-CONTRIB-001 | Contributor guide |
-| enterprise.md | HANDBOOK-ENTERPRISE-001 | Enterprise deployment |
-| maintainer.md | HANDBOOK-MAINTAINER-001 | Maintainer guide |
+| Area | Role | Canonical Path |
+|------|------|----------------|
+| Guides | Operational procedure | docs/guides/ |
+| Handbooks | Contributor and maintainer workflow | docs/handbook/ |
+| Tutorials | Executable learning path | docs/tutorials/ |
+| Cookbook | Current runtime examples | docs/cookbook/ |
+| ADRs | Design decision log | docs/adr/ |
+| Repository specs | Repository contract | docs/specs/repository/ |
+| Ecosystem specs | Product and integration direction | docs/specs/ecosystem/ |
+| Runtime and interface implementations | Code-backed reference | crates/kcm-runtime/, crates/kcm-interface/, crates/kcm-server/ |
 
-## Tutorials
+## Archive and Historical References
 
-| Document | ID | Scope |
-|----------|-----|-------|
-| 01-installation.md | TUTORIAL-INSTALL-001 | Installation guide |
-| 02-first-database.md | TUTORIAL-FIRSTDB-001 | Creating your first database |
-| 03-basic-queries.md | TUTORIAL-QUERIES-001 | Basic query operations |
-| 04-transactions.md | TUTORIAL-TXN-001 | Transaction management |
-| 05-reasoning.md | TUTORIAL-REASON-001 | Reasoning engine usage |
+The following files are retained for traceability and review history only. They do not define current behavior or implementation contracts:
 
-## Cookbook
+| Document | Use |
+|----------|-----|
+| KCM_DOCUMENT_AUDIT_REPORT.md | Historical documentation audit |
+| DOCUMENTATION_CONSISTENCY_REPORT.md | Historical consistency review |
+| DOCUMENTATION_CONSISTENCY_REPORT_V2.md | Historical remediation review |
+| KCM_STABILITY_READINESS_REPORT.md | Historical stability assessment |
+| KCM_PERFORMANCE_ENGINEERING_REPORT.md | Historical performance review |
+| PROJECT_COMPLIANCE_REPORT.md | Historical compliance review |
+| DESIGN_REVIEW_REPORT.md | Historical design review |
+| CODEBASE_AUDIT_REPORT.md | Historical codebase review |
 
-| Document | ID | Scope |
-|----------|-----|-------|
-| docker-compose.md | COOKBOOK-DOCKER-001 | Docker Compose deployment |
-| kubernetes.md | COOKBOOK-K8S-001 | Kubernetes deployment |
+## Relationship Rules
 
-## Crate Documentation
-
-| Crate | README | Spec Reference |
-|-------|--------|---------------|
-| kcm-core | crates/kcm-core/README.md | PRD.md §3-4 |
-| kcm-storage | crates/kcm-storage/README.md | PRD2.md §2-5 |
-| kcm-compute | crates/kcm-compute/README.md | PRD.md §5 |
-| kcm-reasoning | crates/kcm-reasoning/README.md | PRD.md §6 |
-| kcm-optimizer | crates/kcm-optimizer/README.md | PRD2.md §16 |
-| kcm-runtime | crates/kcm-runtime/README.md | PRD2.md §18 |
-| kcm-interface | crates/kcm-interface/README.md | PRD2.md §19 |
-| kcm-distributed | crates/kcm-distributed/README.md | PRD3.md §27 |
-| kcm-ml | crates/kcm-ml/README.md | PRD3.md §29 |
-| kcm-security | crates/kcm-security/README.md | PRD3.md §30 |
-| kcm-compliance | crates/kcm-compliance/README.md | PRD3.md §32 |
-| kcm-testing | crates/kcm-testing/README.md | PRD-TESTING§1-8 |
-| kcm-server | crates/kcm-server/README.md | PRD2.md §19 |
-
-## Tools
-
-| Tool | Status | README |
-|------|--------|--------|
-| kcm-cli | Active | tools/kcm-cli/README.md |
-| kcm-bench | Active | tools/kcm-bench/README.md |
-| kcm-perf | Active | tools/kcm-perf/README.md |
-| kcm-profile | Active | tools/kcm-profile/README.md |
-| kcm-doctor | Active | tools/kcm-doctor/README.md |
-| kcm-diagnose | Active | tools/kcm-diagnose/README.md |
-| kcm-inspect | Active | tools/kcm-inspect/README.md |
-| kcm-backup | Active | tools/kcm-backup/README.md |
-| kcm-restore | Active | tools/kcm-restore/README.md |
-| kcm-snapshot | Active | tools/kcm-snapshot/README.md |
-| kcm-compact | Active | tools/kcm-compact/README.md |
-| kcm-migrate | Active | tools/kcm-migrate/README.md |
-| kcm-import | Active | tools/kcm-import/README.md |
-| kcm-export | Active | tools/kcm-export/README.md |
-| kcm-schema | Active | tools/kcm-schema/README.md |
-| kcm-cluster | Active | tools/kcm-cluster/README.md |
-| kcm-docs | Active | tools/kcm-docs/README.md |
-
-## SDKs
-
-| Language | Status | Path |
-|----------|--------|------|
-| Rust | Active | sdk/rust/ |
-| C | Active | sdk/c/ |
-| C++ | Active | sdk/cpp/ |
-| Python | Active | sdk/python/ |
-| Java | Active | sdk/java/ |
-| JavaScript | Active | sdk/javascript/ |
-| TypeScript | Active | sdk/typescript/ |
-| Go | Active | sdk/go/ |
-| .NET | Active | sdk/dotnet/ |
-
-## Integrations
-
-| Integration | Status | README |
-|-------------|--------|--------|
-| REST API | Active | integrations/rest/README.md |
-| gRPC | Active | integrations/grpc/README.md |
-| Apache Arrow | Active | integrations/arrow/README.md |
-| Arrow Flight | Active | integrations/arrow-flight/README.md |
-| Apache Parquet | Active | integrations/parquet/README.md |
-| Apache Kafka | Active | integrations/kafka/README.md |
-| Apache Iceberg | Active | integrations/iceberg/README.md |
-| Apache Delta Lake | Active | integrations/delta/README.md |
-| Apache DataFusion | Active | integrations/datafusion/README.md |
-| DuckDB | Active | integrations/duckdb/README.md |
-| Polars | Active | integrations/polars/README.md |
-| Pandas | Active | integrations/pandas/README.md |
-| NATS | Active | integrations/nats/README.md |
-| MQTT | Active | integrations/mqtt/README.md |
-| MCP | Active | integrations/mcp/README.md |
-
-## Reports
-
-| Document | Scope |
-|----------|-------|
-| KCM_DOCUMENT_AUDIT_REPORT.md | Documentation audit (v1) |
-| DOCUMENTATION_CONSISTENCY_REPORT.md | Consistency audit (v1) |
-| DOCUMENTATION_CONSISTENCY_REPORT_V2.md | Post-remediation audit (v2) |
-| KCM_STABILITY_READINESS_REPORT.md | Stability readiness assessment |
-| KCM_PERFORMANCE_ENGINEERING_REPORT.md | Performance engineering report |
-| PROJECT_COMPLIANCE_REPORT.md | Project compliance report |
-| DESIGN_REVIEW_REPORT.md | Design review report |
-| CODEBASE_AUDIT_REPORT.md | Codebase audit report |
-
-## Repository Specifications
-
-| Document | Scope |
-|----------|-------|
-| specs/repository/CRATE_OWNERSHIP.md | Crate ownership assignments |
-| specs/repository/RELEASE_POLICY.md | Release policy |
-| specs/repository/VERSIONING_POLICY.md | Versioning policy |
-| specs/repository/DEPENDENCY_POLICY.md | Dependency policy |
-| specs/repository/DOCUMENTATION_STRUCTURE.md | Documentation structure |
-| specs/repository/REPOSITORY_EVOLUTION.md | Repository evolution |
-| specs/repository/REPOSITORY_GOVERNANCE.md | Repository governance |
-| specs/repository/FOLDER_CONVENTION.md | Folder conventions |
-| specs/repository/WORKSPACE_LAYOUT.md | Workspace layout |
-| specs/repository/REPOSITORY_ARCHITECTURE.md | Repository architecture |
-| specs/repository/NAMING_CONVENTION.md | Naming conventions |
-
-## Ecosystem Specifications
-
-| Document | Scope |
-|----------|-------|
-| specs/ecosystem/DEVELOPER_ECOSYSTEM.md | Developer ecosystem |
-| specs/ecosystem/DEPLOYMENT_STRATEGY.md | Deployment strategy |
-| specs/ecosystem/CLOUD_STRATEGY.md | Cloud strategy |
-| specs/ecosystem/OBSERVABILITY.md | Observability |
-| specs/ecosystem/COMMUNITY_ROADMAP.md | Community roadmap |
-| specs/ecosystem/PLUGIN_SYSTEM.md | Plugin system |
-| specs/ecosystem/SDK_ROADMAP.md | SDK roadmap |
-| specs/ecosystem/LONG_TERM_VISION.md | Long-term vision |
-| specs/ecosystem/EXTENSION_SYSTEM.md | Extension system |
-| specs/ecosystem/CLI_ROADMAP.md | CLI roadmap |
-| specs/ecosystem/ENTERPRISE_ECOSYSTEM.md | Enterprise ecosystem |
-| specs/ecosystem/INTEGRATION_ROADMAP.md | Integration roadmap |
-
-## Other Documentation
-
-| Document | Scope |
-|----------|-------|
-| CHANGELOG.md | Version changelog |
-| CONTRIBUTING.md | Contribution guidelines |
-| CODE_OF_CONDUCT.md | Code of conduct |
-| SECURITY.md | Security policy |
-| LICENSE | License |
-| PLATFORM_ROADMAP.md | Platform roadmap |
-| CICD_QUALITY_GATES.md | CI/CD quality gates |
-| ARCHITECTURE_CONSISTENCY_MATRIX.md | Architecture consistency |
-| DESIGN_SYSTEM.md | Design system |
-| DESIGN_SYSTEM_SPEC.md | Design system specification (deprecated) |
-| analisis-benchmark.md | Benchmark analysis |
-| adr/README.md | ADR index |
-
-## Deprecated/Redirect Documents
-
-| Document | Redirect |
-|----------|----------|
-| DESIGN_SYSTEM_SPEC.md | → DESIGN_SYSTEM.md |
+1. The PRD documents are the root authoritative contracts.
+2. Derived specifications explain the implementation contract in one location only.
+3. Guides, handbooks, tutorials, and cookbook material provide operational context and may reference the primary specification set rather than restating it.
+4. Archive reports are non-normative and must not be used as the basis for new implementation changes.

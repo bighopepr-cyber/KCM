@@ -1,29 +1,24 @@
 # KCM Tutorials
 
-Step-by-step tutorials for learning KCM.
+**Document ID:** TUTORIAL-INDEX-001
+**Version:** 2.0.0
+**Status:** Active
+**Owner:** Documentation Guardian (P11)
 
-## Getting Started
+This directory contains the repository's executable learning path for the current implementation. The tutorial set is intentionally scoped to the documents that exist in the codebase today and is limited to the active learning surface.
 
-| Tutorial | Level | Duration | Description |
-|----------|-------|----------|-------------|
-| 01-installation.md | Beginner | 10 min | Install KCM and verify |
-| 02-first-database.md | Beginner | 15 min | Create your first database |
-| 03-basic-queries.md | Beginner | 20 min | Learn KQL basics |
-| 04-transactions.md | Intermediate | 25 min | Use transactions |
-| 05-reasoning.md | Intermediate | 30 min | Apply inference rules |
+## Current Tutorial Set
 
-## Advanced
-
-| Tutorial | Level | Duration | Description |
-|----------|-------|----------|-------------|
-| 06-performance.md | Advanced | 45 min | Optimize queries (Planned) |
-| 07-security.md | Advanced | 30 min | Enable encryption (Planned) |
-| 08-distributed.md | Advanced | 60 min | Set up clustering (Planned) |
-| 09-custom-operators.md | Advanced | 45 min | Build custom operators (Planned) |
-| 10-production.md | Advanced | 60 min | Deploy to production (Planned) |
+| Tutorial | Level | Description |
+|----------|-------|-------------|
+| 01-installation.md | Beginner | Installation and verification |
+| 02-first-database.md | Beginner | Creating a first database |
+| 03-basic-queries.md | Beginner | Basic query execution |
+| 04-transactions.md | Intermediate | Transaction usage |
+| 05-reasoning.md | Intermediate | Rule execution and reasoning |
 
 ## Prerequisites
 
-- Rust 1.85+ installed
-- Basic Rust knowledge
-- Command line familiarity
+- Rust toolchain installed for the workspace
+- Working familiarity with the command line
+- Access to the repository sources and the relevant crate documentation

@@ -1,8 +1,9 @@
-# KCM Architecture Specification
+# KCM Core Architecture Specification
 
 **Document ID:** KCM-ARCH-001
 **Version:** 2.0.0
 **Status:** Authoritative
+**Owner:** Specification Lock (P4)
 **Authority:** P4 (Specification Lock)
 
 ---

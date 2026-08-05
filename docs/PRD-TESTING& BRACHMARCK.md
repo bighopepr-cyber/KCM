@@ -3,6 +3,7 @@
 **Document ID:** KCM-TEST-001
 **Version:** 2.0.0
 **Status:** Authoritative
+**Owner:** Specification Lock (P4)
 **Authority:** P1 (Highest — overrides all on validation methodology)
 
 ---
@@ -126,7 +127,7 @@ Every build must pass all gates:
 ```rust
 Criterion::default()
     .measurement_time(Duration::from_secs(10))
-    .sample_size(100)
+    .measurement_batch_size(100)
     .warm_up_time(Duration::from_secs(3))
 ```
 

@@ -1,30 +1,21 @@
 # KCM Guides
 
-Operational guides for using KCM in production.
+**Document ID:** GUIDE-INDEX-001
+**Version:** 2.0.0
+**Status:** Active
+**Owner:** Platform Operations Owner
 
-## Operations
+This directory contains the operational reference set for production deployment and maintenance. These documents are the authoritative operating guides for the repository and are intended to complement the primary specification set.
 
-| Guide | Description |
-|-------|-------------|
-| operations.md | Day-to-day operations |
-| monitoring.md | Metrics, logging, alerting |
-| backup-recovery.md | Backup and disaster recovery |
-| security-hardening.md | Security configuration |
-| performance-tuning.md | Performance optimization (Planned) |
-| troubleshooting.md | Common issues and solutions (Planned) |
+## Canonical Guides
 
-## Deployment
+| Guide | Scope |
+|-------|-------|
+| operations.md | Day-to-day operations and operational runbooks |
+| monitoring.md | Metrics, logging, and alerting |
+| backup-recovery.md | Backup and recovery procedures |
+| security-hardening.md | Security configuration and hardening |
 
-| Guide | Description |
-|-------|-------------|
-| docker-deployment.md | Docker and Docker Compose (Planned) |
-| kubernetes-deployment.md | Kubernetes and Helm (Planned) |
-| cloud-deployment.md | AWS, GCP, Azure (Planned) |
+## Usage
 
-## Development
-
-| Guide | Description |
-|-------|-------------|
-| contributing.md | How to contribute (Planned) |
-| architecture-deep-dive.md | Internal architecture (Planned) |
-| crate-guide.md | Working with crates (Planned) |
+Use these guides in conjunction with the authoritative architecture and runtime specifications in the root documentation set. When a topic is already described in a primary specification, the guide only provides operational context and procedure rather than duplicating the specification.

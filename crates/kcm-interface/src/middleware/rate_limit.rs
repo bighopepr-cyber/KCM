@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use parking_lot::Mutex;
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 /// Token bucket rate limiter per client IP.

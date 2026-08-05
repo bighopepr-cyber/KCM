@@ -1,20 +1,26 @@
 # Ecosystem Specifications
 
-Technical specifications for the KCM ecosystem: SDKs, integrations, and tooling.
+**Document ID:** KCM-ECO-README-001
+**Version:** 2.0.0
+**Status:** Active
+**Owner:** Product/Platform Owner
 
-## Documents
+This directory defines the repository's current ecosystem-facing documentation. The authoritative source for implementation remains the code and the primary PRD documents; the files in this directory are reference documents for ecosystem integration surfaces.
 
-| Document | Purpose |
-|----------|---------|
-| DEVELOPER_ECOSYSTEM.md | Developer journey and strategy |
-| ENTERPRISE_ECOSYSTEM.md | Enterprise deployment and security |
-| SDK_ROADMAP.md | SDK development plan (9 languages) |
-| CLI_ROADMAP.md | CLI tool development plan (17 tools) |
-| PLUGIN_SYSTEM.md | Dynamic plugin architecture |
-| EXTENSION_SYSTEM.md | KQL and runtime extensions |
-| DEPLOYMENT_STRATEGY.md | Deployment stages and configuration |
-| CLOUD_STRATEGY.md | Multi-cloud deployment options |
-| OBSERVABILITY.md | Metrics, logging, tracing |
-| INTEGRATION_ROADMAP.md | Third-party integration plan |
-| COMMUNITY_ROADMAP.md | Community building and governance |
-| LONG_TERM_VISION.md | 1/3/5-year vision |
+## Canonical Documents
+
+| Document | Scope |
+|----------|-------|
+| DEVELOPER_ECOSYSTEM.md | Developer-facing product and integration surface |
+| ENTERPRISE_ECOSYSTEM.md | Enterprise deployment and operational posture |
+| PLUGIN_SYSTEM.md | Plugin and extension integration model |
+| EXTENSION_SYSTEM.md | Runtime and query extension model |
+| DEPLOYMENT_STRATEGY.md | Deployment and environment configuration |
+| CLOUD_STRATEGY.md | Cloud deployment posture |
+| OBSERVABILITY.md | Metrics, logging, and operational visibility |
+| LONG_TERM_VISION.md | Repository-level direction and long-range architectural intent |
+
+## Implementation Boundaries
+
+- SDK, CLI, and integration support are documented through the concrete directories under [sdk](../../../sdk), [tools](../../../tools), and [integrations](../../../integrations).
+- This directory does not duplicate the lower-level crate or server specifications. It provides coordinate-level context only.
