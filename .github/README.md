@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://drive.google.com/uc?export=view&id=1Mz77KUmqKnIUssu1jLQyfBSNviJB0Hbh" alt="KCM Logo" width="320" style="max-width: 100%; height: auto;">
+  <img src="[https://drive.google.com/uc?export=view&id=1Mz77KUmqKnIUssu1jLQyfBSNviJB0Hbh](https://raw.githubusercontent.com/bighopepr-cyber/KCM/main/assets/KCM-LOGO.svg)" alt="KCM Logo" width="320" style="max-width: 100%; height: auto;">
   
   # KCM — Knowledge Columnar Model
   
