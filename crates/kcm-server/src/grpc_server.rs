@@ -56,6 +56,9 @@ impl KnowledgeService for KcmGrpcService {
         if let Some(c) = req.confidence_min {
             query = query.with_confidence(c);
         }
+        if let Some(limit) = req.limit {
+            query = query.with_limit(limit as usize);
+        }
 
         match query.execute() {
             Ok(facts) => {

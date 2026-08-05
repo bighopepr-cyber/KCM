@@ -127,6 +127,7 @@ pub fn handle_query(
     predicate: Option<u8>,
     object: Option<u32>,
     confidence_min: Option<f64>,
+    limit: Option<usize>,
 ) -> ApiResponse {
     let mut query = state.db.query();
     if let Some(s) = subject {
@@ -140,6 +141,9 @@ pub fn handle_query(
     }
     if let Some(c) = confidence_min {
         query = query.with_confidence(c);
+    }
+    if let Some(limit) = limit {
+        query = query.with_limit(limit);
     }
 
     match query.execute() {

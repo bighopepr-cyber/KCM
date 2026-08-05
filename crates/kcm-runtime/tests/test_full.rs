@@ -142,6 +142,34 @@ fn test_database_get_fact_invalid() {
 }
 
 #[test]
+fn test_database_query_limit_and_ordering() {
+    let kb = KnowledgeDatabase::new().unwrap();
+
+    for i in 0..5u32 {
+        let fact = Fact::new(
+            SubjectID(1),
+            PredicateID(0),
+            ObjectID(i),
+            0.1 + (i as f64 * 0.2),
+        )
+        .unwrap();
+        kb.insert(&fact).unwrap();
+    }
+
+    let results = kb
+        .query()
+        .with_subject(SubjectID(1))
+        .with_limit(2)
+        .with_order_by_confidence_desc()
+        .execute()
+        .unwrap();
+
+    assert_eq!(results.len(), 2);
+    assert_eq!(results[0].object, ObjectID(4));
+    assert_eq!(results[1].object, ObjectID(3));
+}
+
+#[test]
 fn test_database_dictionary() {
     let kb = KnowledgeDatabase::new().unwrap();
 

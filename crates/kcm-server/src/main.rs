@@ -39,6 +39,7 @@ struct QueryParams {
     predicate: Option<u8>,
     object: Option<u32>,
     confidence_min: Option<f64>,
+    limit: Option<usize>,
 }
 
 fn build_response(resp: kcm_interface::rest_api::ApiResponse) -> HttpResponse {
@@ -89,6 +90,7 @@ async fn query_handler(
         params.predicate,
         params.object,
         params.confidence_min,
+        params.limit,
     ))
 }
 

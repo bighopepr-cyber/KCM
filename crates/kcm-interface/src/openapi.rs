@@ -26,7 +26,8 @@ pub fn openapi_spec() -> &'static str {
           {"name": "subject", "in": "query", "schema": {"type": "integer"}},
           {"name": "predicate", "in": "query", "schema": {"type": "integer"}},
           {"name": "object", "in": "query", "schema": {"type": "integer"}},
-          {"name": "confidence_min", "in": "query", "schema": {"type": "number"}}
+          {"name": "confidence_min", "in": "query", "schema": {"type": "number"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer"}}
         ],
         "responses": {"200": {"description": "Fact list"}}
       },

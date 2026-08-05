@@ -1,11 +1,11 @@
 use crate::transaction::Transaction;
 use kcm_core::dictionary::{DictID, SharedDictionary};
 use kcm_core::types::*;
-use kcm_optimizer::planner::{PlanNode, Planner, PlannerFilterPredicate};
+use kcm_optimizer::planner::Planner;
 use kcm_optimizer::statistics::Statistics;
 use kcm_storage::column::Schema;
 use parking_lot::RwLock;
-use std::sync::Arc;
+use std::{cmp::Ordering, sync::Arc};
 
 /// Knowledge database with columnar storage.
 ///
@@ -142,7 +142,6 @@ enum OrderedFilter {
     Predicate(u8),
     Object(u32),
     Confidence(f64),
-    Noop,
 }
 
 impl OrderedFilter {
@@ -161,7 +160,6 @@ impl OrderedFilter {
             OrderedFilter::Confidence(v) => {
                 planner.estimate_selectivity(ColumnID::Confidence, (*v * 100.0) as i64, 100)
             }
-            OrderedFilter::Noop => 1.0,
         }
     }
 
@@ -171,9 +169,14 @@ impl OrderedFilter {
             OrderedFilter::Predicate(v) => fact.predicate.0 == *v,
             OrderedFilter::Object(v) => fact.object.0 == *v,
             OrderedFilter::Confidence(threshold) => fact.confidence >= *threshold,
-            OrderedFilter::Noop => true,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QueryOrder {
+    ConfidenceAsc,
+    ConfidenceDesc,
 }
 
 pub struct QueryBuilder {
@@ -183,6 +186,8 @@ pub struct QueryBuilder {
     object_filter: Option<ObjectID>,
     confidence_filter: Option<f64>,
     row_count: usize,
+    order_by: Option<QueryOrder>,
+    limit: Option<usize>,
 }
 
 impl QueryBuilder {
@@ -194,6 +199,8 @@ impl QueryBuilder {
             object_filter: None,
             confidence_filter: None,
             row_count,
+            order_by: None,
+            limit: None,
         }
     }
 
@@ -214,6 +221,21 @@ impl QueryBuilder {
 
     pub fn with_confidence(mut self, threshold: f64) -> Self {
         self.confidence_filter = Some(threshold);
+        self
+    }
+
+    pub fn with_order_by_confidence_desc(mut self) -> Self {
+        self.order_by = Some(QueryOrder::ConfidenceDesc);
+        self
+    }
+
+    pub fn with_order_by_confidence_asc(mut self) -> Self {
+        self.order_by = Some(QueryOrder::ConfidenceAsc);
+        self
+    }
+
+    pub fn with_limit(mut self, limit: usize) -> Self {
+        self.limit = Some(limit);
         self
     }
 
@@ -293,6 +315,23 @@ impl QueryBuilder {
                     result.push(fact);
                 }
             }
+        }
+
+        if let Some(order_by) = self.order_by {
+            result.sort_by(|lhs, rhs| match order_by {
+                QueryOrder::ConfidenceAsc => lhs
+                    .confidence
+                    .partial_cmp(&rhs.confidence)
+                    .unwrap_or(Ordering::Equal),
+                QueryOrder::ConfidenceDesc => rhs
+                    .confidence
+                    .partial_cmp(&lhs.confidence)
+                    .unwrap_or(Ordering::Equal),
+            });
+        }
+
+        if let Some(limit) = self.limit {
+            result.truncate(limit);
         }
 
         Ok(result)
