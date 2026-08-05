@@ -1,5 +1,6 @@
 <div align="center">
-  <img src="assets/KCM-LOGO.svg" alt="KCM Logo" width="320" style="max-width: 100%; height: auto;">
+  <img src="KCM/assets
+/KCM-LOGO.svg" alt="KCM Logo" width="320" style="max-width: 100%; height: auto;">
   
   # KCM — Knowledge Columnar Model
   
