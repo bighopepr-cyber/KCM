@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="120" viewBox="0 0 480 120">
-  <rect width="480" height="120" rx="8" fill="#F9F9F9"/>
-  <text x="30" y="78" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="bold" fill="#0D5EE8">KCM</text>
-  <text x="220" y="78" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#6A7685">Knowledge Columnar Model</text>
-  <rect x="30" y="95" width="180" height="3" rx="1.5" fill="#0D5EE8"/>
-</svg>
