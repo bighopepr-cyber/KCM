@@ -57,7 +57,14 @@ impl<'a> Operator for ScanOp<'a> {
     }
 
     fn estimated_rows(&self) -> usize {
-        self.schema.len()
+        let total = self.schema.len();
+        if self.context_filter.is_some() {
+            (total as f64 * 0.1).ceil() as usize
+        } else if self.confidence_filter.is_some() {
+            (total as f64 * 0.3).ceil() as usize
+        } else {
+            total
+        }
     }
 }
 
@@ -120,7 +127,19 @@ impl<'a> Operator for FilterOp<'a> {
     }
 
     fn estimated_rows(&self) -> usize {
-        (self.rowids.len() as f64 * 0.1).ceil() as usize
+        let input = self.rowids.len();
+        let selectivity = match &self.predicate {
+            FilterPredicate::EqualSubject(_) => 0.05,
+            FilterPredicate::EqualPredicate(_) => 0.15,
+            FilterPredicate::EqualObject(_) => 0.05,
+            FilterPredicate::EqualContext(_) => 0.2,
+            FilterPredicate::InSet(vals) => {
+                let set_size = vals.len() as f64;
+                (set_size / 255.0).min(0.5).max(0.01)
+            }
+            FilterPredicate::RangeTimestamp(_, _) => 0.3,
+        };
+        (input as f64 * selectivity).ceil() as usize
     }
 }
 
@@ -238,7 +257,14 @@ impl<'a> Operator for JoinOp<'a> {
     }
 
     fn estimated_rows(&self) -> usize {
-        (self.left_rowids.len() as f64 * self.right_rowids.len() as f64 * 0.1) as usize
+        let left = self.left_rowids.len();
+        let right = self.right_rowids.len();
+        if left == 0 || right == 0 {
+            return 0;
+        }
+        let distinct_right = (right as f64 * 0.3).max(1.0);
+        let join_selectivity = 1.0 / distinct_right;
+        (left as f64 * right as f64 * join_selectivity).ceil() as usize
     }
 }
 
@@ -340,8 +366,12 @@ impl<'a> Operator for AggregateOp<'a> {
             for &idx in &self.rowids {
                 let key = match group_col {
                     ColumnID::Subject => self.schema.subject_col.get(idx).unwrap_or(0) as u64,
+                    ColumnID::Predicate => self.schema.predicate_col.get(idx).unwrap_or(0) as u64,
                     ColumnID::Object => self.schema.object_col.get(idx).unwrap_or(0) as u64,
-                    _ => 0,
+                    ColumnID::Context => self.schema.context_col.get(idx).unwrap_or(0) as u64,
+                    ColumnID::Evidence => self.schema.evidence_col.get(idx).unwrap_or(0) as u64,
+                    ColumnID::Owner => self.schema.owner_col.get(idx).unwrap_or(0) as u64,
+                    _ => self.schema.subject_col.get(idx).unwrap_or(0) as u64,
                 };
                 groups.insert(key);
             }
