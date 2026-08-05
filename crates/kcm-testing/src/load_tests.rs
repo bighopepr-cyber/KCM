@@ -201,4 +201,159 @@ mod tests {
             h.join().unwrap();
         }
     }
+
+    #[test]
+    fn test_load_heavy() {
+        let scenario = LoadTestScenario {
+            name: "Heavy".to_string(),
+            concurrent_users: 100,
+            operations_per_user: 20,
+            initial_facts: 5_000,
+            expected_qps: 500.0,
+            max_latency_p99_ms: 2000.0,
+        };
+        let results = run_load_test(&scenario).unwrap();
+        assert!(results.total_operations > 0, "Should complete operations");
+        assert!(results.pass(&scenario), "Heavy load should pass");
+        println!("{}", results.to_report());
+    }
+
+    #[test]
+    fn test_load_spike() {
+        let scenario = LoadTestScenario {
+            name: "Spike".to_string(),
+            concurrent_users: 200,
+            operations_per_user: 10,
+            initial_facts: 2_000,
+            expected_qps: 1000.0,
+            max_latency_p99_ms: 3000.0,
+        };
+        let results = run_load_test(&scenario).unwrap();
+        assert!(results.total_operations > 0, "Should complete operations");
+        assert!(results.pass(&scenario), "Spike load should pass");
+        println!("{}", results.to_report());
+    }
+
+    #[test]
+    fn test_load_read_heavy() {
+        let kb = Arc::new(KnowledgeDatabase::new().unwrap());
+        for i in 0..1_000u32 {
+            let fact = Fact::new(SubjectID(i % 50), PredicateID(0), ObjectID(i), 0.8).unwrap();
+            kb.insert(&fact).unwrap();
+        }
+
+        let total_ops = Arc::new(AtomicU64::new(0));
+        let failed_ops = Arc::new(AtomicU64::new(0));
+        let start = Instant::now();
+        let mut handles = Vec::new();
+
+        for user in 0..20 {
+            let kb = kb.clone();
+            let total_ops = total_ops.clone();
+            let failed_ops = failed_ops.clone();
+            handles.push(std::thread::spawn(move || {
+                for i in 0..100u64 {
+                    let op_start = Instant::now();
+                    let success = if (user + i as usize) % 10 < 9 {
+                        kb.query().with_predicate(PredicateID(0)).execute().is_ok()
+                    } else {
+                        let fact = Fact::new(
+                            SubjectID((user % 50) as u32),
+                            PredicateID(1),
+                            ObjectID((i % 1000) as u32),
+                            0.7,
+                        );
+                        match fact {
+                            Ok(f) => kb.insert(&f).is_ok(),
+                            Err(_) => false,
+                        }
+                    };
+                    total_ops.fetch_add(1, AtomicOrdering::Relaxed);
+                    if !success {
+                        failed_ops.fetch_add(1, AtomicOrdering::Relaxed);
+                    }
+                    let _ = op_start.elapsed();
+                }
+            }));
+        }
+        for h in handles {
+            h.join().unwrap();
+        }
+        let elapsed = start.elapsed().as_secs_f64();
+        let total = total_ops.load(AtomicOrdering::Relaxed);
+        let failed = failed_ops.load(AtomicOrdering::Relaxed);
+        println!(
+            "Read-Heavy: {} ops ({} failed) in {:.2}s, {:.0} QPS",
+            total,
+            failed,
+            elapsed,
+            total as f64 / elapsed
+        );
+        assert!(total > 0, "Should complete operations");
+        assert!(
+            failed <= total / 1000,
+            "Read-heavy failure rate too high: {}/{}",
+            failed,
+            total
+        );
+    }
+
+    #[test]
+    fn test_load_write_heavy() {
+        let kb = Arc::new(KnowledgeDatabase::new().unwrap());
+        let total_ops = Arc::new(AtomicU64::new(0));
+        let failed_ops = Arc::new(AtomicU64::new(0));
+        let start = Instant::now();
+        let mut handles = Vec::new();
+
+        for user in 0..20 {
+            let kb = kb.clone();
+            let total_ops = total_ops.clone();
+            let failed_ops = failed_ops.clone();
+            handles.push(std::thread::spawn(move || {
+                for i in 0..100u64 {
+                    let op_start = Instant::now();
+                    let success = if (user + i as usize) % 10 < 9 {
+                        let fact = Fact::new(
+                            SubjectID((user % 50) as u32),
+                            PredicateID((i % 10) as u8),
+                            ObjectID((i % 1000) as u32),
+                            0.7,
+                        );
+                        match fact {
+                            Ok(f) => kb.insert(&f).is_ok(),
+                            Err(_) => false,
+                        }
+                    } else {
+                        kb.query().with_predicate(PredicateID(0)).execute().is_ok()
+                    };
+                    total_ops.fetch_add(1, AtomicOrdering::Relaxed);
+                    if !success {
+                        failed_ops.fetch_add(1, AtomicOrdering::Relaxed);
+                    }
+                    let _ = op_start.elapsed();
+                }
+            }));
+        }
+        for h in handles {
+            h.join().unwrap();
+        }
+        let elapsed = start.elapsed().as_secs_f64();
+        let total = total_ops.load(AtomicOrdering::Relaxed);
+        let failed = failed_ops.load(AtomicOrdering::Relaxed);
+        println!(
+            "Write-Heavy: {} ops ({} failed) in {:.2}s, {:.0} QPS",
+            total,
+            failed,
+            elapsed,
+            total as f64 / elapsed
+        );
+        assert!(total > 0, "Should complete operations");
+        assert!(
+            failed <= total / 1000,
+            "Write-heavy failure rate too high: {}/{}",
+            failed,
+            total
+        );
+    }
 }

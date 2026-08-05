@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "kcm-doctor")]
@@ -16,11 +17,23 @@ enum Commands {
     /// Run full health check
     Check,
     /// Verify data integrity
-    Integrity,
+    Integrity {
+        /// Path to the database file
+        #[arg(long = "db")]
+        db_path: PathBuf,
+    },
     /// Check WAL consistency
-    Wal,
+    Wal {
+        /// Path to the WAL file
+        #[arg(long = "wal")]
+        wal_path: PathBuf,
+    },
     /// Attempt automatic repair
-    Repair,
+    Repair {
+        /// Path to the database file
+        #[arg(long = "db")]
+        db_path: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -70,25 +83,113 @@ fn main() -> Result<()> {
             println!("{}", "Health check complete".bold());
             Ok(())
         }
-        Commands::Integrity => {
+        Commands::Integrity { db_path } => {
             println!("{}", "Data Integrity Check".bold());
             println!();
-            println!("  This feature requires a database file path.");
-            println!("  Use: kcm-doctor integrity --db <path>");
+            println!("  Checking: {}", db_path.display());
+
+            if !db_path.exists() {
+                println!("  {} File not found: {}", "FAILED".red(), db_path.display());
+                return Ok(());
+            }
+
+            print!("  BLAKE3 checksum verification... ");
+            match kcm_storage::file_format::DatabaseFile::verify(db_path) {
+                Ok(true) => println!("{}", "OK".green()),
+                Ok(false) => println!("{}", "CORRUPTED".red()),
+                Err(e) => println!("{} ({})", "FAILED".red(), e),
+            }
+
+            print!("  Schema load... ");
+            match kcm_storage::file_format::DatabaseFile::load(db_path) {
+                Ok(schema) => {
+                    println!(
+                        "{} ({} rows, {} active)",
+                        "OK".green(),
+                        schema.len(),
+                        schema.active_count()
+                    );
+                }
+                Err(e) => println!("{} ({})", "FAILED".red(), e),
+            }
+
+            println!();
+            println!("{}", "Integrity check complete".bold());
             Ok(())
         }
-        Commands::Wal => {
+        Commands::Wal { wal_path } => {
             println!("{}", "WAL Consistency Check".bold());
             println!();
-            println!("  This feature requires a database file path.");
-            println!("  Use: kcm-doctor wal --db <path>");
+            println!("  Checking: {}", wal_path.display());
+
+            if !wal_path.exists() {
+                println!(
+                    "  {} File not found: {}",
+                    "FAILED".red(),
+                    wal_path.display()
+                );
+                return Ok(());
+            }
+
+            print!("  WAL integrity verification... ");
+            let wal = kcm_storage::wal::WriteAheadLog::new(wal_path)?;
+            match wal.verify_integrity() {
+                Ok(()) => println!("{}", "OK".green()),
+                Err(e) => println!("{} ({})", "FAILED".red(), e),
+            }
+
+            println!();
+            println!("{}", "WAL check complete".bold());
             Ok(())
         }
-        Commands::Repair => {
+        Commands::Repair { db_path } => {
             println!("{}", "Automatic Repair".bold());
             println!();
-            println!("  This feature requires a database file path.");
-            println!("  Use: kcm-doctor repair --db <path>");
+            println!("  Database: {}", db_path.display());
+
+            if !db_path.exists() {
+                println!(
+                    "  {} Database file not found: {}",
+                    "FAILED".red(),
+                    db_path.display()
+                );
+                return Ok(());
+            }
+
+            print!("  Loading schema... ");
+            let schema = match kcm_storage::file_format::DatabaseFile::load(db_path) {
+                Ok(s) => {
+                    println!("{} ({} rows)", "OK".green(), s.len());
+                    s
+                }
+                Err(e) => {
+                    println!("{} ({})", "FAILED".red(), e);
+                    println!();
+                    println!("  {} Cannot repair: schema load failed", "FAILED".red());
+                    return Ok(());
+                }
+            };
+
+            print!("  Compacting schema... ");
+            match schema.compact() {
+                Ok(compacted) => {
+                    println!(
+                        "{} ({} → {} rows)",
+                        "OK".green(),
+                        schema.len(),
+                        compacted.len()
+                    );
+                    print!("  Saving repaired schema... ");
+                    match kcm_storage::file_format::DatabaseFile::save(&compacted, db_path) {
+                        Ok(()) => println!("{}", "OK".green()),
+                        Err(e) => println!("{} ({})", "FAILED".red(), e),
+                    }
+                }
+                Err(e) => println!("{} ({})", "FAILED".red(), e),
+            }
+
+            println!();
+            println!("{}", "Repair complete".bold());
             Ok(())
         }
     }

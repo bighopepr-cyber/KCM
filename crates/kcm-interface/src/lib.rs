@@ -397,12 +397,18 @@ pub unsafe extern "C" fn KCM_DatabaseLoad(
                     Ok(db) => db,
                     Err(e) => return e.into(),
                 };
-                *db_ref.inner.lock() = new_db;
-                let db_guard = db_ref.inner.lock();
+                let mut db_guard = db_ref.inner.lock();
+                *db_guard = new_db;
+                let mut insert_errors = 0usize;
                 for idx in 0..schema.len() {
                     if let Some(fact) = schema.get_fact(idx) {
-                        let _ = db_guard.insert(&fact);
+                        if db_guard.insert(&fact).is_err() {
+                            insert_errors += 1;
+                        }
                     }
+                }
+                if insert_errors > 0 {
+                    return KCM_Error::KCM_ERR_CORRUPTED;
                 }
                 KCM_Error::KCM_OK
             }

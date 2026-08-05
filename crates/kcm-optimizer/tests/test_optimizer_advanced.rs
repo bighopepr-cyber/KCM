@@ -102,6 +102,7 @@ fn test_execution_stats_zero() {
 fn test_filter_pushdown() {
     let optimizer = FilterPushdownOptimizer;
     let plan = PlanNode::Scan {
+        context_filter: None,
         confidence_filter: None,
     };
     let optimized = optimizer.apply(&plan);
@@ -114,6 +115,7 @@ fn test_column_pruning() {
     assert_eq!(pruning.required_column_ids().len(), 2);
     let plan = PlanNode::Project {
         child: Box::new(PlanNode::Scan {
+            context_filter: None,
             confidence_filter: None,
         }),
         columns: vec![ColumnID::Subject],
@@ -127,9 +129,11 @@ fn test_join_ordering() {
     let cost = JoinOrderingOptimizer::estimate_join_cost(100, 1000);
     assert!(cost > 0.0);
     let plan1 = PlanNode::Scan {
+        context_filter: None,
         confidence_filter: None,
     };
     let plan2 = PlanNode::Scan {
+        context_filter: None,
         confidence_filter: None,
     };
     let (a, b) = JoinOrderingOptimizer::reorder(&plan1, &plan2);
@@ -157,6 +161,7 @@ fn test_index_selection() {
 fn test_optimizer_pipeline() {
     let pipeline = OptimizerPipeline::new();
     let plan = PlanNode::Scan {
+        context_filter: None,
         confidence_filter: None,
     };
     let optimized = pipeline.optimize(&plan);

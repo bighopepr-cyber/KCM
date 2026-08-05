@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 fn snapshot_id() -> String {
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or_default()
         .as_secs();
     format!("snap_{}", ts)
 }

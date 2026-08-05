@@ -85,3 +85,43 @@ impl LearnedIndex {
         (lower, upper)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_regression_model_linear() {
+        let mut model = RegressionModel::new();
+        let x = vec![0u32, 1, 2, 3, 4];
+        let y = vec![0usize, 10, 20, 30, 40];
+        model.train(&x, &y);
+        assert!((model.predict(2) as f64 - 20.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_regression_model_empty() {
+        let mut model = RegressionModel::new();
+        model.train(&[], &[]);
+        assert_eq!(model.predict(0), 0);
+    }
+
+    #[test]
+    fn test_learned_index_search() {
+        let mut index = LearnedIndex::new(2);
+        let values: Vec<u32> = (0..1000).collect();
+        let positions: Vec<usize> = (0..1000).collect();
+        index.train(&values, &positions);
+        let (lower, upper) = index.search(500);
+        assert!(lower <= 500);
+        assert!(upper >= 500);
+    }
+
+    #[test]
+    fn test_learned_index_empty() {
+        let index = LearnedIndex::new(2);
+        let (lower, upper) = index.search(0);
+        assert_eq!(lower, 0);
+        assert!(upper >= lower);
+    }
+}

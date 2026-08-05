@@ -79,25 +79,19 @@ fn test_gdpr_concurrent_operations() {
 fn test_data_classification_enforcement() {
     assert!(!DataClassification::Public.requires_encryption());
     assert!(!DataClassification::Public.requires_audit_log());
-    assert_eq!(DataClassification::Public.max_retention_days(), Some(365));
+    assert_eq!(DataClassification::Public.max_retention_days(), 365);
 
     assert!(!DataClassification::Internal.requires_encryption());
     assert!(DataClassification::Internal.requires_audit_log());
-    assert_eq!(DataClassification::Internal.max_retention_days(), Some(730));
+    assert_eq!(DataClassification::Internal.max_retention_days(), 730);
 
     assert!(DataClassification::Confidential.requires_encryption());
     assert!(DataClassification::Confidential.requires_audit_log());
-    assert_eq!(
-        DataClassification::Confidential.max_retention_days(),
-        Some(1825)
-    );
+    assert_eq!(DataClassification::Confidential.max_retention_days(), 1825);
 
     assert!(DataClassification::Restricted.requires_encryption());
     assert!(DataClassification::Restricted.requires_audit_log());
-    assert_eq!(
-        DataClassification::Restricted.max_retention_days(),
-        Some(2555)
-    );
+    assert_eq!(DataClassification::Restricted.max_retention_days(), 2555);
 }
 
 #[test]

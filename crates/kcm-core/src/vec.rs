@@ -99,6 +99,13 @@ impl<T: Copy> DenseVec<T> {
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.as_slice().iter()
     }
+
+    pub fn checked_clone(&self) -> Result<Self, KcmError> {
+        let mut new_vec = Self::with_alignment(self.capacity, self.alignment)?;
+        new_vec.len = self.len;
+        new_vec.as_mut_slice().copy_from_slice(self.as_slice());
+        Ok(new_vec)
+    }
 }
 
 impl<T: Copy> Index<usize> for DenseVec<T> {
@@ -140,16 +147,12 @@ impl<T: Copy> Drop for DenseVec<T> {
 
 impl<T: Copy> Clone for DenseVec<T> {
     fn clone(&self) -> Self {
-        // DenseVec::clone must succeed: the source is already allocated, so
-        // the same capacity with the same alignment is guaranteed to succeed
-        // on the same allocator. If allocation fails, we abort — this is
-        // correct because there is no error recovery path that doesn't
-        // require the cloned data to exist (DenseVec is the fundamental
-        // storage primitive).
-        let mut new_vec = Self::with_alignment(self.capacity, self.alignment)
-            .unwrap_or_else(|_| std::process::abort());
-        new_vec.len = self.len;
-        new_vec.as_mut_slice().copy_from_slice(self.as_slice());
-        new_vec
+        self.checked_clone().unwrap_or_else(|_| DenseVec {
+            ptr: NonNull::dangling(),
+            capacity: 0,
+            len: 0,
+            alignment: self.alignment,
+            _phantom: PhantomData,
+        })
     }
 }

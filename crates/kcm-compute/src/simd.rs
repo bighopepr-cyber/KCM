@@ -236,10 +236,7 @@ mod tests {
     #[test]
     fn test_simd_filter_eq_u32() {
         let data = [10u32, 20, 30, 20, 50];
-        assert_eq!(
-            data.simd_filter_eq(20),
-            [false, true, false, true, false]
-        );
+        assert_eq!(data.simd_filter_eq(20), [false, true, false, true, false]);
     }
 
     #[test]
@@ -251,18 +248,12 @@ mod tests {
     #[test]
     fn test_simd_filter_ge_u8_boundary() {
         let data = [0u8, 127, 128, 255, 0];
-        assert_eq!(
-            data.simd_filter_ge(128),
-            [false, false, true, true, false]
-        );
+        assert_eq!(data.simd_filter_ge(128), [false, false, true, true, false]);
     }
 
     #[test]
     fn test_simd_filter_ge_u32_boundary() {
         let data = [0u32, u32::MAX, 100, 200];
-        assert_eq!(
-            data.simd_filter_ge(200),
-            [false, true, false, true]
-        );
+        assert_eq!(data.simd_filter_ge(200), [false, true, false, true]);
     }
 }

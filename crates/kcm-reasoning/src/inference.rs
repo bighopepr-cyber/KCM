@@ -1,10 +1,9 @@
 use crate::rule::{Rule, RuleID, RulePattern, RuleRegistry};
 use kcm_core::types::*;
 use kcm_storage::column::Schema;
+use std::collections::HashSet;
 use std::time::Instant;
 
-/// Provenance record for a derived fact.
-/// Tracks which rule was applied and which source facts led to the derivation.
 #[derive(Debug, Clone)]
 pub struct Derivation {
     pub derived_fact: Fact,
@@ -12,7 +11,6 @@ pub struct Derivation {
     pub confidence_formula_result: f64,
 }
 
-/// Statistics about an inference run.
 #[derive(Debug, Clone)]
 pub struct InferenceStats {
     pub iterations: usize,
@@ -25,6 +23,7 @@ pub struct InferenceEngine {
     rule_registry: RuleRegistry,
     max_iterations: usize,
     confidence_threshold: f64,
+    timeout_secs: u64,
 }
 
 impl InferenceEngine {
@@ -35,6 +34,7 @@ impl InferenceEngine {
             rule_registry: RuleRegistry::new(),
             max_iterations: DEFAULT_MAX_ITERATIONS,
             confidence_threshold: DEFAULT_CONFIDENCE_THRESHOLD,
+            timeout_secs: 60,
         }
     }
 
@@ -48,23 +48,30 @@ impl InferenceEngine {
         self
     }
 
+    pub fn with_timeout_secs(mut self, secs: u64) -> Self {
+        self.timeout_secs = secs;
+        self
+    }
+
     pub fn register_rule(&mut self, rule: Rule) -> Result<(), KcmError> {
         self.rule_registry.register(rule)
     }
 
-    /// Run inference and return both derivations and statistics.
     pub fn infer_with_stats(
         &self,
         schema: &mut Schema,
     ) -> Result<(Vec<Derivation>, InferenceStats), KcmError> {
         let start = Instant::now();
-        let max_duration = std::time::Duration::from_secs(60);
+        let max_duration = std::time::Duration::from_secs(self.timeout_secs);
         let mut all_derived: Vec<Derivation> = Vec::new();
         let mut iterations = 0;
         let mut total_rules = 0;
 
+        let mut derived_set: HashSet<(RuleID, u32, u32)> = HashSet::new();
+
         for iteration in 0..self.max_iterations {
             iterations = iteration + 1;
+
             if start.elapsed() > max_duration {
                 break;
             }
@@ -72,21 +79,33 @@ impl InferenceEngine {
             let mut new_facts: Vec<Derivation> = Vec::new();
             let mut rules_used = 0;
 
-            for rule in self.rule_registry.all_enabled() {
+            let mut enabled_rules: Vec<&Rule> = self.rule_registry.all_enabled();
+            enabled_rules.sort_by_key(|b| std::cmp::Reverse(b.priority));
+
+            for rule in enabled_rules {
                 if !rule.enabled {
                     continue;
                 }
 
                 let matches = self.find_pattern_matches(&rule.pattern, schema)?;
-                rules_used += 1;
+
+                if !matches.is_empty() {
+                    rules_used += 1;
+                }
 
                 for (subject, object, confidences) in matches {
                     let confidence = (rule.confidence_formula)(&confidences);
 
                     if confidence >= self.confidence_threshold {
+                        let key = (rule.id, subject.0, object.0);
+                        if derived_set.contains(&key) {
+                            continue;
+                        }
+
                         let mut fact =
                             Fact::new(subject, rule.consequent_predicate, object, confidence)?;
                         fact.priority = rule.priority.clamp(i8::MIN as i32, i8::MAX as i32) as i8;
+                        derived_set.insert(key);
                         new_facts.push(Derivation {
                             derived_fact: fact,
                             rule_id: rule.id,
@@ -120,8 +139,6 @@ impl InferenceEngine {
         ))
     }
 
-    /// Run forward-chaining inference.
-    /// Returns derived facts with their source rule IDs.
     pub fn infer_forward_chaining(
         &self,
         schema: &mut Schema,
@@ -182,11 +199,16 @@ impl InferenceEngine {
                 let right_matches = self.find_pattern_matches(right, schema)?;
 
                 let mut result = Vec::new();
-                for (ls, lo, mut lc) in left_matches {
+                for (ls, lo, lc) in &left_matches {
                     for (rs, ro, rc) in &right_matches {
-                        if lo.0 == rs.0 {
-                            lc.extend(rc.iter().copied());
-                            result.push((ls, *ro, lc.clone()));
+                        let left_obj_right_subj = lo.0 == rs.0;
+                        let left_obj_right_obj = lo.0 == ro.0;
+                        let left_subj_right_subj = ls.0 == rs.0;
+
+                        if left_obj_right_subj || left_obj_right_obj || left_subj_right_subj {
+                            let mut confidences = lc.clone();
+                            confidences.extend(rc.iter().copied());
+                            result.push((*ls, *ro, confidences));
                         }
                     }
                 }
@@ -197,14 +219,35 @@ impl InferenceEngine {
             RulePattern::Or(left, right) => {
                 let mut left_matches = self.find_pattern_matches(left, schema)?;
                 let right_matches = self.find_pattern_matches(right, schema)?;
-                left_matches.extend(right_matches);
+
+                let mut seen: HashSet<(u32, u32)> = HashSet::new();
+                for m in &left_matches {
+                    seen.insert((m.0 .0, m.1 .0));
+                }
+                for m in right_matches {
+                    let key = (m.0 .0, m.1 .0);
+                    if seen.insert(key) {
+                        left_matches.push(m);
+                    }
+                }
                 Ok(left_matches)
             }
 
             RulePattern::Not(inner) => {
                 let inner_matches = self.find_pattern_matches(inner, schema)?;
-                let inner_pairs: std::collections::HashSet<(u32, u32)> =
-                    inner_matches.iter().map(|(s, o, _)| (s.0, o.0)).collect();
+
+                let exclude_set: HashSet<(u32, u8, u32)> = inner_matches
+                    .iter()
+                    .filter_map(|(s, o, _)| {
+                        let idx = (0..schema.len()).find(|&i| {
+                            !schema.is_deleted(i)
+                                && schema.subject_col.get(i) == Some(s.0)
+                                && schema.object_col.get(i) == Some(o.0)
+                        })?;
+                        let p = schema.predicate_col.get(idx)?;
+                        Some((s.0, p, o.0))
+                    })
+                    .collect();
 
                 let mut result = Vec::new();
                 for idx in 0..schema.len() {
@@ -212,10 +255,10 @@ impl InferenceEngine {
                         continue;
                     }
                     if let Some(s) = schema.subject_col.get(idx) {
-                        if let Some(_p) = schema.predicate_col.get(idx) {
+                        if let Some(p) = schema.predicate_col.get(idx) {
                             if let Some(o) = schema.object_col.get(idx) {
                                 if let Some(c) = schema.confidence_col.get(idx) {
-                                    if !inner_pairs.contains(&(s, o)) {
+                                    if !exclude_set.contains(&(s, p, o)) {
                                         let s_id = SubjectID(s);
                                         let o_id = ObjectID(o);
                                         result.push((s_id, o_id, vec![c]));

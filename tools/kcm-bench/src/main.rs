@@ -131,7 +131,7 @@ fn main() -> Result<()> {
                         ObjectID((i % 500) as u32),
                         0.95,
                     )
-                    .unwrap()
+                    .unwrap_or_else(|e| panic!("Invalid fact at index {}: {}", i, e))
                 })
                 .collect();
             db.insert_batch(&facts)?;
@@ -185,7 +185,9 @@ fn main() -> Result<()> {
                             ObjectID((i % 500) as u32),
                             0.95,
                         )
-                        .unwrap()
+                        .unwrap_or_else(|e| {
+                            panic!("Invalid fact at batch {} index {}: {}", b, i, e)
+                        })
                     })
                     .collect();
                 db.insert_batch(&facts)?;

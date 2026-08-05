@@ -1,4 +1,5 @@
 use kcm_core::bitmap::Bitmap;
+use kcm_core::dictionary::Dictionary;
 use kcm_core::types::*;
 use proptest::prelude::*;
 
@@ -35,6 +36,26 @@ proptest! {
         let r1 = conf1.multiply(conf2);
         let r2 = conf2.multiply(conf1);
         prop_assert!((r1.0 - r2.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn fuzz_confidence_multiply_identity(
+        c in 0.0f64..=1.0,
+    ) {
+        let conf = Confidence::new(c).unwrap();
+        let one = Confidence::new(1.0).unwrap();
+        let result = conf.multiply(one);
+        prop_assert!((result.0 - c).abs() < 1e-10);
+    }
+
+    #[test]
+    fn fuzz_confidence_multiply_absorption(
+        c in 0.0f64..=1.0,
+    ) {
+        let conf = Confidence::new(c).unwrap();
+        let zero = Confidence::new(0.0).unwrap();
+        let result = conf.multiply(zero);
+        prop_assert!((result.0 - 0.0).abs() < 1e-10);
     }
 
     #[test]
@@ -113,5 +134,48 @@ proptest! {
         let row = RowID::new(id);
         let next = row.next();
         prop_assert_eq!(next.0, id + 1);
+    }
+
+    #[test]
+    fn fuzz_dictionary_idempotence(
+        values in prop::collection::vec("[a-z]{1,10}", 0..100),
+    ) {
+        let mut dict = Dictionary::new();
+        for value in &values {
+            dict.insert(value).unwrap();
+        }
+        for value in &values {
+            let id1 = dict.lookup(value);
+            let id2 = dict.lookup(value);
+            prop_assert_eq!(id1, id2);
+        }
+    }
+
+    #[test]
+    fn fuzz_dictionary_bijection(
+        values in prop::collection::vec("[a-z]{1,10}", 1..100),
+    ) {
+        let mut dict = Dictionary::new();
+        let mut seen = std::collections::HashSet::new();
+        let mut unique_count = 0;
+        for value in &values {
+            if seen.insert(value.clone()) {
+                let id = dict.insert(value).unwrap();
+                prop_assert!(id >= unique_count as u32);
+                unique_count += 1;
+            }
+        }
+    }
+
+    #[test]
+    fn fuzz_dictionary_retrieval(
+        values in prop::collection::vec("[a-z]{1,10}", 1..100),
+    ) {
+        let mut dict = Dictionary::new();
+        for value in &values {
+            let id = dict.insert(value).unwrap();
+            let retrieved = dict.get(id);
+            prop_assert_eq!(retrieved, Some(value.as_str()));
+        }
     }
 }

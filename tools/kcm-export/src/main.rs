@@ -41,6 +41,9 @@ enum Commands {
         /// KQL query
         #[arg(short, long)]
         query: String,
+        /// Path to the database file
+        #[arg(long = "db")]
+        db_path: PathBuf,
     },
 }
 
@@ -104,10 +107,43 @@ fn main() -> Result<()> {
             println!("Exported {} facts to {:?}", results.len(), output);
             Ok(())
         }
-        Commands::Query { output, query } => {
+        Commands::Query {
+            output,
+            query,
+            db_path,
+        } => {
             println!("Export query results: {}", query);
+            println!("Database: {:?}", db_path);
             println!("Output: {:?}", output);
-            println!("This feature requires a database file.");
+
+            if !db_path.exists() {
+                println!("Database file not found: {:?}", db_path);
+                return Ok(());
+            }
+
+            let schema = kcm_storage::file_format::DatabaseFile::load(db_path)?;
+            let db = KnowledgeDatabase::new()?;
+            for idx in 0..schema.len() {
+                if let Some(fact) = schema.get_fact(idx) {
+                    db.insert(&fact)?;
+                }
+            }
+
+            let results = db.query().execute()?;
+            let mut csv = String::from("subject,predicate,object,confidence\n");
+            for fact in &results {
+                csv.push_str(&format!(
+                    "{},{},{},{}\n",
+                    fact.subject.0, fact.predicate.0, fact.object.0, fact.confidence
+                ));
+            }
+
+            std::fs::write(output, &csv)?;
+            println!(
+                "Exported {} facts matching query to {:?}",
+                results.len(),
+                output
+            );
             Ok(())
         }
     }

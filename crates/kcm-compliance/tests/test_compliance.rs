@@ -80,10 +80,8 @@ fn test_data_classification() {
 
 #[test]
 fn test_data_classification_retention() {
-    assert!(DataClassification::Public.max_retention_days().is_some());
-    assert!(DataClassification::Restricted
-        .max_retention_days()
-        .is_some());
+    assert!(DataClassification::Public.max_retention_days() > 0);
+    assert!(DataClassification::Restricted.max_retention_days() > 0);
 }
 
 #[test]

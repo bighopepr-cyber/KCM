@@ -5,6 +5,7 @@ use kcm_core::types::*;
 #[derive(Debug, Clone)]
 pub enum PlanNode {
     Scan {
+        context_filter: Option<u8>,
         confidence_filter: Option<f64>,
     },
     Filter {
@@ -18,6 +19,7 @@ pub enum PlanNode {
     },
     Aggregate {
         child: Box<PlanNode>,
+        agg_func: PlannerAggregateFunc,
         group_by: Option<ColumnID>,
     },
     Infer {
@@ -35,6 +37,18 @@ pub enum PlannerFilterPredicate {
     EqualSubject(u32),
     EqualPredicate(u8),
     EqualObject(u32),
+    EqualContext(u8),
+    InSet(Vec<u32>),
+    RangeTimestamp(i64, i64),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlannerAggregateFunc {
+    Count,
+    Sum,
+    Avg,
+    Min,
+    Max,
 }
 
 pub struct QueryPlan {
@@ -50,10 +64,13 @@ impl QueryPlan {
     fn explain_node(&self, node: &PlanNode, indent: usize) -> String {
         let prefix = "  ".repeat(indent);
         match node {
-            PlanNode::Scan { confidence_filter } => {
+            PlanNode::Scan {
+                context_filter,
+                confidence_filter,
+            } => {
                 format!(
-                    "{}Scan (est. {} rows, conf={:?})",
-                    prefix, self.total_cost.estimated_rows, confidence_filter
+                    "{}Scan (est. {} rows, ctx={:?}, conf={:?})",
+                    prefix, self.total_cost.estimated_rows, context_filter, confidence_filter
                 )
             }
             PlanNode::Filter { child, predicate } => {
@@ -61,6 +78,13 @@ impl QueryPlan {
                     PlannerFilterPredicate::EqualSubject(v) => format!("subject={}", v),
                     PlannerFilterPredicate::EqualPredicate(v) => format!("predicate={}", v),
                     PlannerFilterPredicate::EqualObject(v) => format!("object={}", v),
+                    PlannerFilterPredicate::EqualContext(v) => format!("context={}", v),
+                    PlannerFilterPredicate::InSet(vals) => {
+                        format!("object IN [{}; {} items]", vals[0], vals.len())
+                    }
+                    PlannerFilterPredicate::RangeTimestamp(low, high) => {
+                        format!("timestamp=[{}, {}]", low, high)
+                    }
                 };
                 format!(
                     "{}Filter ({})\n{}",
@@ -82,10 +106,15 @@ impl QueryPlan {
                     self.explain_node(right, indent + 1)
                 )
             }
-            PlanNode::Aggregate { child, group_by } => {
+            PlanNode::Aggregate {
+                child,
+                agg_func,
+                group_by,
+            } => {
                 format!(
-                    "{}Aggregate (group_by={:?})\n{}",
+                    "{}Aggregate ({:?}, group_by={:?})\n{}",
                     prefix,
+                    agg_func,
                     group_by,
                     self.explain_node(child, indent + 1)
                 )
@@ -171,7 +200,10 @@ impl Planner {
         object_filter: Option<ObjectID>,
         confidence_filter: Option<f64>,
     ) -> QueryPlan {
-        let mut node = PlanNode::Scan { confidence_filter };
+        let mut node = PlanNode::Scan {
+            context_filter: None,
+            confidence_filter,
+        };
         let mut cost = self.cost_model.estimate_scan(1.0);
 
         if let Some(subject) = subject_filter {
@@ -220,6 +252,7 @@ impl Planner {
         join_column: ColumnID,
     ) -> QueryPlan {
         let mut left_node = PlanNode::Scan {
+            context_filter: None,
             confidence_filter: None,
         };
         let mut left_cost = self.cost_model.estimate_scan(1.0);
@@ -236,6 +269,7 @@ impl Planner {
         }
 
         let mut right_node = PlanNode::Scan {
+            context_filter: None,
             confidence_filter: None,
         };
         let mut right_cost = self.cost_model.estimate_scan(1.0);

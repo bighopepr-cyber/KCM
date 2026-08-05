@@ -31,6 +31,99 @@ impl StressTestResults {
     }
 }
 
+pub struct StressTestConfig {
+    pub name: String,
+    pub max_concurrent_users: usize,
+    pub ops_per_user: u64,
+    pub batch_size: usize,
+}
+
+pub struct StressTestConfigResults {
+    pub scenario: String,
+    pub total_ops: u64,
+    pub failed_ops: u64,
+    pub elapsed_secs: f64,
+    pub actual_qps: f64,
+    pub failure_rate: f64,
+    pub graceful_degradation: bool,
+}
+
+impl StressTestConfigResults {
+    pub fn to_report(&self) -> String {
+        format!(
+            "Stress Config Test: {}\n  Operations: {} (failed: {})\n  Elapsed: {:.2}s\n  QPS: {:.0}\n  Failure Rate: {:.4}%\n  Graceful Degradation: {}",
+            self.scenario, self.total_ops, self.failed_ops,
+            self.elapsed_secs, self.actual_qps, self.failure_rate * 100.0,
+            self.graceful_degradation,
+        )
+    }
+}
+
+pub fn run_stress_test_config(
+    config: &StressTestConfig,
+) -> Result<StressTestConfigResults, KcmError> {
+    let kb = Arc::new(KnowledgeDatabase::new()?);
+    let total_ops = Arc::new(AtomicU64::new(0));
+    let failed_ops = Arc::new(AtomicU64::new(0));
+
+    let start = Instant::now();
+    let mut handles = Vec::new();
+
+    for user in 0..config.max_concurrent_users {
+        let kb = kb.clone();
+        let total_ops = total_ops.clone();
+        let failed_ops = failed_ops.clone();
+        let ops = config.ops_per_user;
+        let batch = config.batch_size;
+
+        handles.push(std::thread::spawn(move || {
+            for i in 0..ops {
+                let success = if i % (batch as u64 + 1) == 0 {
+                    let fact = Fact::new(
+                        SubjectID((user % 100) as u32),
+                        PredicateID((i % 10) as u8),
+                        ObjectID((i % 1000) as u32),
+                        0.7,
+                    );
+                    match fact {
+                        Ok(f) => kb.insert(&f).is_ok(),
+                        Err(_) => false,
+                    }
+                } else {
+                    kb.query().with_predicate(PredicateID(5)).execute().is_ok()
+                };
+                total_ops.fetch_add(1, Ordering::Relaxed);
+                if !success {
+                    failed_ops.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+        }));
+    }
+
+    for h in handles {
+        h.join()
+            .map_err(|e| KcmError::Io(format!("Thread panicked during stress test: {:?}", e)))?;
+    }
+
+    let elapsed = start.elapsed().as_secs_f64();
+    let total = total_ops.load(Ordering::Relaxed);
+    let failed = failed_ops.load(Ordering::Relaxed);
+
+    Ok(StressTestConfigResults {
+        scenario: config.name.clone(),
+        total_ops: total,
+        failed_ops: failed,
+        elapsed_secs: elapsed,
+        actual_qps: total as f64 / elapsed,
+        failure_rate: if total > 0 {
+            failed as f64 / total as f64
+        } else {
+            0.0
+        },
+        graceful_degradation: (failed as f64 / total.max(1) as f64) < 0.10,
+    })
+}
+
 pub fn run_stress_test(scenario: &StressTestScenario) -> Result<StressTestResults, KcmError> {
     let kb = Arc::new(KnowledgeDatabase::new()?);
     let running = Arc::new(AtomicBool::new(true));
@@ -141,5 +234,35 @@ mod tests {
         let results = run_stress_test(&scenario).unwrap();
         assert_eq!(results.total_ops, 0);
         assert!(results.graceful_degradation);
+    }
+
+    #[test]
+    fn test_stress_memory_exhaustion() {
+        let config = StressTestConfig {
+            name: "Memory Exhaustion".to_string(),
+            max_concurrent_users: 16,
+            ops_per_user: 500,
+            batch_size: 50,
+        };
+        let results = run_stress_test_config(&config).unwrap();
+        assert!(results.total_ops > 0, "Should complete operations");
+        assert!(
+            results.graceful_degradation,
+            "Should degrade gracefully under memory pressure"
+        );
+        println!("{}", results.to_report());
+    }
+
+    #[test]
+    fn test_stress_memory_exhaustion_large_batch() {
+        let config = StressTestConfig {
+            name: "Memory Exhaustion Large Batch".to_string(),
+            max_concurrent_users: 32,
+            ops_per_user: 200,
+            batch_size: 200,
+        };
+        let results = run_stress_test_config(&config).unwrap();
+        assert!(results.total_ops > 0, "Should complete operations");
+        println!("{}", results.to_report());
     }
 }

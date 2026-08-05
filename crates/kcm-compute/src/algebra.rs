@@ -135,7 +135,7 @@ impl<'a> Operator for FilterOp<'a> {
             FilterPredicate::EqualContext(_) => 0.2,
             FilterPredicate::InSet(vals) => {
                 let set_size = vals.len() as f64;
-                (set_size / 255.0).min(0.5).max(0.01)
+                (set_size / 255.0).clamp(0.01, 0.5)
             }
             FilterPredicate::RangeTimestamp(_, _) => 0.3,
         };

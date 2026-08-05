@@ -63,8 +63,8 @@ fn test_lexer_all_keywords() {
     assert_eq!(format!("{:?}", tokens[4]), "Or");
     assert_eq!(format!("{:?}", tokens[5]), "Not");
     assert_eq!(format!("{:?}", tokens[6]), "Limit");
-    assert_eq!(format!("{:?}", tokens[7]), "OrderBy");
-    assert_eq!(format!("{:?}", tokens[8]), "OrderBy");
+    assert_eq!(format!("{:?}", tokens[7]), "Order");
+    assert_eq!(format!("{:?}", tokens[8]), "By");
     assert_eq!(format!("{:?}", tokens[9]), "Asc");
     assert_eq!(format!("{:?}", tokens[10]), "Desc");
     assert_eq!(format!("{:?}", tokens[11]), "Join");
@@ -221,17 +221,27 @@ fn test_parser_numeric_condition() {
 }
 
 #[test]
-fn test_parser_order_by_rejected() {
+fn test_parser_order_by_asc() {
     let mut parser = Parser::new("SELECT * FROM facts ORDER BY confidence ASC").unwrap();
-    let result = parser.parse();
-    assert!(result.is_err());
+    let query = parser.parse().unwrap();
+    let ob = query.order_by.unwrap();
+    assert_eq!(ob.column, "confidence");
+    assert!(matches!(
+        ob.direction,
+        kcm_interface::kql_parser::OrderByDirection::Asc
+    ));
 }
 
 #[test]
-fn test_parser_order_by_desc_rejected() {
+fn test_parser_order_by_desc() {
     let mut parser = Parser::new("SELECT * FROM facts ORDER BY confidence DESC").unwrap();
-    let result = parser.parse();
-    assert!(result.is_err());
+    let query = parser.parse().unwrap();
+    let ob = query.order_by.unwrap();
+    assert_eq!(ob.column, "confidence");
+    assert!(matches!(
+        ob.direction,
+        kcm_interface::kql_parser::OrderByDirection::Desc
+    ));
 }
 
 #[test]
@@ -283,4 +293,40 @@ fn test_parser_or_condition() {
     let query = parser.parse().unwrap();
     let wc = query.where_clause.unwrap();
     assert_eq!(wc.conditions.len(), 2);
+}
+
+#[test]
+fn test_parser_where_greater_than_or_equal() {
+    let mut parser = Parser::new("SELECT * FROM facts WHERE confidence >= 0.5").unwrap();
+    let query = parser.parse().unwrap();
+    let wc = query.where_clause.unwrap();
+    assert_eq!(wc.conditions.len(), 1);
+    assert!(matches!(
+        wc.conditions[0],
+        kcm_interface::kql_parser::Condition::GreaterThanOrEqual(_, _)
+    ));
+}
+
+#[test]
+fn test_parser_where_less_than_or_equal() {
+    let mut parser = Parser::new("SELECT * FROM facts WHERE confidence <= 0.8").unwrap();
+    let query = parser.parse().unwrap();
+    let wc = query.where_clause.unwrap();
+    assert_eq!(wc.conditions.len(), 1);
+    assert!(matches!(
+        wc.conditions[0],
+        kcm_interface::kql_parser::Condition::LessThanOrEqual(_, _)
+    ));
+}
+
+#[test]
+fn test_parser_where_not() {
+    let mut parser = Parser::new("SELECT * FROM facts WHERE NOT subject = 1").unwrap();
+    let query = parser.parse().unwrap();
+    let wc = query.where_clause.unwrap();
+    assert_eq!(wc.conditions.len(), 1);
+    assert!(matches!(
+        wc.conditions[0],
+        kcm_interface::kql_parser::Condition::Not(_)
+    ));
 }

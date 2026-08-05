@@ -20,9 +20,15 @@ impl KnowledgeService for KcmGrpcService {
         request: tonic::Request<InsertFactRequest>,
     ) -> Result<tonic::Response<InsertFactResponse>, tonic::Status> {
         let req = request.into_inner();
+        let predicate_u8: u8 = req.predicate.try_into().map_err(|_| {
+            tonic::Status::invalid_argument(format!(
+                "Predicate value {} out of range (must be 0-255)",
+                req.predicate
+            ))
+        })?;
         let fact = Fact::new(
             SubjectID(req.subject),
-            PredicateID(req.predicate as u8),
+            PredicateID(predicate_u8),
             ObjectID(req.object),
             req.confidence,
         )
@@ -48,7 +54,13 @@ impl KnowledgeService for KcmGrpcService {
             query = query.with_subject(SubjectID(s));
         }
         if let Some(p) = req.predicate {
-            query = query.with_predicate(PredicateID(p as u8));
+            let p_u8: u8 = p.try_into().map_err(|_| {
+                tonic::Status::invalid_argument(format!(
+                    "Predicate value {} out of range (must be 0-255)",
+                    p
+                ))
+            })?;
+            query = query.with_predicate(PredicateID(p_u8));
         }
         if let Some(o) = req.object {
             query = query.with_object(ObjectID(o));

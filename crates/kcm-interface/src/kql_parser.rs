@@ -47,7 +47,8 @@ pub enum Token {
     Or,
     Not,
     Limit,
-    OrderBy,
+    Order,
+    By,
     Asc,
     Desc,
     Join,
@@ -169,7 +170,8 @@ impl<'a> Lexer<'a> {
             "or" => Token::Or,
             "not" => Token::Not,
             "limit" => Token::Limit,
-            "order" | "by" => Token::OrderBy,
+            "order" => Token::Order,
+            "by" => Token::By,
             "asc" => Token::Asc,
             "desc" => Token::Desc,
             "join" => Token::Join,
@@ -238,6 +240,9 @@ pub enum Condition {
     Equal(String, String),
     GreaterThan(String, f64),
     LessThan(String, f64),
+    GreaterThanOrEqual(String, f64),
+    LessThanOrEqual(String, f64),
+    Not(Box<Condition>),
     And(Box<Condition>, Box<Condition>),
     Or(Box<Condition>, Box<Condition>),
 }
@@ -292,8 +297,9 @@ impl Parser {
             None
         };
 
-        let order_by = if self.peek() == &Token::OrderBy {
+        let order_by = if self.peek() == &Token::Order {
             self.next();
+            self.expect(Token::By)?;
             Some(self.parse_order_by_clause()?)
         } else {
             None
@@ -338,40 +344,58 @@ impl Parser {
     fn parse_where_clause(&mut self) -> KqlResult<WhereClause> {
         let mut conditions = Vec::new();
         loop {
-            let left = self.parse_identifier()?;
-            let op_token = self.next();
-            let condition = match op_token {
-                Token::Equals => {
-                    let right = match self.peek() {
-                        Token::Number(_) => self.parse_number()?.to_string(),
-                        Token::StringLit(_) => {
-                            if let Token::StringLit(s) = self.next() {
-                                s
-                            } else {
-                                unreachable!()
-                            }
-                        }
-                        _ => self.parse_identifier()?,
-                    };
-                    Condition::Equal(left, right)
-                }
-                Token::GreaterThan => {
-                    let right = self.parse_number()?;
-                    Condition::GreaterThan(left, right)
-                }
-                Token::LessThan => {
-                    let right = self.parse_number()?;
-                    Condition::LessThan(left, right)
-                }
-                _ => return Err(KqlError::ExpectedComparisonOperator),
+            let left = if self.peek() == &Token::Not {
+                self.next();
+                let inner = self.parse_single_condition()?;
+                Condition::Not(Box::new(inner))
+            } else {
+                self.parse_single_condition()?
             };
-            conditions.push(condition);
+            conditions.push(left);
             if self.peek() != &Token::And && self.peek() != &Token::Or {
                 break;
             }
             self.next();
         }
         Ok(WhereClause { conditions })
+    }
+
+    fn parse_single_condition(&mut self) -> KqlResult<Condition> {
+        let left = self.parse_identifier()?;
+        let op_token = self.next();
+        match op_token {
+            Token::Equals => {
+                let right = match self.peek() {
+                    Token::Number(_) => self.parse_number()?.to_string(),
+                    Token::StringLit(_) => {
+                        if let Token::StringLit(s) = self.next() {
+                            s
+                        } else {
+                            unreachable!()
+                        }
+                    }
+                    _ => self.parse_identifier()?,
+                };
+                Ok(Condition::Equal(left, right))
+            }
+            Token::GreaterThan => {
+                let right = self.parse_number()?;
+                Ok(Condition::GreaterThan(left, right))
+            }
+            Token::LessThan => {
+                let right = self.parse_number()?;
+                Ok(Condition::LessThan(left, right))
+            }
+            Token::GreaterThanOrEqual => {
+                let right = self.parse_number()?;
+                Ok(Condition::GreaterThanOrEqual(left, right))
+            }
+            Token::LessThanOrEqual => {
+                let right = self.parse_number()?;
+                Ok(Condition::LessThanOrEqual(left, right))
+            }
+            _ => Err(KqlError::ExpectedComparisonOperator),
+        }
     }
 
     fn parse_join_clause(&mut self) -> KqlResult<JoinClause> {

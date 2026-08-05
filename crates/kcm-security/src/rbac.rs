@@ -126,3 +126,34 @@ impl Default for ACLManager {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_user_and_role() {
+        let acl = ACLManager::new();
+        acl.create_user("alice");
+        acl.create_role("admin");
+        acl.add_permission_to_role("admin", Permission::Admin);
+        acl.assign_role("alice", "admin");
+        assert!(acl.check_permission("alice", ContextID(1), Permission::Admin));
+    }
+
+    #[test]
+    fn test_deny_unauthorized() {
+        let acl = ACLManager::new();
+        acl.create_user("bob");
+        assert!(!acl.check_permission("bob", ContextID(1), Permission::Write));
+    }
+
+    #[test]
+    fn test_context_permission() {
+        let acl = ACLManager::new();
+        acl.create_user("carol");
+        acl.grant_context_permission("carol", ContextID(5), Permission::Read);
+        assert!(acl.check_permission("carol", ContextID(5), Permission::Read));
+        assert!(!acl.check_permission("carol", ContextID(6), Permission::Read));
+    }
+}

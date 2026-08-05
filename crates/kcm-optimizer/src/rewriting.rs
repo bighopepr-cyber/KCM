@@ -64,7 +64,11 @@ impl ColumnPruningOptimizer {
 
     pub fn prune(&self, node: &PlanNode) -> PlanNode {
         match node {
-            PlanNode::Scan { confidence_filter } => PlanNode::Scan {
+            PlanNode::Scan {
+                context_filter,
+                confidence_filter,
+            } => PlanNode::Scan {
+                context_filter: *context_filter,
                 confidence_filter: *confidence_filter,
             },
             PlanNode::Filter { child, predicate } => PlanNode::Filter {
@@ -81,9 +85,14 @@ impl ColumnPruningOptimizer {
                 right: Box::new(self.prune(right)),
                 join_column: *join_column,
             },
-            PlanNode::Aggregate { child, group_by } => PlanNode::Aggregate {
+            PlanNode::Aggregate {
+                child,
+                group_by,
+                agg_func,
+            } => PlanNode::Aggregate {
                 child: Box::new(self.prune(child)),
                 group_by: *group_by,
+                agg_func: *agg_func,
             },
             PlanNode::Infer { child, rule_id } => PlanNode::Infer {
                 child: Box::new(self.prune(child)),
@@ -245,12 +254,14 @@ impl PartialEq for PlanNode {
         match (self, other) {
             (
                 PlanNode::Scan {
+                    context_filter: ca,
                     confidence_filter: a,
                 },
                 PlanNode::Scan {
+                    context_filter: cb,
                     confidence_filter: b,
                 },
-            ) => a == b,
+            ) => ca == cb && a == b,
             (
                 PlanNode::Filter {
                     child: a1,
@@ -287,12 +298,14 @@ impl PartialEq for PlanNode {
                 PlanNode::Aggregate {
                     child: a1,
                     group_by: a2,
+                    agg_func: a3,
                 },
                 PlanNode::Aggregate {
                     child: b1,
                     group_by: b2,
+                    agg_func: b3,
                 },
-            ) => a1 == b1 && a2 == b2,
+            ) => a1 == b1 && a2 == b2 && a3 == b3,
             (
                 PlanNode::Infer {
                     child: a1,

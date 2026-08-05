@@ -1,4 +1,4 @@
-use kcm_core::types::Fact;
+use kcm_core::types::{Fact, KcmError};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum DataClassification {
@@ -23,13 +23,23 @@ impl DataClassification {
                 | DataClassification::Restricted
         )
     }
-    pub fn max_retention_days(&self) -> Option<i32> {
+    pub fn max_retention_days(&self) -> u32 {
         match self {
-            DataClassification::Public => Some(365),
-            DataClassification::Internal => Some(730),
-            DataClassification::Confidential => Some(1825),
-            DataClassification::Restricted => Some(2555),
+            DataClassification::Public => 365,
+            DataClassification::Internal => 730,
+            DataClassification::Confidential => 1825,
+            DataClassification::Restricted => 2555,
         }
+    }
+
+    pub fn validate_encryption(&self, is_encrypted: bool) -> Result<(), KcmError> {
+        if self.requires_encryption() && !is_encrypted {
+            return Err(KcmError::InvalidArgument(format!(
+                "Classification {:?} requires encryption but fact is not encrypted",
+                self
+            )));
+        }
+        Ok(())
     }
 }
 
@@ -40,10 +50,8 @@ pub struct ClassifiedFact {
 
 impl ClassifiedFact {
     pub fn should_retain(&self, now: i64) -> bool {
-        match self.classification.max_retention_days() {
-            Some(days) => (now - self.fact.timestamp) <= (days as i64) * 86400,
-            None => true,
-        }
+        let days = self.classification.max_retention_days();
+        (now - self.fact.timestamp) <= (days as i64) * 86400
     }
 
     pub fn is_expired(&self, now: i64) -> bool {

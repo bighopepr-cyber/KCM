@@ -392,7 +392,7 @@ async fn test_update_nonexistent_fact() {
         }))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), 500);
+    assert_eq!(resp.status(), 400);
 }
 
 #[actix_web::test]
@@ -406,7 +406,7 @@ async fn test_delete_nonexistent_fact() {
     .await;
     let req = test::TestRequest::delete().uri("/facts/999").to_request();
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), 500);
+    assert_eq!(resp.status(), 400);
 }
 
 #[actix_web::test]

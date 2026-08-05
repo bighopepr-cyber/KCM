@@ -65,7 +65,7 @@ fn main() -> Result<()> {
             }
             let total = start.elapsed();
 
-            latencies.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            latencies.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
             let p50 = latencies[latencies.len() / 2];
             let p99 = latencies[latencies.len() * 99 / 100];
 

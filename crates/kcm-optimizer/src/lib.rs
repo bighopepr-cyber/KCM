@@ -5,7 +5,7 @@ pub mod rewriting;
 pub mod statistics;
 
 pub use cost_model::{CostModel, OperatorCost};
-pub use planner::{PlanNode, Planner, PlannerFilterPredicate, QueryPlan};
+pub use planner::{PlanNode, Planner, PlannerAggregateFunc, PlannerFilterPredicate, QueryPlan};
 pub use rewriting::{
     ColumnPruningOptimizer, FilterPushdownOptimizer, IndexSelectionOptimizer, IndexType,
     JoinOrderingOptimizer, OptimizerPipeline, RuleOptimizer,
@@ -20,6 +20,7 @@ mod tests {
     #[test]
     fn test_plan_node_canonical() {
         let plan = PlanNode::Scan {
+            context_filter: None,
             confidence_filter: None,
         };
         let explain = QueryPlan {
@@ -41,9 +42,11 @@ mod tests {
         let plan = PlanNode::Filter {
             child: Box::new(PlanNode::Join {
                 left: Box::new(PlanNode::Scan {
+                    context_filter: None,
                     confidence_filter: None,
                 }),
                 right: Box::new(PlanNode::Scan {
+                    context_filter: None,
                     confidence_filter: None,
                 }),
                 join_column: ColumnID::Object,
@@ -66,9 +69,11 @@ mod tests {
             OptimizerPipeline::new().with_rule(Box::new(rewriting::JoinOrderingOptimizer));
         let plan = PlanNode::Join {
             left: Box::new(PlanNode::Scan {
+                context_filter: None,
                 confidence_filter: None,
             }),
             right: Box::new(PlanNode::Scan {
+                context_filter: None,
                 confidence_filter: None,
             }),
             join_column: ColumnID::Object,

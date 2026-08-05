@@ -59,6 +59,27 @@ impl ApiResponse {
             body: r#"{"error":"Rate limit exceeded","status":429}"#.to_string(),
         }
     }
+
+    pub fn from_kcm_error(err: &KcmError) -> Self {
+        match err {
+            KcmError::NotFound(msg) => ApiResponse::not_found(msg),
+            KcmError::OutOfMemory => ApiResponse {
+                status: 507,
+                body: r#"{"error":"Out of memory","status":507}"#.to_string(),
+            },
+            KcmError::Conflict(msg) => ApiResponse {
+                status: 409,
+                body: format!(r#"{{"error":"{}","status":409}}"#, msg),
+            },
+            KcmError::TransactionAborted => ApiResponse {
+                status: 409,
+                body: r#"{"error":"Transaction aborted","status":409}"#.to_string(),
+            },
+            KcmError::InvalidArgument(msg) => ApiResponse::bad_request(msg),
+            KcmError::Corrupted(msg) => ApiResponse::internal_error(msg),
+            KcmError::Io(msg) => ApiResponse::internal_error(msg),
+        }
+    }
 }
 
 pub fn handle_health(state: &ApiState) -> ApiResponse {
@@ -96,7 +117,7 @@ pub fn handle_insert(
         }
         Err(e) => {
             state.metrics.record_insert(false);
-            ApiResponse::internal_error(&format!("Insert failed: {}", e))
+            ApiResponse::from_kcm_error(&e)
         }
     }
 }
@@ -169,7 +190,7 @@ pub fn handle_query(
         }
         Err(e) => {
             state.metrics.record_query(0, false);
-            ApiResponse::internal_error(&format!("Query failed: {}", e))
+            ApiResponse::from_kcm_error(&e)
         }
     }
 }
@@ -181,7 +202,7 @@ pub fn handle_get_fact(state: &ApiState, row_id: u64) -> ApiResponse {
             row_id, fact.subject.0, fact.predicate.0, fact.object.0, fact.confidence
         )),
         Ok(None) => ApiResponse::not_found(&format!("Fact {} not found", row_id)),
-        Err(e) => ApiResponse::internal_error(&format!("Error: {}", e)),
+        Err(e) => ApiResponse::from_kcm_error(&e),
     }
 }
 
@@ -204,7 +225,7 @@ pub fn handle_update(
     };
     match state.db.update(RowID(row_id), &fact) {
         Ok(()) => ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"updated"}}"#, row_id)),
-        Err(e) => ApiResponse::internal_error(&format!("Update failed: {}", e)),
+        Err(e) => ApiResponse::from_kcm_error(&e),
     }
 }
 
@@ -216,7 +237,7 @@ pub fn handle_delete(state: &ApiState, row_id: u64) -> ApiResponse {
             }
             ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"deleted"}}"#, row_id))
         }
-        Err(e) => ApiResponse::internal_error(&format!("Delete failed: {}", e)),
+        Err(e) => ApiResponse::from_kcm_error(&e),
     }
 }
 

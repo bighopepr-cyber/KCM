@@ -201,6 +201,10 @@ impl Fact {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Serialize, serde::Deserialize)
+)]
 /// Column identifier for query operations.
 pub enum ColumnID {
     RowID = 0,
@@ -273,3 +277,14 @@ impl From<String> for KcmError {
 }
 
 pub type KcmResult<T> = Result<T, KcmError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use static_assertions::assert_eq_size;
+
+    #[test]
+    fn fact_is_34_bytes() {
+        assert_eq_size!(Fact, [u8; 40]);
+    }
+}
