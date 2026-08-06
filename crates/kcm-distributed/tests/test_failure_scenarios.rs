@@ -83,7 +83,10 @@ fn test_partial_failure_one_node_down() {
     let txn_id = coord.begin_transaction(vec![0]);
     let result = coord.two_phase_commit(&txn_id);
     assert!(result.is_ok());
-    assert_eq!(coord.get_status(&txn_id), Some(TransactionStatus::Committed));
+    assert_eq!(
+        coord.get_status(&txn_id),
+        Some(TransactionStatus::Committed)
+    );
 }
 
 #[test]
@@ -180,7 +183,11 @@ fn test_network_partition_simulation() {
     assert_eq!(all.len(), 4);
     for key in 0..1000u32 {
         let loc = map.locate_key(key);
-        assert!(loc.is_some(), "Key {} has no shard after simulated partition", key);
+        assert!(
+            loc.is_some(),
+            "Key {} has no shard after simulated partition",
+            key
+        );
     }
 }
 
@@ -203,7 +210,9 @@ fn test_replication_lag_tracking() {
     });
     manager.update_lag("r1", 10).unwrap();
     manager.update_lag("r2", 5000).unwrap();
-    manager.update_status("r2", ReplicationStatus::Lagging).unwrap();
+    manager
+        .update_status("r2", ReplicationStatus::Lagging)
+        .unwrap();
     let healthy = manager.healthy_regions();
     assert!(healthy.iter().any(|r| r.region_id == "r1"));
     assert!(!healthy.iter().any(|r| r.region_id == "r2"));
@@ -275,12 +284,24 @@ fn test_2pc_all_participants_committed() {
     let coord = TransactionCoordinator::with_transport(transport);
     let txn_id = coord.begin_transaction(vec![0, 1, 2, 3]);
     coord.two_phase_commit(&txn_id).unwrap();
-    assert_eq!(coord.get_status(&txn_id), Some(TransactionStatus::Committed));
+    assert_eq!(
+        coord.get_status(&txn_id),
+        Some(TransactionStatus::Committed)
+    );
 }
 
 #[test]
 fn test_2pc_all_participants_aborted_on_single_failure() {
     let transport = Arc::new(FailingTransport::vote_no());
+    let coord = TransactionCoordinator::with_transport(transport);
+    let txn_id = coord.begin_transaction(vec![0, 1, 2, 3]);
+    coord.two_phase_commit(&txn_id).unwrap_err();
+    assert_eq!(coord.get_status(&txn_id), Some(TransactionStatus::Aborted));
+}
+
+#[test]
+fn test_2pc_abort_on_commit_failure() {
+    let transport = Arc::new(FailingTransport::fail_on_commit());
     let coord = TransactionCoordinator::with_transport(transport);
     let txn_id = coord.begin_transaction(vec![0, 1, 2, 3]);
     coord.two_phase_commit(&txn_id).unwrap_err();

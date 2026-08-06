@@ -21,7 +21,7 @@ impl Fact {
         object: u32,
         confidence: f64,
     ) -> Result<Self, SdkError> {
-        if confidence < 0.0 || confidence > 1.0 {
+        if !(0.0..=1.0).contains(&confidence) {
             return Err(SdkError::InvalidArgument(
                 "Confidence must be in [0.0, 1.0]".to_string(),
             ));

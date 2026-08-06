@@ -28,7 +28,7 @@ fn bench_dictionary_encode(c: &mut Criterion) {
             },
         );
 
-        let mut codec = DictionaryCodec::with_capacity(size);
+        let codec = DictionaryCodec::with_capacity(size);
         group.bench_with_input(
             BenchmarkId::new("ahash_codec_encode", size),
             &strings,
@@ -67,7 +67,7 @@ fn bench_dictionary_lookup(c: &mut Criterion) {
             },
         );
 
-        let mut codec = DictionaryCodec::with_capacity(size);
+        let codec = DictionaryCodec::with_capacity(size);
         for s in &strings {
             codec.encode(s);
         }
@@ -122,7 +122,7 @@ fn bench_dictionary_batch_lookup(c: &mut Criterion) {
             },
         );
 
-        let mut codec = DictionaryCodec::with_capacity(size);
+        let codec = DictionaryCodec::with_capacity(size);
         for s in &strings {
             codec.encode(s);
         }
@@ -149,7 +149,7 @@ fn bench_dictionary_parallel_lookup(c: &mut Criterion) {
         let strings = generate_strings(size, "entity");
         let lookup_strings: Vec<&str> = strings.iter().map(|s| s.as_str()).collect();
 
-        let mut codec = DictionaryCodec::with_capacity(size);
+        let codec = DictionaryCodec::with_capacity(size);
         for s in &strings {
             codec.encode(s);
         }
@@ -174,7 +174,7 @@ fn bench_dictionary_parallel_lookup(c: &mut Criterion) {
             |b, strings| {
                 let codec_clone = codec.clone();
                 b.iter(|| {
-                    let chunk_size = (strings.len() + 3) / 4;
+                    let chunk_size = strings.len().div_ceil(4);
                     let results: Vec<Vec<Option<u32>>> = strings
                         .par_chunks(chunk_size)
                         .map(|chunk| {
@@ -215,7 +215,7 @@ fn bench_dictionary_warm_up(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("warm_up", size), &strings, |b, strings| {
             b.iter_batched(
-                || DictionaryCache::new(),
+                DictionaryCache::new,
                 |mut cache| {
                     let refs: Vec<&str> = strings.iter().map(|s| s.as_str()).collect();
                     cache.warm_up(&refs);
@@ -248,7 +248,7 @@ fn bench_robin_hood_vs_ahash(c: &mut Criterion) {
     group.bench_function(BenchmarkId::new("robin_hood_lookup", size), |b| {
         b.iter(|| {
             for s in &lookup_strings {
-                rh_map.get(s);
+                rh_map.get(*s);
             }
         })
     });

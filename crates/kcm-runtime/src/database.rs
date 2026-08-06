@@ -124,7 +124,11 @@ impl KnowledgeDatabase {
             let schema = self.schema.read();
             (schema.len(), schema.active_count())
         };
-        log::info!("Compacting database: {} total, {} active", total_before, active_before);
+        log::info!(
+            "Compacting database: {} total, {} active",
+            total_before,
+            active_before
+        );
         let compacted = {
             let schema = self.schema.read();
             schema.compact()?
@@ -134,7 +138,11 @@ impl KnowledgeDatabase {
             dictionaries: Arc::clone(&self.dictionaries),
         };
         let total_after = new_kb.fact_count();
-        log::info!("Compaction complete: {} -> {} facts", total_before, total_after);
+        log::info!(
+            "Compaction complete: {} -> {} facts",
+            total_before,
+            total_after
+        );
         Ok(new_kb)
     }
 }

@@ -30,9 +30,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Total facts: {}", db.fact_count());
     println!("Active facts: {}", db.active_fact_count());
 
-    let results = db.query("all")?;
-    println!("Query returned {} results:", results.count());
-    for fact in results {
+    let results: Vec<_> = db.query("all")?.collect();
+    println!("Query returned {} results:", results.len());
+    for fact in &results {
         println!(
             "  S={} P={} O={} conf={:.2}",
             fact.subject, fact.predicate, fact.object, fact.confidence

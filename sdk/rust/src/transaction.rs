@@ -37,7 +37,7 @@ impl Transaction {
         Ok(())
     }
 
-    pub fn commit(mut self) -> Result<(), SdkError> {
+    pub fn commit(self) -> Result<(), SdkError> {
         self.inner.commit()?;
         Ok(())
     }

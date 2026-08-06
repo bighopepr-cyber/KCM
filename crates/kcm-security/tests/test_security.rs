@@ -95,10 +95,10 @@ fn test_encrypt_decrypt_large_data() {
 #[test]
 fn test_audit_log() {
     let log = AuditLog::new();
-    log.log_query("alice", "SELECT * FROM facts");
-    log.log_insert("alice", 42);
-    log.log_delete("alice", 42);
-    log.log_permission_denied("bob", "facts/42");
+    log.log_query("alice", "SELECT * FROM facts").unwrap();
+    log.log_insert("alice", 42).unwrap();
+    log.log_delete("alice", 42).unwrap();
+    log.log_permission_denied("bob", "facts/42").unwrap();
     assert_eq!(log.event_count(), 4);
     let events = log.get_events();
     assert_eq!(events[0].user_id, "alice");
@@ -109,7 +109,7 @@ fn test_audit_log() {
 fn test_audit_log_eviction() {
     let log = AuditLog::new();
     for i in 0..100_100 {
-        log.log_query(&format!("user_{}", i % 10), "query");
+        log.log_query(&format!("user_{}", i % 10), "query").unwrap();
     }
     assert!(log.event_count() <= 100_000);
 }

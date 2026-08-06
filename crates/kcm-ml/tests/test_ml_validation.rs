@@ -117,7 +117,7 @@ fn test_confidence_calibration_mixed_50_50() {
     }
     let predicted = learner.predict_confidence("mixed").unwrap();
     assert!(
-        predicted >= 0.0 && predicted <= 1.0,
+        (0.0..=1.0).contains(&predicted),
         "After 50/50 observations, confidence {} should be in [0, 1]",
         predicted
     );
@@ -218,8 +218,14 @@ fn test_regression_deterministic_training() {
     model2.train(&x, &y);
     let pred2 = model2.predict(5);
 
-    assert_eq!(pred1_a, pred1_b, "Same model should produce same prediction");
-    assert_eq!(pred1_a, pred2, "Identical training should produce identical predictions");
+    assert_eq!(
+        pred1_a, pred1_b,
+        "Same model should produce same prediction"
+    );
+    assert_eq!(
+        pred1_a, pred2,
+        "Identical training should produce identical predictions"
+    );
 }
 
 #[test]
@@ -233,8 +239,16 @@ fn test_learned_index_search_repeatability() {
     let (l2, u2) = index.search(500);
     let (l3, u3) = index.search(500);
 
-    assert_eq!((l1, u1), (l2, u2), "Search should be deterministic across calls");
-    assert_eq!((l2, u2), (l3, u3), "Search should be deterministic across calls");
+    assert_eq!(
+        (l1, u1),
+        (l2, u2),
+        "Search should be deterministic across calls"
+    );
+    assert_eq!(
+        (l2, u2),
+        (l3, u3),
+        "Search should be deterministic across calls"
+    );
 }
 
 #[test]
@@ -257,7 +271,10 @@ fn test_confidence_learner_repeatability() {
 
     let pred1 = learner1.predict_confidence("f1").unwrap();
     let pred2 = learner2.predict_confidence("f1").unwrap();
-    assert_eq!(pred1, pred2, "Identical observations should produce identical predictions");
+    assert_eq!(
+        pred1, pred2,
+        "Identical observations should produce identical predictions"
+    );
 }
 
 #[test]
@@ -274,8 +291,16 @@ fn test_rule_discovery_repeatability() {
     let patterns2 = engine2.discover_patterns(&facts);
     let rules2 = engine2.patterns_to_rules(&patterns2);
 
-    assert_eq!(patterns1.len(), patterns2.len(), "Pattern discovery should be deterministic");
-    assert_eq!(rules1.len(), rules2.len(), "Rule generation should be deterministic");
+    assert_eq!(
+        patterns1.len(),
+        patterns2.len(),
+        "Pattern discovery should be deterministic"
+    );
+    assert_eq!(
+        rules1.len(),
+        rules2.len(),
+        "Rule generation should be deterministic"
+    );
 }
 
 // ============================================================
@@ -319,7 +344,7 @@ fn test_confidence_no_systematic_bias() {
     }
     let predicted = learner.predict_confidence("test").unwrap();
     assert!(
-        predicted >= 0.0 && predicted <= 0.5,
+        (0.0..=0.5).contains(&predicted),
         "Confidence for 50/50 data should be <= 0.5, got {}",
         predicted
     );

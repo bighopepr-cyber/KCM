@@ -59,11 +59,12 @@ fn test_confidence_boundary_rejection() {
 #[test]
 fn test_rbac_enforcement() {
     let acl = ACLManager::new();
-    acl.create_user("alice");
-    acl.create_user("bob");
-    acl.create_role("reader");
-    acl.add_permission_to_role("reader", Permission::Read);
-    acl.assign_role("alice", "reader");
+    acl.create_user("alice").unwrap();
+    acl.create_user("bob").unwrap();
+    acl.create_role("reader").unwrap();
+    acl.add_permission_to_role("reader", Permission::Read)
+        .unwrap();
+    acl.assign_role("alice", "reader").unwrap();
 
     assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(!acl.check_permission("alice", ContextID(1), Permission::Write));
@@ -74,14 +75,19 @@ fn test_rbac_enforcement() {
 #[test]
 fn test_rbac_admin_role() {
     let acl = ACLManager::new();
-    acl.create_user("admin");
-    acl.create_role("admin_role");
-    acl.add_permission_to_role("admin_role", Permission::Read);
-    acl.add_permission_to_role("admin_role", Permission::Write);
-    acl.add_permission_to_role("admin_role", Permission::Delete);
-    acl.add_permission_to_role("admin_role", Permission::Execute);
-    acl.add_permission_to_role("admin_role", Permission::Admin);
-    acl.assign_role("admin", "admin_role");
+    acl.create_user("admin").unwrap();
+    acl.create_role("admin_role").unwrap();
+    acl.add_permission_to_role("admin_role", Permission::Read)
+        .unwrap();
+    acl.add_permission_to_role("admin_role", Permission::Write)
+        .unwrap();
+    acl.add_permission_to_role("admin_role", Permission::Delete)
+        .unwrap();
+    acl.add_permission_to_role("admin_role", Permission::Execute)
+        .unwrap();
+    acl.add_permission_to_role("admin_role", Permission::Admin)
+        .unwrap();
+    acl.assign_role("admin", "admin_role").unwrap();
 
     assert!(acl.check_permission("admin", ContextID(1), Permission::Read));
     assert!(acl.check_permission("admin", ContextID(1), Permission::Write));
@@ -92,8 +98,9 @@ fn test_rbac_admin_role() {
 #[test]
 fn test_context_isolation() {
     let acl = ACLManager::new();
-    acl.create_user("alice");
-    acl.grant_context_permission("alice", ContextID(1), Permission::Read);
+    acl.create_user("alice").unwrap();
+    acl.grant_context_permission("alice", ContextID(1), Permission::Read)
+        .unwrap();
 
     assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(!acl.check_permission("alice", ContextID(2), Permission::Read));

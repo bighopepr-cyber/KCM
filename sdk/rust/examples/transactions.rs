@@ -22,7 +22,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_context(2)
         .with_owner(2);
     txn.insert(&txn_fact)?;
-    println!("  Inserted fact in transaction, changes: {}", txn.change_count());
+    println!(
+        "  Inserted fact in transaction, changes: {}",
+        txn.change_count()
+    );
     txn.commit()?;
     println!("  Committed transaction");
     println!("  After commit: {} active facts", db.active_fact_count());

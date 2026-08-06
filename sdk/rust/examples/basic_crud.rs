@@ -34,7 +34,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let row3 = db.insert(&fact3)?;
 
     println!("  Inserted rows: {}, {}, {}, {}", row0, row1, row2, row3);
-    println!("  Total: {}, Active: {}", db.fact_count(), db.active_fact_count());
+    println!(
+        "  Total: {}, Active: {}",
+        db.fact_count(),
+        db.active_fact_count()
+    );
 
     // --- QUERY ALL ---
     println!("\n--- Query All Facts ---");
@@ -48,9 +52,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // --- QUERY WITH KQL ---
     println!("\n--- KQL Query: all ---");
-    let results = db.query("all")?;
-    println!("  Query returned {} results:", results.count());
-    for fact in results {
+    let results: Vec<_> = db.query("all")?.collect();
+    println!("  Query returned {} results:", results.len());
+    for fact in &results {
         println!(
             "  S={} P={} O={}",
             fact.subject, fact.predicate, fact.object
@@ -80,7 +84,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n--- Delete Fact ---");
     db.delete(row3)?;
     println!("  Deleted row {}", row3);
-    println!("  Total: {}, Active: {}", db.fact_count(), db.active_fact_count());
+    println!(
+        "  Total: {}, Active: {}",
+        db.fact_count(),
+        db.active_fact_count()
+    );
 
     // --- VERIFY COUNTS ---
     println!("\n--- Verify Counts ---");

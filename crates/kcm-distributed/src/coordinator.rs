@@ -130,7 +130,11 @@ impl TransactionCoordinator {
         let txn_id = format!("txn-{}", id);
         let txn = DistributedTransaction::new(txn_id.clone(), participants.clone());
         self.transactions.lock().insert(txn_id.clone(), txn);
-        log::debug!("Began transaction {} with {} participants", txn_id, participants.len());
+        log::debug!(
+            "Began transaction {} with {} participants",
+            txn_id,
+            participants.len()
+        );
         txn_id
     }
 
@@ -170,7 +174,11 @@ impl TransactionCoordinator {
             }
         }
 
-        log::debug!("2PC committing {} participants for transaction {}", txn.participants.len(), txn_id);
+        log::debug!(
+            "2PC committing {} participants for transaction {}",
+            txn.participants.len(),
+            txn_id
+        );
 
         // Phase 2: COMMIT
         for participant in &txn.participants {

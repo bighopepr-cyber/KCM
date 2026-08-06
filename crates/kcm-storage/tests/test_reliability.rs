@@ -55,7 +55,11 @@ fn test_double_recovery_truncates_wal() {
     assert_eq!(result1.len(), 4, "First recovery should include WAL entry");
 
     let result2 = RecoveryManager::recover(&db_path, &wal_path).unwrap();
-    assert_eq!(result2.len(), 3, "Second recovery: WAL was truncated, only DB facts remain");
+    assert_eq!(
+        result2.len(),
+        3,
+        "Second recovery: WAL was truncated, only DB facts remain"
+    );
 }
 
 #[test]
@@ -103,7 +107,11 @@ fn test_wal_truncated_entry_recovery() {
     let result = RecoveryManager::recover(&db_path, &wal_path);
     if result.is_err() {
         let db_still_works = DatabaseFile::load(&db_path).unwrap();
-        assert_eq!(db_still_works.len(), 2, "DB should remain intact after WAL corruption");
+        assert_eq!(
+            db_still_works.len(),
+            2,
+            "DB should remain intact after WAL corruption"
+        );
     }
 }
 
@@ -191,8 +199,16 @@ fn test_wal_delete_and_insert_mixed_recovery() {
     wal.flush_buffer().unwrap();
 
     let recovered = RecoveryManager::recover(&db_path, &wal_path).unwrap();
-    assert_eq!(recovered.len(), 11, "10 original + 1 insert (delete marks tombstone)");
-    assert_eq!(recovered.active_count(), 10, "10 original - 1 deleted + 1 inserted = 10 active");
+    assert_eq!(
+        recovered.len(),
+        11,
+        "10 original + 1 insert (delete marks tombstone)"
+    );
+    assert_eq!(
+        recovered.active_count(),
+        10,
+        "10 original - 1 deleted + 1 inserted = 10 active"
+    );
 }
 
 #[test]

@@ -14,9 +14,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // --- SAVE DATABASE ---
     println!("--- Save Database ---");
     let db = Database::new()?;
-    db.insert(&Fact::new(1, 0, 2, 0.95)?.with_evidence(1).with_context(1).with_owner(1)?)?;
-    db.insert(&Fact::new(2, 1, 3, 0.90)?.with_evidence(2).with_context(1).with_owner(2)?)?;
-    db.insert(&Fact::new(3, 2, 4, 0.85)?.with_evidence(3).with_context(2).with_owner(3)?)?;
+    db.insert(
+        &Fact::new(1, 0, 2, 0.95)?
+            .with_evidence(1)
+            .with_context(1)
+            .with_owner(1),
+    )?;
+    db.insert(
+        &Fact::new(2, 1, 3, 0.90)?
+            .with_evidence(2)
+            .with_context(1)
+            .with_owner(2),
+    )?;
+    db.insert(
+        &Fact::new(3, 2, 4, 0.85)?
+            .with_evidence(3)
+            .with_context(2)
+            .with_owner(3),
+    )?;
     println!(
         "  Facts before save: {} total, {} active",
         db.fact_count(),

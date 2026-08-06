@@ -41,12 +41,8 @@ pub mod bindings {
                 .unwrap_or_else(|e| e.into_inner())
                 .insert(&fact)
                 .map_err(|e| match e {
-                    KcmError::InvalidArgument(msg) => {
-                        pyo3::exceptions::PyValueError::new_err(msg)
-                    }
-                    KcmError::NotFound(msg) => {
-                        pyo3::exceptions::PyKeyError::new_err(msg)
-                    }
+                    KcmError::InvalidArgument(msg) => pyo3::exceptions::PyValueError::new_err(msg),
+                    KcmError::NotFound(msg) => pyo3::exceptions::PyKeyError::new_err(msg),
                     _ => pyo3::exceptions::PyException::new_err("Internal error"),
                 })?;
             Ok(())

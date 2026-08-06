@@ -5,7 +5,6 @@ use kcm_storage::compress::{Compressor, Lz4Compressor, ZstdCompressor};
 use kcm_storage::robin_hood::RobinHoodMap;
 use kcm_storage::wal::WriteAheadLog;
 use proptest::prelude::*;
-use std::sync::Arc;
 
 proptest! {
     #[test]
@@ -59,11 +58,8 @@ proptest! {
 
         let mut deleted_ids = Vec::new();
         wal.replay(|entry| {
-            match entry {
-                kcm_storage::wal::WALEntry::Delete { row_id } => {
-                    deleted_ids.push(row_id);
-                }
-                _ => {}
+            if let kcm_storage::wal::WALEntry::Delete { row_id } = entry {
+                deleted_ids.push(row_id);
             }
             Ok(())
         }).unwrap();

@@ -39,7 +39,10 @@ fn test_update_fact() {
     db.update(row_id, &updated_fact)
         .expect("failed to update fact");
 
-    let retrieved = db.get_fact(row_id).expect("failed to get fact").expect("fact not found");
+    let retrieved = db
+        .get_fact(row_id)
+        .expect("failed to get fact")
+        .expect("fact not found");
     assert_eq!(retrieved.subject, 10);
     assert_eq!(retrieved.predicate, 20);
     assert_eq!(retrieved.object, 30);
@@ -77,11 +80,11 @@ fn test_query_iterator() {
         db.insert(&fact).expect("failed to insert");
     }
 
-    let result = db.query("all").expect("failed to query");
-    assert_eq!(result.count(), 5);
+    let result: Vec<_> = db.query("all").expect("failed to query").collect();
+    assert_eq!(result.len(), 5);
 
     let mut count = 0;
-    for fact in result {
+    for fact in &result {
         let _ = fact;
         count += 1;
     }
@@ -102,8 +105,7 @@ fn test_save_and_load() {
     }
 
     {
-        let db = Database::load(path.to_str().expect("invalid path"))
-            .expect("failed to load");
+        let db = Database::load(path.to_str().expect("invalid path")).expect("failed to load");
         assert_eq!(db.fact_count(), 1);
         let facts = db.query_all().expect("failed to query all");
         assert_eq!(facts.len(), 1);
