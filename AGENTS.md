@@ -1,18 +1,59 @@
 # KCM Engineering Constitution
 
-## Identity
+> Document ID: KCM-CONSTITUTION-001
+> Version: 4.0.0
+> Status: Active
+> Owner: Engineering Orchestrator (P1)
+> Authority: Highest — supersedes all other governance documents except SSOT.md
 
-**KCM — Knowledge Columnar Model** is a self-contained columnar knowledge representation, storage, query, and reasoning engine implemented in Rust. KCM owns its core technology stack: storage, execution, query engine, compression, dictionary encoding, bitmap engine, optimizer, reasoning engine, transaction engine, recovery, benchmarking, testing, monitoring, and documentation.
+## Table of Contents
 
-## Engineering Philosophy
+1. [Mission](#1-mission)
+2. [Vision](#2-vision)
+3. [Engineering Philosophy](#3-engineering-philosophy)
+4. [Core Principles](#4-core-principles)
+5. [Repository Constitution](#5-repository-constitution)
+6. [Repository Structure Rules](#6-repository-structure-rules)
+7. [SSOT Authority](#7-ssot-authority)
+8. [Documentation Hierarchy](#8-documentation-hierarchy)
+9. [Decision Hierarchy](#9-decision-hierarchy)
+10. [Change Management](#10-change-management)
+11. [Engineering Workflow](#11-engineering-workflow)
+12. [Review Workflow](#12-review-workflow)
+13. [Security Rules](#13-security-rules)
+14. [Performance Rules](#14-performance-rules)
+15. [Testing Rules](#15-testing-rules)
+16. [Documentation Rules](#16-documentation-rules)
+17. [Versioning Rules](#17-versioning-rules)
+18. [API Stability Rules](#18-api-stability-rules)
+19. [Benchmark Policy](#19-benchmark-policy)
+20. [Release Policy](#20-release-policy)
+21. [AI Agent Behaviour](#21-ai-agent-behaviour)
+22. [Conflict Resolution](#22-conflict-resolution)
+23. [Quality Gates](#23-quality-gates)
+24. [Enforcement Rules](#24-enforcement-rules)
+25. [Skill Governance](#25-skill-governance)
+26. [References](#26-references)
+
+---
+
+## 1. Mission
+
+KCM (Knowledge Columnar Model) is a self-contained columnar knowledge representation, storage, query, and reasoning engine implemented in Rust. KCM owns its entire technology stack: storage, execution, query engine, compression, dictionary encoding, bitmap engine, optimizer, reasoning engine, transaction engine, recovery, benchmarking, testing, monitoring, and documentation.
+
+## 2. Vision
+
+To become the definitive open-source columnar knowledge engine — enterprise-grade, fully auditable, deterministically governed, and powered by an AI engineering system that maintains perfect consistency between specification, implementation, and documentation.
+
+## 3. Engineering Philosophy
 
 KCM optimizes for:
-1. **Correctness** over performance
-2. **Determinism** over flexibility
-3. **Simplicity** over generality
-4. **Engineering ownership** over external abstraction
-5. **Implementation completeness** over feature breadth
-6. **Long-term sustainability** over short-term convenience
+- **Correctness** over performance
+- **Determinism** over flexibility
+- **Simplicity** over generality
+- **Engineering ownership** over external abstraction
+- **Implementation completeness** over feature breadth
+- **Long-term sustainability** over short-term convenience
 
 KCM rejects:
 - Framework-driven design
@@ -24,9 +65,58 @@ KCM rejects:
 - Dynamic architecture where deterministic architecture suffices
 - Multiple implementations for the same responsibility
 
-## System Architecture
+## 4. Core Principles
 
-### Crate Map (13 crates, single responsibility each)
+1. **SSOT First** — Single Source of Truth governs all decisions
+2. **Specification Before Implementation** — No code without spec
+3. **Test Before Merge** — No merge without passing tests
+4. **Security By Design** — Security is not an afterthought
+5. **Documentation As Code** — Documentation is versioned, reviewed, tested
+6. **Deterministic Governance** — AI decisions are auditable and reproducible
+7. **Zero Trust Assumptions** — Every input is validated, every output is verified
+8. **Minimal Dependencies** — Every dependency must justify its existence
+9. **Backward Compatibility** — Breaking changes require explicit approval
+10. **Continuous Validation** — Automation enforces quality gates
+
+## 5. Repository Constitution
+
+### 5.1 Document Hierarchy
+
+| Priority | Document | Authority |
+|----------|----------|-----------|
+| P1 | SSOT.md | Single Source of Truth — highest authority |
+| P2 | AGENTS.md (this document) | Engineering Constitution |
+| P3 | docs/specs/PRD-TESTING-AND-BENCHMARK.md | Testing & benchmark targets |
+| P4 | docs/specs/PRD3.md | Distributed, ML, security, compliance |
+| P5 | docs/specs/PRD2.md | Storage, runtime, interfaces |
+| P6 | docs/specs/PRD.md | Core types, storage, compute, reasoning |
+| P7 | docs/specs/KCM_*.md | Derived specifications (15 documents) |
+| P8 | docs/adr/ADR-*.md | Architecture Decision Records |
+
+### 5.2 Conflict Resolution
+
+When documents conflict:
+1. Higher priority document wins
+2. If equal priority, SSOT.md wins
+3. If SSOT.md is silent, AGENTS.md wins
+4. If both are silent, Engineering Orchestrator (P1) decides
+5. All conflicts are documented as ADRs
+
+### 5.3 Immutable Contracts
+
+The following are FROZEN and cannot be changed without P4 (Specification Lock) approval:
+- Binary file format (DB_MAGIC, DB_VERSION, header layout)
+- WAL entry format (WAL_INSERT_SIZE, WAL_DELETE_SIZE)
+- C FFI signatures (18 functions)
+- Error code enum (7 variants)
+- Fact structure (34 bytes, 10 fields)
+- gRPC proto definitions
+- Public API return types (`Result<T, KcmError>`)
+- `#[repr(C)]` struct layouts
+
+## 6. Repository Structure Rules
+
+### 6.1 Crate Map (13 crates, single responsibility each)
 
 ```
 kcm-core          → Types, DenseVec, Bitmap, Dictionary. Depends on parking_lot only.
@@ -44,7 +134,7 @@ kcm-testing       → Load, stress, security, recovery, regression detection, me
 kcm-server        → HTTP (actix-web) + gRPC (tonic) server binaries.
 ```
 
-### Dependency Flow
+### 6.2 Dependency Flow
 
 ```
 kcm-core (zero deps)
@@ -68,170 +158,209 @@ kcm-compliance (core + parking_lot)
 kcm-testing (core + storage + runtime + reasoning + security + distributed + compliance)
 ```
 
-### Dependency Policy
+### 6.3 Dependency Policy
 
-Every external dependency must justify its existence:
+Every external dependency must justify its existence. See the dependency table in the workspace Cargo.toml.
 
-| Dependency | Justification | Could Remove? |
-|------------|---------------|---------------|
-| parking_lot | 3-5x faster RwLock/Mutex than std. Used in 7 crates. | Yes, measurable perf regression |
-| zstd | Industry-standard compression codec. Complex to reimplement. | No |
-| lz4 | Speed-optimized compression. Complex to reimplement. | No |
-| blake3 | Fastest cryptographic hash. Used for checksums + key derivation. | No |
-| thiserror | Derive macro for Error trait. Boilerplate only. | Yes, manual impl |
-| rayon | Work-stealing parallel iterator library. | Yes, manual threads (loses work-stealing) |
-| tokio | Async runtime. No practical replacement. | No |
-| serde/serde_json | Serialization framework. No practical replacement. | No |
-| aes-gcm | Authenticated encryption. Must use audited crypto. | No |
-| getrandom | CSPRNG. Platform-specific alternative possible. | Yes, portability loss |
-| actix-web | HTTP server. | Yes, could use hyper directly |
-| tonic/prost | gRPC framework. No replacement for gRPC compliance. | No |
-| pyo3 | Python bindings. Feature-gated. | No (when python feature enabled) |
-| log/env_logger | Logging. | Yes, custom macros |
-| criterion | Dev-only benchmarking. | Yes, manual timing |
-| proptest | Dev-only property testing. | Yes, custom fuzzing |
-| quickcheck | **UNUSED.** Redundant with proptest. | **Remove** |
+## 7. SSOT Authority
 
-## Single Source of Truth
+### 7.1 SSOT-First Development Rules
 
-### Document Hierarchy
+| Rule | Description |
+|------|-------------|
+| SSOT-01 | All public APIs, data structures, formats, algorithms, and behaviors are defined in SSOT documents |
+| SSOT-02 | Implementation MUST match SSOT specifications exactly |
+| SSOT-03 | No code change is permitted that deviates from SSOT without first updating the SSOT |
+| SSOT-04 | SSOT updates require approval from the Specification Lock (P4) skill |
+| SSOT-05 | When SSOT and code diverge, the SSOT is the reference — fix the code, not the SSOT |
+| SSOT-06 | Every code change must trace back to a requirement in the SSOT |
+| SSOT-07 | New features require SSOT specification before implementation begins |
+| SSOT-08 | API changes require backward compatibility analysis before SSOT update |
+
+### 7.2 Requirement Traceability
+
+```
+SSOT Requirement → Specification Document → Implementation File → Test File → Benchmark
+```
+
+| Level | Description |
+|-------|-------------|
+| L1 | Requirement exists in SSOT |
+| L2 | Specification defines behavior |
+| L3 | Implementation matches specification |
+| L4 | Test validates implementation |
+| L5 | Benchmark measures performance |
+
+## 8. Documentation Hierarchy
 
 | Priority | Document | Authority |
 |----------|----------|-----------|
-| P1 | `docs/PRD-TESTING& BRACHMARCK.md` | Performance targets, validation methodology, testing strategy |
-| P2 | `docs/PRD3.md` | Distributed architecture, ML integration, security, compliance |
-| P3 | `docs/PRD2.md` | Persistence layer, optimizer, monitoring, interfaces |
-| P4 | `docs/PRD.md` | Core types, storage engine, compute engine, reasoning engine |
-| P5 | `docs/*.md` | Derived technical specifications (26 documents) |
+| P1 | SSOT.md | Single Source of Truth |
+| P2 | AGENTS.md | Engineering Constitution |
+| P3 | docs/specs/PRD-TESTING-AND-BENCHMARK.md | Testing targets |
+| P4 | docs/specs/PRD3.md | Distributed, ML, security |
+| P5 | docs/specs/PRD2.md | Storage, runtime, interfaces |
+| P6 | docs/specs/PRD.md | Core types, storage, compute |
+| P7 | docs/specs/KCM_*.md | Derived specifications |
+| P8 | docs/governance/documentation-governance.md | Documentation governance |
 
-When documents conflict, the higher-priority document wins.
-
-### Specification Ownership
-
-| Domain | Authoritative Document | Type Definitions |
-|--------|----------------------|-----------------|
-| Core types | PRD.md §3 | Fact, RowID, SubjectID, Confidence, KcmError |
-| Storage format | PRD2.md §15 | DB header, column blocks, WAL entries |
-| Query engine | PRD.md §5 | Operator trait, ScanOp, FilterOp, JoinOp |
-| Optimizer | PRD2.md §16 | PlanNode, CostModel, Planner |
-| Runtime | PRD2.md §18 | KnowledgeDatabase, Transaction, Metrics |
-| Interfaces | PRD2.md §19 | KCM_Database (FFI), REST handlers, KQL parser |
-| Distributed | PRD3.md §27 | ShardMap, TransactionCoordinator |
-| Security | PRD3.md §30 | ACLManager, EncryptionKey, AuditLog |
-| Compliance | PRD3.md §32 | GDPRManager, DataClassification |
-| Testing | PRD-TESTING§1-8 | Test pyramid, quality gates, benchmark suite |
-| Benchmarks | PRD-TESTING§4 | Criterion configuration, results template |
-
-## Engineering Gates
-
-Every task passes 6 mandatory gates. No exceptions.
-
-### Gate 1 — Repository Understanding
-- Crate structure understood
-- Affected modules identified
-- Dependencies mapped
-- Existing implementations located
-
-### Gate 2 — Specification Validation
-- Frozen contracts identified
-- Format compatibility confirmed
-- Architecture alignment verified
-- Dependency boundaries respected
-
-### Gate 3 — Implementation Planning
-- Implementation strategy defined
-- Affected files listed
-- Impact assessment complete
-- Risks identified
-
-### Gate 4 — Implementation Validation
-- No placeholders or stubs
-- Error handling complete
-- Tests written and passing
-- No unwrap in production code
-
-### Gate 5 — Domain Validation
-- Storage/query changes reviewed by database-engine-specialist
-- Security changes reviewed by security-engineer
-- Performance changes benchmarked
-
-### Gate 6 — Production Readiness
-- `cargo build --release` passes
-- `cargo test --workspace` all pass
-- `cargo clippy --workspace -- -D warnings` clean
-- `cargo fmt --all -- --check` clean
-
-## Non-Negotiable Rules
-
-1. All public APIs return `Result<T, KcmError>`
-2. No `unwrap()` in production code paths
-3. No `panic!()` in production code
-4. No TODO/FIXME/HACK in production code
-5. No placeholder implementations
-6. No fake success responses
-7. All tests must pass before commit
-8. All clippy warnings must be resolved
-9. Every requirement maps to an implementation
-10. Every implementation maps to a test
-11. Every benchmark validates a documented requirement
-12. No documentation describes behavior that doesn't exist
-
-## Error Model
-
-Single error hierarchy rooted at `KcmError`:
+## 9. Decision Hierarchy
 
 ```
-KcmError
-├── NotFound(String)
-├── OutOfMemory
-├── InvalidArgument(String)
-├── Io(String)
-├── Corrupted(String)
-├── Conflict(String)
-└── TransactionAborted
+SSOT Requirement
+  ↓
+Specification Lock (P4) — validates contract compatibility
+  ↓
+Architecture Guardian (P5) — validates architectural integrity
+  ↓
+Domain Specialist (P6/P7/P8) — validates domain correctness
+  ↓
+Code Quality Guardian (P10) — validates code quality
+  ↓
+Testing Verification (P9) — validates correctness
+  ↓
+Documentation Guardian (P11) — validates documentation
+  ↓
+Release Readiness (P12) — validates production readiness
+  ↓
+Engineering Orchestrator (P1) — final coordination
 ```
 
-Storage-specific errors (`StorageError`) convert to `KcmError` via `From` impl.
+## 10. Change Management
 
-## Concurrency Model
+### 10.1 Change Categories
 
-| Component | Mechanism | Rationale |
-|-----------|-----------|-----------|
-| Schema | `Arc<RwLock<Schema>>` (parking_lot) | Readers concurrent, writers exclusive |
-| Dictionaries | `Arc<RwLock<Dictionary>>` (parking_lot) | Same pattern as Schema |
-| WAL | `Mutex<File>` (parking_lot) | Serialized writes |
-| Audit Log | `Mutex<VecDeque<AuditEvent>>` (parking_lot, wrapped in Arc) | Serialized append, FIFO eviction at 100K |
-| Metrics | `AtomicU64` (14 counters) | Lock-free counters |
-| Thread Pool | rayon ThreadPool | Work-stealing parallelism |
-| Async | tokio Runtime | I/O-bound async operations |
+| Category | Approval Required | Skills Involved |
+|----------|------------------|-----------------|
+| Bug fix | P10 + P9 | Code Quality, Testing |
+| New feature | P2 + P4 + P5 + P9 + P11 | Task Planner, Spec Lock, Arch Guardian, Testing, Doc Guardian |
+| API change | P4 + P5 + P9 + P11 | Spec Lock, Arch Guardian, Testing, Doc Guardian |
+| FFI change | P4 + P7 + P5 | Spec Lock, Security, Arch Guardian |
+| Storage format | P4 + P5 + P6 + P7 | Spec Lock, Arch Guardian, DB Specialist, Security |
+| Security fix | P7 + P4 | Security, Spec Lock |
+| Performance | P8 + P9 | Performance Engineer, Testing |
+| Documentation | P11 | Documentation Guardian |
+| Release | P12 + P1 | Release Readiness, Orchestrator |
 
-## Storage Model
+### 10.2 Change Process
 
-Single storage model: columnar with per-column encoding and compression.
+```
+1. Task Planning (P2)
+2. Impact Analysis (P3)
+3. Specification Validation (P4)
+4. Architecture Validation (P5)
+5. Implementation (Domain Specialist)
+6. Code Quality (P10)
+7. Testing (P9)
+8. Benchmark (P8) — if performance-related
+9. Documentation (P11)
+10. Code Review (P13)
+11. Release Readiness (P12)
+12. Final Coordination (P1)
+```
 
-| Column | Type | Encoding | Compression |
-|--------|------|----------|-------------|
-| Subject | u32 | Dictionary | Zstd |
-| Predicate | u8 | Dictionary | RLE |
-| Object | u32 | Dictionary | Zstd |
-| Confidence | f64 | Gorilla | Zstd |
-| Evidence | u8 | Dictionary | RLE |
-| Timestamp | i64 | Delta | Zstd |
-| Context | u8 | Dictionary | RLE |
-| Version | i32 | Delta | LZ4 |
-| Priority | i8 | Identity | RLE |
-| Owner | u16 | Dictionary | Zstd |
+## 11. Engineering Workflow
 
-## Query Model
+### 11.1 Standard Workflow
 
-Single query model: Volcano-style pull-based execution with cost-based optimization.
+```
+Task → Planning → Impact Analysis → Specification Validation → Architecture Validation
+  → Implementation → Code Quality → Testing → Benchmark → Documentation
+  → Code Review → Release Readiness → Done
+```
 
-Operators: Scan → Filter → Project → Join → Aggregate
-Optimizer: Filter pushdown → Column pruning → Join reordering → Index selection
+### 11.2 Emergency Workflow (Critical Bugs)
 
-## Testing Strategy
+```
+Bug Report → Root Cause (P14) → Minimal Fix → Testing (P9) → Code Quality (P10) → Release (P12)
+```
 
-Single testing strategy: 4-tier pyramid.
+### 11.3 Security Workflow
+
+```
+Security Issue → Security Engineer (P7) → Spec Lock (P4) → Fix → Security Test → Release (P12)
+```
+
+## 12. Review Workflow
+
+### 12.1 Code Review Process
+
+```
+1. Author completes implementation
+2. Code Quality Guardian (P10) — automated check
+3. Testing Verification (P9) — test validation
+4. Code Review Auditor (P13) — senior review
+5. Domain Specialist — domain review
+6. Final approval — owner
+```
+
+### 12.2 Review SLA
+
+| Change Type | Review SLA | Approval SLA |
+|-------------|-----------|-------------|
+| Critical (security) | 24 hours | 48 hours |
+| High (API, breaking) | 24 hours | 48 hours |
+| Medium (feature) | 48 hours | 72 hours |
+| Low (typo, doc) | 12 hours | 24 hours |
+
+## 13. Security Rules
+
+### 13.1 Non-Negotiable Security Rules
+
+1. All encryption uses AES-256-GCM with BLAKE3 KDF
+2. Zero hardcoded keys, tokens, or credentials
+3. CSPRNG for all random number generation
+4. Hash-chained audit logging for all write operations
+5. RBAC enforcement on every sensitive operation
+6. TLS for all network communication
+7. Input validation on all public interfaces
+8. Null-pointer guards on all FFI functions
+9. No `unsafe` without documented `// SAFETY:` justification
+10. Security changes require P7 (Security Engineer) approval
+
+### 13.2 Security Model
+
+| Component | Mechanism |
+|-----------|-----------|
+| Encryption | AES-256-GCM, 256-bit key, 96-bit nonce |
+| Key Derivation | BLAKE3 |
+| RBAC | 5 permission levels (Read, Write, Admin, SuperAdmin, Owner) |
+| Audit Log | Hash-chained, FIFO at 100K events |
+| Compliance | GDPR consent management, 4-tier data classification |
+
+## 14. Performance Rules
+
+### 14.1 Performance Targets
+
+| Metric | Target |
+|--------|--------|
+| Column scan | > 100M ops/sec |
+| Bitmap operations | > 8M ops/sec |
+| Dictionary lookup | < 100ns |
+| Insert throughput | > 50K facts/sec |
+| Query P99 latency | < 100ms |
+| Memory per fact | < 34 bytes (uncompressed) |
+| Compression ratio | > 5x |
+
+### 14.2 Regression Thresholds
+
+| Regression | Action |
+|-----------|--------|
+| < 5% | Acceptable — no action |
+| 5-10% | WARNING — requires justification |
+| > 10% | FAILURE — blocks merge |
+
+### 14.3 Benchmark Policy
+
+- Every performance claim must have a benchmark
+- All benchmarks use criterion with statistical analysis
+- Baseline stored in benchmark-results/
+- Regression detection via bench-compare.py
+- Benchmark results are part of release validation
+
+## 15. Testing Rules
+
+### 15.1 Test Pyramid
 
 | Tier | Count | Speed | Purpose |
 |------|-------|-------|---------|
@@ -240,35 +369,237 @@ Single testing strategy: 4-tier pyramid.
 | Property | 8+ | 1-5min | Invariant verification |
 | Security | 29+ | varies | Attack surface validation |
 
-Quality gates: ≥95% coverage, 0 clippy warnings, 0 unwrap in production, benchmarks within 5% of baseline.
+### 15.2 Testing Requirements
 
-### Automated Validation
+1. Every public function must have at least one unit test
+2. Every bug fix must have a regression test
+3. Every storage change must have recovery tests
+4. Every security change must have security tests
+5. Every numeric operation must have property tests
+6. No fake tests (tests that always pass)
+7. No placeholder assertions
+8. 100% test pass rate required for merge
+
+### 15.3 Quality Gates
 
 ```bash
-bash scripts/validate-ssot.sh  # 13 automated checks
+cargo fmt --all -- --check          # Format
+cargo clippy --workspace -- -D warnings  # Lint
+cargo build --workspace              # Build
+cargo test --workspace               # Test
+bash scripts/validate-ssot.sh        # SSOT
 ```
 
-## Build and Test Commands
+## 16. Documentation Rules
 
-```bash
-cargo build --workspace
-cargo build --release --workspace
-cargo test --workspace
-cargo clippy --workspace -- -D warnings
-cargo fmt --all -- --check
-cargo bench --workspace
+### 16.1 Documentation Requirements
+
+1. Every crate must have README.md, SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md
+2. Every crate must have docs/<crate>/spesifikasi.md
+3. Every folder must follow the 5-document blueprint
+4. All documentation is version controlled
+5. All documentation is reviewed before merge
+6. Documentation changes follow the same CI pipeline as code
+
+### 16.2 Documentation Standards
+
+- Enterprise-grade quality
+- SSOT-compliant
+- No duplication with root docs
+- Cross-references to root documents
+- Consistent heading structure
+- Table of Contents for long documents
+
+## 17. Versioning Rules
+
+| Change Type | Version Bump | Example |
+|-------------|-------------|---------|
+| Bug fix | Patch (0.0.x) | WAL replay fix |
+| New feature | Minor (0.x.0) | New codec, new index |
+| Breaking API change | Major (x.0.0) | Remove FFI function |
+| Format change | Major (x.0.0) | Header layout change |
+| Dependency change | Patch or Minor | Depends on impact |
+
+## 18. API Stability Rules
+
+### 18.1 API Contract
+
+- All public APIs return `Result<T, KcmError>`
+- API changes require P4 (Specification Lock) approval
+- Breaking changes require major version bump
+- Backward compatibility analysis required before any API change
+- API documentation must be updated with every change
+
+### 18.2 FFI Stability Rules
+
+- All FFI functions have `# Safety` documentation
+- All FFI functions validate null pointers
+- Memory management uses `Box::into_raw` / `Box::from_raw`
+- FFI changes require P4 + P7 approval
+- FFI changes require SDK version bump
+
+### 18.3 SDK Stability Rules
+
+- All SDKs expose identical API surface
+- SDK changes require cross-SDK consistency validation
+- SDK breaking changes require major version bump
+- SDK changes require test validation across all languages
+
+## 19. Benchmark Policy
+
+- Benchmarks use criterion with statistical analysis
+- Results stored in benchmark-results/
+- Regression detection via scripts/bench-compare.py
+- Thresholds: 5% warning, 10% failure
+- Baseline must be updated before merge if benchmarks change
+- Performance claims must be backed by benchmarks
+
+## 20. Release Policy
+
+### 20.1 Release Validation
+
+1. All CI jobs pass
+2. SSOT validation passes
+3. No regressions from baseline
+4. All public APIs match SSOT
+5. All FFI functions match SSOT
+6. All REST endpoints match SSOT
+7. All gRPC RPCs match SSOT
+8. Deployment configs valid
+9. Documentation up to date
+10. Changelog updated
+
+### 20.2 Release Process
+
+1. P12 (Release Readiness) validates all gates
+2. P1 (Orchestrator) gives final approval
+3. Version bump per versioning rules
+4. Changelog update
+5. Git tag
+6. CI/CD triggers release
+
+## 21. AI Agent Behaviour
+
+### 21.1 Mandatory Behaviour
+
+All AI agents must:
+1. Follow the Engineering Workflow (Section 11)
+2. Respect the Authority System (Section 22)
+3. Validate against SSOT before any change
+4. Run quality gates before reporting completion
+5. Produce deterministic, reproducible output
+6. Document all decisions
+7. Never modify frozen contracts without P4 approval
+8. Never modify security model without P7 approval
+9. Never modify API without P4 approval
+10. Never modify benchmark targets without P8 approval
+
+### 21.2 Forbidden Behaviour
+
+AI agents must NOT:
+1. Modify SSOT without P4 approval
+2. Modify API without P4 approval
+3. Modify FFI without P4 + P7 approval
+4. Modify benchmark targets without P8 approval
+5. Modify security model without P7 approval
+6. Modify storage format without P4 + P5 approval
+7. Modify protocol without P4 approval
+8. Modify data model without P4 + P5 approval
+9. Modify documentation hierarchy without P1 approval
+10. Modify dependency architecture without P5 approval
+11. Create duplicate implementations
+12. Create duplicate specifications
+13. Produce documentation conflicting with SSOT
+14. Skip quality gates
+15. Use placeholder implementations
+
+### 21.3 Output Standards
+
+All AI output must be:
+- Deterministic
+- Reproducible
+- Consistent
+- SSOT-compliant
+- Well-documented
+- Fully traceable
+
+## 22. Conflict Resolution
+
+### 22.1 Skill Conflicts
+
+| Scenario | Resolution |
+|----------|-----------|
+| Two skills disagree | Higher priority wins |
+| Same priority, different domain | Domain authority wins |
+| Same priority, same domain | Engineering Orchestrator decides |
+| Security vs Performance | Security wins (P7 > P8) |
+| Security vs Functionality | Security wins (P7 > any feature) |
+| Performance vs Correctness | Correctness wins (per philosophy) |
+
+### 22.2 Escalation Rules
+
+| Level | Escalation Path |
+|-------|----------------|
+| Level 1 | Skill internally resolves |
+| Level 2 | Higher priority skill resolves |
+| Level 3 | Engineering Orchestrator (P1) resolves |
+| Level 4 | SSOT.md is the final authority |
+
+## 23. Quality Gates
+
+### 23.1 CI Pipeline
+
+```
+Format Check → Clippy Lint → Build → Unit Tests → Integration Tests
+  → Property Tests → Security Tests → SSOT Validation → Quality Gate
 ```
 
-## Skill Governance
+### 23.2 Merge Requirements
 
-16 engineering skills with defined authority boundaries:
+- All CI jobs pass
+- At least 1 reviewer approval
+- No unresolved conflicts
+- SSOT traceability documented
+- Tests pass
+- Documentation updated
+
+### 23.3 Release Requirements
+
+- All merge requirements
+- No performance regressions > 5%
+- All benchmarks within baseline
+- Documentation complete
+- Changelog updated
+- Version bumped
+
+## 24. Enforcement Rules
+
+### 24.1 Automated Enforcement
+
+- CI pipeline enforces format, lint, build, test
+- Documentation validator enforces required files
+- SSOT validator enforces alignment
+- Coverage validator enforces 100%
+- Drift detector enforces code-doc sync
+
+### 24.2 Manual Enforcement
+
+- Code owners review all changes
+- P10 (Code Quality) runs first
+- P13 (Code Review) runs after P10
+- P12 (Release) gates all releases
+- P1 (Orchestrator) coordinates all skills
+
+## 25. Skill Governance
+
+### 25.1 Skill Registry
 
 | Priority | Skill | Authority |
 |----------|-------|-----------|
 | P1 | kcm-engineering-orchestrator | Master coordinator — overrides all |
 | P2 | kcm-task-planner | Can block implementation without plan |
 | P3 | kcm-change-impact-analysis | Can block changes with unassessed impact |
-| P4 | kcm-specification-lock | Can veto format/API/FFI changes |
+| P4 | kcm-specification-lock | Can VETO format/API/FFI changes |
 | P5 | kcm-architecture-guardian | Can block architecture violations |
 | P6 | kcm-database-engine-specialist | Can block storage/query changes |
 | P7 | kcm-security-engineer | Can block security/compliance violations |
@@ -282,353 +613,40 @@ cargo bench --workspace
 | P15 | kcm-engineering-decision-record | Documents decisions |
 | P16 | kcm-repository-intelligence | Provides codebase understanding |
 
-### Execution Flow
+### 25.2 Authority Types
+
+| Type | Skills | Description |
+|------|--------|-------------|
+| Override | P1 | Can override any skill decision |
+| Veto | P4 | Can block contract changes |
+| Block | P2,P3,P5,P6,P7,P8,P9,P10,P11,P12 | Can block specific categories |
+| Feedback | P13,P14,P15,P16 | Advisory only, no blocking power |
+
+### 25.3 Skill Execution Order
 
 ```
-1. Repository Understanding    → kcm-repository-intelligence (P16)
-2. Specification Validation    → kcm-specification-lock (P4), kcm-architecture-guardian (P5)
-3. Planning                    → kcm-task-planner (P2), kcm-change-impact-analysis (P3)
-4. Implementation              → Domain skills (P6, P7, P8)
-5. Verification                → kcm-testing-verification (P9), kcm-code-quality-guardian (P10), kcm-code-review-auditor (P13)
-6. Release                     → kcm-release-readiness (P12)
+1. Repository Intelligence (P16) — understand codebase
+2. Task Planner (P2) — plan implementation
+3. Change Impact Analysis (P3) — assess impact
+4. Specification Lock (P4) — validate contracts
+5. Architecture Guardian (P5) — validate architecture
+6. Domain Specialist (P6/P7/P8) — implement
+7. Code Quality Guardian (P10) — quality check
+8. Testing Verification (P9) — test validation
+9. Performance Engineer (P8) — benchmark (if needed)
+10. Documentation Guardian (P11) — doc update
+11. Code Review Auditor (P13) — review
+12. Release Readiness (P12) — release gate
+13. Engineering Orchestrator (P1) — final coordination
 ```
 
-### Authority Boundaries
-
-- **Specification Lock (P4)** owns frozen contracts. Can VETO.
-- **Database Engine Specialist (P6)** owns implementation. Cannot change contracts.
-- **Architecture Guardian (P5)** owns system architecture. Defers to P4 for format changes.
-- **Task Planner (P2)** answers "What should be done?"
-- **Change Impact Analysis (P3)** answers "What will break?"
-- **Code Quality Guardian (P10)** = automated prevention. Runs FIRST.
-- **Code Review Auditor (P13)** = senior review. Runs AFTER CQG.
-
----
-
-## SSOT-First Development Rules
-
-**The SSOT (Single Source of Truth) documentation is the absolute technical contract for the KCM project. No implementation may deviate from the SSOT without an approved SSOT update.**
-
-### SSOT Authority
-
-| Rule | Description |
-|------|-------------|
-| SSOT-01 | All public APIs, data structures, formats, algorithms, and behaviors are defined in SSOT documents |
-| SSOT-02 | Implementation MUST match SSOT specifications exactly |
-| SSOT-03 | No code change is permitted that deviates from SSOT without first updating the SSOT |
-| SSOT-04 | SSOT updates require approval from the Specification Lock (P4) skill |
-| SSOT-05 | When SSOT and code diverge, the SSOT is the reference — fix the code, not the SSOT |
-| SSOT-06 | Every code change must trace back to a requirement in the SSOT |
-| SSOT-07 | New features require SSOT specification before implementation begins |
-| SSOT-08 | API changes require backward compatibility analysis before SSOT update |
-
-### Requirement Traceability
-
-Every implementation must be traceable to an SSOT requirement:
-
-```
-SSOT Requirement → Specification Document → Implementation File → Test File → Benchmark
-```
-
-| Traceability Level | Description |
-|-------------------|-------------|
-| L1 | Requirement exists in SSOT |
-| L2 | Specification defines behavior |
-| L3 | Implementation matches specification |
-| L4 | Test validates implementation |
-| L5 | Benchmark measures performance |
-
-### SSOT Documents (Authoritative Sources)
-
-| Document | Scope | Priority |
-|----------|-------|----------|
-| `docs/PRD.md` | Core types, storage, compute, reasoning | P4 |
-| `docs/PRD2.md` | Storage, runtime, interfaces | P3 |
-| `docs/PRD3.md` | Distributed, ML, security, compliance | P2 |
-| `docs/PRD-TESTING& BRACHMARCK.md` | Testing, benchmarks, quality gates | P1 |
-| `AGENTS.md` | Engineering constitution | P5 |
-
----
-
-## Codebase Audit Procedures
-
-### Pre-Implementation Audit
-
-Before any code change, perform this audit:
-
-| Step | Action | Output |
-|------|--------|--------|
-| 1 | Identify affected crates and modules | Affected file list |
-| 2 | Map SSOT requirements for affected area | Requirement IDs |
-| 3 | Verify current implementation matches SSOT | Drift report |
-| 4 | Check dependency impact | Dependency graph |
-| 5 | Assess backward compatibility | Compatibility report |
-| 6 | Identify affected tests | Test list |
-| 7 | Identify affected benchmarks | Benchmark list |
-
-### Post-Implementation Audit
-
-After any code change, perform this audit:
-
-| Step | Action | Command |
-|------|--------|---------|
-| 1 | Verify compilation | `cargo build --workspace` |
-| 2 | Run all tests | `cargo test --workspace` |
-| 3 | Run clippy | `cargo clippy --workspace -- -D warnings` |
-| 4 | Check formatting | `cargo fmt --all -- --check` |
-| 5 | Verify SSOT compliance | `bash scripts/validate-ssot.sh` |
-| 6 | Check for stubs/placeholders | `grep -r "todo!\|unimplemented!\|FIXME\|TODO" crates/ --include="*.rs"` |
-| 7 | Check for unwrap in production | `grep -r "\.unwrap()" crates/ --include="*.rs" \| grep -v tests/ \| grep -v benches/` |
-
-### Continuous Audit Schedule
-
-| Audit Type | Frequency | Owner |
-|------------|-----------|-------|
-| SSOT compliance | Every PR | CI pipeline |
-| Stub/placeholder detection | Every PR | CI pipeline |
-| Benchmark regression | Weekly | benchmark.yml |
-| Dependency audit | Monthly | Manual |
-| Full codebase audit | Quarterly | kcm-engineering-orchestrator |
-
----
-
-## Implementation Quality Standards
-
-### Code Quality Requirements
-
-| Requirement | Standard | Enforcement |
-|-------------|----------|-------------|
-| Error handling | All public APIs return `Result<T, KcmError>` | Compiler + clippy |
-| No unwrap | Zero `unwrap()` in production code paths | CI gate |
-| No panic | Zero `panic!()` in production code | CI gate |
-| No TODO/FIXME | Zero markers in production code | CI gate |
-| No placeholders | Every function has real implementation | Code review |
-| No fake returns | Every return value is computed, not hardcoded | Code review |
-| Thread safety | All shared types are `Send + Sync` | Compiler |
-| Memory safety | No unsafe without documented justification | Code review |
-| Determinism | Identical input produces identical output | Tests |
-
-### Architecture Consistency
-
-| Rule | Description |
-|------|-------------|
-| Single responsibility | Each crate has exactly one responsibility |
-| Dependency direction | Dependencies flow upward only (no cycles) |
-| Interface segregation | Public APIs are minimal and focused |
-| Encapsulation | Internal details are not exposed through public API |
-| Consistency | Similar operations have similar interfaces |
-
-### Backward Compatibility
-
-| Change Type | Compatibility Requirement |
-|-------------|-------------------------|
-| New public method | Additive, no breaking change |
-| New crate | Additive, no breaking change |
-| New dependency | Must justify existence per Dependency Policy |
-| API signature change | Breaking — requires version bump |
-| Remove public API | Breaking — requires version bump + migration |
-| Format change | Breaking — requires version bump + migration |
-| FFI change | Breaking — requires SDK version bump |
-
----
-
-## Engineering Analysis Requirements
-
-### Before Implementation
-
-Every implementation task must complete this analysis:
-
-1. **Requirements Analysis**: What SSOT requirements does this address?
-2. **Architecture Analysis**: How does this fit the existing architecture?
-3. **Dependency Analysis**: What dependencies are affected?
-4. **Impact Analysis**: What other components are affected?
-5. **Risk Analysis**: What could go wrong?
-6. **Test Analysis**: What tests are needed?
-7. **Benchmark Analysis**: What performance targets apply?
-8. **Compatibility Analysis**: Is this backward compatible?
-
-### During Implementation
-
-Every implementation must follow:
-
-1. **SSOT Alignment**: Implementation matches specification exactly
-2. **Error Handling**: All error paths return `Result<T, KcmError>`
-3. **Thread Safety**: All shared types are `Send + Sync`
-4. **Memory Safety**: No unsafe without documented justification
-5. **Determinism**: No randomness in query/inference paths
-6. **Observability**: Metrics and logging where appropriate
-7. **Testability**: Code is structured for testability
-
-### After Implementation
-
-Every implementation must verify:
-
-1. **Correctness**: All tests pass
-2. **Performance**: Benchmarks within 5% of baseline
-3. **Quality**: No clippy warnings
-4. **Format**: Code passes fmt check
-5. **SSOT**: Automated validation passes
-6. **Documentation**: Changes reflected in SSOT
-
----
-
-## Refactoring Standards
-
-### Safe Refactoring Rules
-
-| Rule | Description |
-|------|-------------|
-| R-01 | Refactoring must not change external behavior |
-| R-02 | All tests must pass before and after refactoring |
-| R-03 | No new features during refactoring |
-| R-04 | Refactoring must be verifiable by SSOT validation |
-| R-05 | Refactoring must not break backward compatibility |
-| R-06 | Refactoring must be reversible (git revert) |
-
-### Refactoring Checklist
-
-- [ ] SSOT requirements still met
-- [ ] All tests pass
-- [ ] No new stubs/placeholders introduced
-- [ ] No new unwrap() in production code
-- [ ] No new TODO/FIXME markers
-- [ ] Clippy clean
-- [ ] Format clean
-- [ ] SSOT validation passes
-- [ ] Benchmarks within 5% of baseline
-- [ ] No dependency changes
-
----
-
-## CI/CD and Release Validation
-
-### CI Pipeline Requirements
-
-| Job | Trigger | Blocks Merge |
-|-----|---------|-------------|
-| Format Check | Every push | Yes |
-| Clippy Lint | Every push | Yes |
-| Build | Every push | Yes |
-| Unit Tests | Every push | Yes |
-| Integration Tests | Every push | Yes |
-| Property Tests | Every push | Yes |
-| Security Tests | After unit tests | Yes |
-| Benchmarks (compile) | After unit tests | Yes |
-| SSOT Validation | Every push | Yes |
-| Quality Gate | All above pass | Yes |
-
-### Release Validation
-
-Before any release:
-
-| Step | Action | Gate |
-|------|--------|------|
-| 1 | All CI jobs pass | `ci.yml` |
-| 2 | SSOT validation passes | `validate-ssot.sh` |
-| 3 | No regressions from baseline | Benchmark comparison |
-| 4 | All public APIs match SSOT | API audit |
-| 5 | All FFI functions match SSOT | FFI audit |
-| 6 | All REST endpoints match SSOT | REST audit |
-| 7 | All gRPC RPCs match SSOT | gRPC audit |
-| 8 | Deployment configs valid | Docker/K8s build |
-| 9 | Documentation up to date | SSOT review |
-| 10 | Changelog updated | Manual review |
-
-### Version Bumping Rules
-
-| Change Type | Version Bump | Example |
-|-------------|-------------|---------|
-| Bug fix | Patch (0.0.x) | WAL replay fix |
-| New feature | Minor (0.x.0) | New codec, new index |
-| Breaking API change | Major (x.0.0) | Remove FFI function |
-| Format change | Major (x.0.0) | Header layout change |
-| Dependency change | Patch or Minor | Depends on impact |
-
----
-
-## Development Playbooks
-
-### New Feature Playbook
-
-```
-1. SSOT: Define requirement in appropriate PRD document
-2. SSOT: Define specification in appropriate KCM_*_SPEC document
-3. Plan: Identify affected crates, files, tests, benchmarks
-4. Implement: Write code matching SSOT specification
-5. Test: Write tests validating implementation
-6. Benchmark: Write/verify benchmarks for performance
-7. Validate: Run full quality gate suite
-8. SSOT: Update documentation if implementation differs from spec
-9. Review: Code review against SSOT
-10. Release: Version bump, changelog, release
-```
-
-### Bug Fix Playbook
-
-```
-1. Reproduce: Write a test that demonstrates the bug
-2. Root Cause: Identify the exact cause using debugging skills
-3. Fix: Implement minimal fix matching SSOT behavior
-4. Verify: Ensure fix resolves the bug without regressions
-5. Validate: Run full quality gate suite
-6. Review: Code review focusing on fix correctness
-7. Release: Patch version bump, changelog
-```
-
-### Performance Optimization Playbook
-
-```
-1. Baseline: Run benchmarks to establish current performance
-2. Profile: Identify bottleneck using CPU/memory profiling
-3. SSOT: Verify performance target exists in SSOT
-4. Optimize: Implement optimization matching SSOT target
-5. Measure: Verify improvement with benchmarks
-6. Validate: Ensure no correctness regressions
-7. Document: Update SSOT if behavior changed
-8. Review: Performance engineer review
-```
-
-### Security Fix Playbook
-
-```
-1. Assess: Determine severity and impact
-2. SSOT: Verify security requirement in SSOT
-3. Fix: Implement fix matching security specification
-4. Test: Write security test validating fix
-5. Audit: Run security test suite
-6. Validate: Full quality gate suite
-7. Review: Security engineer review
-8. Release: Immediate patch if critical
-```
-
----
-
-## Monitoring and Observability
-
-### Metrics Requirements
-
-| Component | Required Metrics |
-|-----------|-----------------|
-| KnowledgeDatabase | queries_total, inserts_total, cache_hit_ratio, memory_bytes |
-| Transaction | commit_count, rollback_count, abort_count |
-| WAL | append_count, replay_count, flush_count |
-| Inference | inference_count, facts_inferred, rule_execution_count |
-| Security | permission_check_count, encryption_count, audit_event_count |
-
-### Logging Standards
-
-| Level | Usage |
-|-------|-------|
-| ERROR | Unrecoverable errors requiring immediate attention |
-| WARN | Recoverable errors that may indicate issues |
-| INFO | Significant state changes (startup, shutdown, recovery) |
-| DEBUG | Detailed operational information |
-| TRACE | Most detailed, lowest priority |
-
-### Health Check Requirements
-
-| Status | Condition |
-|--------|-----------|
-| Healthy | error_rate < 5%, latency < 100ms, cache_hit_ratio > 50% |
-| Degraded | latency > 100ms OR cache_hit_ratio < 50% |
-| Unhealthy | error_rate > 5% |
+## 26. References
+
+- [SSOT.md](SSOT.md) — Single Source of Truth
+- [KCM_SPECIFICATION.md](KCM_SPECIFICATION.md) — Technical constitution
+- [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) — Repository structure
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guidelines
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Community guidelines
+- [SECURITY.md](SECURITY.md) — Security policy
+- [docs/governance/documentation-governance.md](docs/governance/documentation-governance.md) — Documentation governance
+- [skills/](skills/) — AI engineering skills

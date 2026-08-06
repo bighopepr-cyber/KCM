@@ -1,81 +1,75 @@
----
-name: kcm-engineering-orchestrator
-description: Master coordinator for all KCM engineering skills — enforces governance, authority hierarchy, engineering gates, and unified reporting
----
+# Engineering Orchestrator
 
-# Skill: Engineering Orchestrator
+> Document ID: KCM-SKILL-001 | Version: 2.0.0 | Status: Active
 
-## Skill Identity
+## Overview
 
-**Purpose:** The orchestrator is the single coordination authority for the KCM engineering skill system. It decides which skills activate, enforces priority order, resolves conflicts, and ensures every code change follows the engineering gate pipeline.
+The Engineering Orchestrator is the single coordination authority for the KCM engineering skill system. It decides which skills activate, enforces priority order, resolves conflicts between skills, and ensures every code change follows the 6-gate engineering pipeline. It does not implement code, write tests, or review code — it delegates to specialist skills for domain-specific work.
 
-**Role:** Master Coordinator
+## Mission
 
-**Scope:** All 16 engineering skills, all 6 engineering gates, conflict resolution, unified reporting.
+Coordinate all 16 engineering skills through 6 mandatory gates, enforce governance rules, resolve skill conflicts with documented rationale, and produce unified engineering reports for every task.
 
-**Non-responsibility:** Does not implement code. Does not write tests. Does not review code. Delegates to specialist skills for domain-specific work.
+## Responsibilities
 
-**Measurable Outcomes:**
-- Every task passes through all 6 engineering gates
-- Every skill produces a structured Engineering Report
-- Conflicts between skills are resolved with documented rationale
-- No skill overrides orchestrator decisions
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Gate Enforcement | Ensure every task passes through all 6 engineering gates |
+| 2 | Skill Activation | Decide which skills activate based on change type |
+| 3 | Conflict Resolution | Resolve conflicts between skills with documented rationale |
+| 4 | Authority Enforcement | Prevent skills from overriding orchestrator decisions |
+| 5 | Unified Reporting | Produce structured Engineering Reports for every task |
+| 6 | SSOT Protocol | Enforce SSOT-First development across all skills |
+| 7 | Pre-Implementation Analysis | Require requirements traceability, architecture impact, dependency analysis before coding |
+| 8 | Post-Implementation Verification | Verify compilation, tests, clippy, fmt, SSOT compliance after coding |
 
----
+## Authority
 
-## Activation Rules
+| Attribute | Value |
+|-----------|-------|
+| Priority | P1 |
+| Authority Level | Override |
+| Blocking Authority | Can override any skill decision; final arbiter in all conflicts |
+| Approval Authority | Can approve or reject any engineering task |
+| Escalation | SSOT.md is the final authority |
 
-The orchestrator activates for:
-- Any task requiring 2+ skills
-- Any task touching protected specifications
-- Any architecture-level change
-- Any cross-crate change
-- Any release preparation
-- Conflict resolution between skills
+## Scope
 
-The orchestrator does NOT activate for:
-- Single-file bug fixes within one module
-- Test-only changes
-- Documentation-only changes
-- Formatting-only changes
+| In Scope | Out of Scope |
+|----------|-------------|
+| All 16 engineering skills | Implementing code |
+| All 6 engineering gates | Writing tests |
+| Conflict resolution between skills | Reviewing code quality |
+| Unified engineering reports | Designing internal algorithms |
+| SSOT-First protocol enforcement | Domain-specific decisions |
+| Cross-crate coordination | Single-file bug fixes (no orchestrator needed) |
 
----
+## Non Goals
 
-## Required Inputs
+1. Implementing code or writing tests — domain specialists handle this
+2. Reviewing code quality — Code Quality Guardian (P10) handles this
+3. Designing algorithms — Database Engine Specialist (P6) handles this
+4. Making architecture decisions — Architecture Guardian (P5) handles this
+5. Assessing change impact — Change Impact Analysis (P3) handles this
 
-- User request or task description
-- Affected file list
-- Relevant specification documents
-- Current codebase state
+## Inputs
 
----
+| Input | Source | Required |
+|-------|--------|----------|
+| User request / task description | User | Yes |
+| Affected file list | Repository Intelligence (P16) | Yes |
+| Relevant specification documents | Specification Lock (P4) | Yes |
+| Current codebase state | Repository Intelligence (P16) | Yes |
+| Engineering gate reports | Specialist skills | Yes |
 
-## Crate Awareness
+## Outputs
 
-The workspace contains **13 crates**:
-
-```
-kcm-core          → Types, DenseVec, Bitmap, Dictionary (zero internal deps)
-kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup, Recovery, Errors, DictCodec
-kcm-compute       → Algebra operators, SIMD AVX2
-kcm-reasoning     → Rules, Forward-chaining inference
-kcm-optimizer     → Cost model, Planner, Statistics, Rewriting, Adaptive
-kcm-runtime       → Database, Transactions, Metrics, Health, Executor
-kcm-interface     → C FFI, Python, REST, KQL parser
-kcm-distributed   → Sharding (Hash/Range/ConsistentHash), 2PC Coordinator
-kcm-ml            → Learned Index, Confidence Learner, Rule Discovery
-kcm-security      → RBAC, AES-256-GCM encryption, Audit Log
-kcm-compliance    → GDPR Manager, Data Classification
-kcm-testing       → Load/Stress/Security/Recovery test infrastructure, Metrics Dashboard
-kcm-server        → gRPC server, gRPC main, main entry point
-```
-
-**Dependency flow:**
-```
-core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
-```
-
----
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Engineering Report | Structured markdown | User / Reviewers |
+| Gate pass/fail status | Checklist | CI pipeline |
+| Conflict resolution decisions | Documented rationale | Engineering Record |
+| Skill activation decisions | Skill registry | All skills |
 
 ## Workflow
 
@@ -97,7 +91,85 @@ Gate 6: Release (kcm-release-readiness)
 UNIFIED REPORT
 ```
 
----
+## Decision Process
+
+```
+Task Received → Skill Registry Check → Gate Assignment → Skill Activation → Conflict Resolution → Unified Report
+```
+
+## Validation
+
+| Check | Method | Pass Criteria |
+|-------|--------|--------------|
+| All 16 skills registered | Registry table | All entries present and authoritative |
+| All 13 crates recognized | Crate map | Count correct, dependency flow mapped |
+| Authority boundaries clear | Boundary matrix | No overlapping veto power |
+| Engineering gates enforced | Gate checklist | Every task passes all required gates |
+| Unified report produced | Report template | Every task generates complete report |
+| Conflict resolution works | Conflict log | No unresolved conflicting recommendations |
+
+## Quality Gates
+
+- [ ] All 6 engineering gates passed for every task
+- [ ] Every skill produces a structured Engineering Report
+- [ ] Conflicts resolved with documented rationale
+- [ ] No skill overrides orchestrator decisions
+- [ ] SSOT-First protocol enforced
+- [ ] Pre-implementation analysis completed
+- [ ] Post-implementation verification completed
+
+## Dependencies
+
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-repository-intelligence (P16) | Upstream | Provides codebase understanding for Gate 1 |
+| kcm-specification-lock (P4) | Upstream | Validates contracts for Gate 2 |
+| kcm-architecture-guardian (P5) | Upstream | Validates architecture for Gate 2 |
+| kcm-task-planner (P2) | Upstream | Plans implementation for Gate 3 |
+| kcm-change-impact-analysis (P3) | Upstream | Assesses impact for Gate 3 |
+| kcm-code-quality-guardian (P10) | Upstream | Validates code quality for Gate 5 |
+| kcm-testing-verification (P9) | Upstream | Validates tests for Gate 5 |
+| kcm-release-readiness (P12) | Upstream | Validates release readiness for Gate 6 |
+
+## Related Skills
+
+| Skill | Relationship |
+|-------|-------------|
+| kcm-task-planner (P2) | Delegates planning to this skill |
+| kcm-change-impact-analysis (P3) | Delegates impact assessment to this skill |
+| kcm-specification-lock (P4) | Delegates contract validation to this skill |
+| kcm-architecture-guardian (P5) | Delegates architecture validation to this skill |
+| kcm-engineering-decision-record (P15) | Delegates decision capture to this skill |
+
+## SSOT References
+
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| SSOT.md | — | Single Source of Truth |
+| AGENTS.md | Section 9 | Decision Hierarchy |
+| AGENTS.md | Section 10 | Change Management |
+| AGENTS.md | Section 11 | Engineering Workflow |
+| AGENTS.md | Section 21 | AI Agent Behaviour |
+| AGENTS.md | Section 25 | Skill Governance |
+
+## Failure Conditions
+
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| Skill conflict unresolved | Task blocked | Engineering Orchestrator decides (P1) |
+| Gate bypassed | Quality risk | Orchestrator rejects task completion |
+| Skill overrides orchestrator | Authority violation | SSOT.md is final authority |
+| Incorrect skill activation | Domain mismatch | Orchestrator reassigns skill |
+| Report not produced | Audit gap | Task cannot be marked complete |
+
+## Escalation
+
+| Level | Path | SLA |
+|-------|------|-----|
+| 1 | Skill internal | 1 hour |
+| 2 | Higher priority skill | 4 hours |
+| 3 | Engineering Orchestrator (P1) | 24 hours |
+| 4 | SSOT.md | Final authority |
 
 ## Skill Registry
 
@@ -120,118 +192,35 @@ UNIFIED REPORT
 | P15 | kcm-engineering-decision-record | Decision authority | Long-term decision capture |
 | P16 | kcm-repository-intelligence | Codebase authority | Structure, dependencies, ownership |
 
----
-
-## Authority Boundaries
-
-### Specification Lock (P4) vs Database Engine Specialist (P6)
-
-**Specification Lock owns:**
-- Binary file format (magic bytes, header layout, column block format)
-- WAL entry format (byte layout, field order, entry sizes)
-- Public API contracts (function signatures, return types)
-- C FFI interface definitions
-- gRPC proto definitions
-- Error code enum variants
-- Schema evolution rules
-- Backward compatibility requirements
-
-**Can:** BLOCK any implementation that violates frozen contracts.
-**Cannot:** Design internal algorithms. Cannot own implementation details.
-
-**Database Engine Specialist owns:**
-- Storage algorithms (how columns store data)
-- Query execution logic (how operators process data)
-- Indexing implementation (how indexes are built and queried)
-- Compression implementation (how codecs encode/decode)
-- Transaction logic (how ACID is maintained)
-- Recovery implementation (how crash recovery works)
-
-**Can:** Choose implementation strategies. Decide algorithmic approach.
-**Cannot:** Change public contracts without specification-lock approval.
-
-**Resolution:** spec-lock decides IF the change is allowed (contract compliance). db-specialist decides HOW the change is implemented (algorithmic correctness). If db-specialist needs a contract change, spec-lock must approve first.
-
-### Architecture Guardian (P5) vs Specification Lock (P4)
-
-**Specification Lock (P4) owns:** Frozen data/protocol specifications.
-**Architecture Guardian (P5) owns:** System architecture, dependency boundaries, module responsibilities.
-
-**Resolution:** spec-lock (P4) has higher priority. If architecture change requires format change, spec-lock must approve the format change first. Architecture guardian then validates the architectural implications.
-
-### Task Planner (P2) vs Change Impact Analysis (P3)
-
-**Task Planner (P2) answers:** "What should be done?"
-- Creates implementation strategy
-- Defines execution order
-- Identifies required skills
-
-**Change Impact Analysis (P3) answers:** "What will break?"
-- Analyzes dependencies
-- Assesses compatibility
-- Identifies affected modules
-- Evaluates risks
-
-**Workflow:** Task Planner → Change Impact Analysis → Implementation
-
-### Code Quality Guardian (P10) vs Code Review Auditor (P13)
-
-**Code Quality Guardian (P10):** Automated prevention.
-- Rust patterns, unsafe usage, complexity, placeholders, dead code
-- Runs FIRST — rejects obviously bad code
-
-**Code Review Auditor (P13):** Senior engineer review.
-- Maintainability, architecture quality, long-term impact, design decisions
-- Runs AFTER — evaluates deeper quality concerns
-
----
-
 ## Engineering Gates
 
-Every task must pass through 6 mandatory gates. No task may be marked complete unless all required gates pass.
+Every task must pass through 6 mandatory gates:
 
 ### Gate 1 — Repository Understanding
-
 **Required skill:** kcm-repository-intelligence
-
-**Must verify:**
 - Understand crate structure (13 crates)
 - Identify affected modules
 - Map dependency relationships
-- Locate existing implementations
 
 ### Gate 2 — Specification Validation
-
 **Required skills:** kcm-specification-lock, kcm-architecture-guardian
-
-**Must verify:**
 - Frozen contracts identified
 - Format compatibility confirmed
 - Architecture alignment verified
-- Dependency boundaries respected
 
 ### Gate 3 — Implementation Planning
-
 **Required skills:** kcm-task-planner, kcm-change-impact-analysis
-
-**Must verify:**
 - Implementation strategy defined
-- Affected files listed
 - Impact assessment complete
 - Risks identified with mitigations
 
 ### Gate 4 — Implementation Validation
-
 **Required skills:** kcm-code-quality-guardian, kcm-testing-verification
-
-**Must verify:**
 - No placeholders or stubs
-- Error handling complete
 - Tests written and passing
 - No unwrap in production code
 
 ### Gate 5 — Domain Validation
-
 **Required skills:** (conditional based on change type)
 
 | Change Type | Required Skill |
@@ -240,75 +229,75 @@ Every task must pass through 6 mandatory gates. No task may be marked complete u
 | Security/compliance | kcm-security-engineer |
 | Performance | kcm-performance-engineer |
 | Documentation | kcm-documentation-guardian |
-| Server/gRPC | kcm-database-engine-specialist (storage), kcm-security-engineer (TLS/auth) |
 
 ### Gate 6 — Production Readiness
-
 **Required skill:** kcm-release-readiness
-
-**Must verify:**
-- `cargo build --release` passes (all 13 crates including kcm-server)
+- `cargo build --release` passes
 - `cargo test --workspace` all pass
 - `cargo clippy --workspace -- -D warnings` clean
 - `cargo fmt --all -- --check` clean
 - No performance regression > 5%
 
----
+## Authority Boundaries
 
-## Execution Flow
+### Specification Lock (P4) vs Database Engine Specialist (P6)
+- **P4 owns:** Binary format, WAL format, API contracts, FFI, gRPC proto, error codes, schema evolution
+- **P6 owns:** Storage algorithms, query execution, indexing, compression, transactions, recovery
+- **Resolution:** P4 decides IF (contract compliance). P6 decides HOW (algorithmic correctness). P6 needs P4 approval for contract changes.
 
-```
-Step 1: Repository Understanding
-  kcm-repository-intelligence → Where does the change belong?
+### Architecture Guardian (P5) vs Specification Lock (P4)
+- **P4 owns:** Frozen data/protocol specifications
+- **P5 owns:** System architecture, dependency boundaries, module responsibilities
+- **Resolution:** P4 has higher priority. Format changes require P4 approval first.
 
-Step 2: Specification Validation
-  kcm-specification-lock → Is the change contract-compliant?
-  kcm-architecture-guardian → Is the change architecturally sound?
+### Code Quality Guardian (P10) vs Code Review Auditor (P13)
+- **P10:** Automated prevention — runs FIRST
+- **P13:** Senior engineer review — runs AFTER
 
-Step 3: Planning
-  kcm-task-planner → What is the implementation plan?
-  kcm-change-impact-analysis → What will break?
+## SSOT-First Development Protocol
 
-Step 4: Implementation
-  Domain skills activate based on change type:
-  - kcm-database-engine-specialist (storage/query)
-  - kcm-security-engineer (security/compliance/gRPC-TLS)
-  - kcm-performance-engineer (performance-critical)
+Every engineering task MUST follow:
 
-Step 5: Verification
-  kcm-code-quality-guardian → Is the code production-ready?
-  kcm-testing-verification → Are tests adequate?
-  kcm-code-review-auditor → Is the design sound?
+1. **Requirement Discovery** — Find the SSOT requirement that mandates this change
+2. **Specification Check** — Verify the specification exists and is current
+3. **Implementation Planning** — Plan the implementation matching the specification
+4. **Code Implementation** — Write code that exactly matches the specification
+5. **Test Validation** — Write tests that validate against the specification
+6. **SSOT Verification** — Run `bash scripts/validate-ssot.sh`
+7. **Documentation Update** — Update SSOT if implementation reveals spec gaps
 
-Step 6: Release
-  kcm-release-readiness → Is it ready to ship?
-```
+## Pre-Implementation Analysis Requirements
 
----
+1. Requirements Traceability — Map change to SSOT requirement ID
+2. Architecture Impact — Assess impact on system architecture
+3. Dependency Analysis — Map affected dependencies
+4. Backward Compatibility — Assess breaking change potential
+5. Test Strategy — Define test approach matching specification
+6. Benchmark Strategy — Define performance validation approach
+7. Risk Assessment — Identify and mitigate risks
+8. Rollback Plan — Define how to revert if issues arise
+
+## Post-Implementation Verification Requirements
+
+1. SSOT Compliance — `bash scripts/validate-ssot.sh` passes
+2. Compilation — `cargo build --workspace` succeeds
+3. Tests — `cargo test --workspace` all pass
+4. Clippy — `cargo clippy --workspace -- -D warnings` clean
+5. Format — `cargo fmt --all -- --check` clean
+6. No Stubs — No placeholder implementations introduced
+7. No unwrap — No new unwrap() in production code
+8. No TODO — No new TODO/FIXME markers
+9. Documentation — SSOT updated if behavior changed
+10. Benchmark — Performance within 5% of baseline
 
 ## Conflict Resolution
 
 When skills disagree:
 
-1. **Higher priority wins** — P4 (spec-lock) overrides P6 (db-specialist)
-2. **Domain authority wins** — Within same priority, the skill with domain expertise wins
+1. **Higher priority wins** — P4 overrides P6
+2. **Domain authority wins** — Within same priority, domain expertise wins
 3. **Engineering priority wins** — Correctness > Specification > Data Integrity > Security > Reliability > Performance > Maintainability > Speed
-4. **Orchestrator is final** — If conflict cannot be resolved, orchestrator makes the final decision
-
----
-
-## Validation Criteria
-
-| Criterion | Pass Condition |
-|-----------|---------------|
-| All 16 skills registered | Registry table complete |
-| All 13 crates recognized | Crate count correct |
-| Authority boundaries clear | No overlapping veto power |
-| Engineering gates enforced | Every task passes all gates |
-| Unified report produced | Every task generates report |
-| Conflict resolution works | No conflicting recommendations |
-
----
+4. **Orchestrator is final** — If unresolved, orchestrator decides
 
 ## Forbidden Actions
 
@@ -319,105 +308,17 @@ When skills disagree:
 - Never allow conflicting recommendations without resolution
 - Never activate irrelevant skills
 
----
+## Examples
 
-## Output Format
+See [examples/](examples/) for usage examples.
 
-Every orchestrator decision produces this report:
+## Checklist
 
-```
-# KCM Engineering Report
+See [checklists/](checklists/) for validation checklists.
 
-## Skill
-kcm-engineering-orchestrator
+## References
 
-## Analysis
-[What task was performed and which skills were activated]
-
-## Findings
-[Key findings from each activated skill]
-
-## Decision
-APPROVE / REJECT / REQUIRE CHANGE
-
-## Specification Impact
-[Files or specs affected]
-
-## Code Impact
-[Files changed or to be changed]
-
-## Validation Required
-[Tests, benchmarks, or checks needed]
-
-## Risks
-[Remaining risks]
-
-## Skills Activated
-| Skill | Gate | Decision |
-|-------|------|----------|
-| ... | ... | APPROVE/REJECT |
-
-## Final Decision
-COMPLETE / BLOCKED / NEEDS REVIEW
-```
-
-## SSOT-First Development Protocol
-
-Every engineering task MUST follow this protocol:
-
-1. **Requirement Discovery**: Find the SSOT requirement that mandates this change
-2. **Specification Check**: Verify the specification exists and is current
-3. **Implementation Planning**: Plan the implementation matching the specification
-4. **Code Implementation**: Write code that exactly matches the specification
-5. **Test Validation**: Write tests that validate against the specification
-6. **SSOT Verification**: Run `bash scripts/validate-ssot.sh` to verify compliance
-7. **Documentation Update**: Update SSOT if implementation reveals spec gaps
-
-## Engineering Team Roles
-
-The AI agent operates as a complete engineering team simultaneously:
-
-| Role | Responsibility |
-|------|---------------|
-| CTO | Strategic technical decisions, architecture ownership |
-| Principal Engineer | Cross-crustechnical leadership, design review |
-| Senior Rust Engineer | Idiomatic Rust, memory safety, performance |
-| Database Engineer | Storage engine, query optimization, indexing |
-| Storage Engine Engineer | WAL, file format, compression, encoding |
-| Backend Engineer | API design, REST/gRPC, server architecture |
-| SDK Engineer | Language bindings, API consistency, developer experience |
-| DevOps Engineer | CI/CD, deployment, monitoring, infrastructure |
-| Security Engineer | Cryptography, RBAC, audit, compliance |
-| Performance Engineer | Benchmarking, profiling, optimization |
-| QA Engineer | Test strategy, quality gates, regression detection |
-| Release Engineer | Versioning, changelog, backward compatibility |
-| Technical Writer | Specification accuracy, documentation quality |
-| Enterprise Architect | System design, integration patterns, scalability |
-
-## Pre-Implementation Analysis Requirements
-
-Before writing any code, the agent MUST complete:
-
-1. **Requirements Traceability**: Map change to SSOT requirement ID
-2. **Architecture Impact**: Assess impact on system architecture
-3. **Dependency Analysis**: Map affected dependencies
-4. **Backward Compatibility**: Assess breaking change potential
-5. **Test Strategy**: Define test approach matching specification
-6. **Benchmark Strategy**: Define performance validation approach
-7. **Risk Assessment**: Identify and mitigate risks
-8. **Rollback Plan**: Define how to revert if issues arise
-
-## Post-Implementation Verification Requirements
-
-After writing code, the agent MUST verify:
-
-1. **SSOT Compliance**: `bash scripts/validate-ssot.sh` passes
-2. **Compilation**: `cargo build --workspace` succeeds
-3. **Tests**: `cargo test --workspace` all pass
-4. **Clippy**: `cargo clippy --workspace -- -D warnings` clean
-5. **Format**: `cargo fmt --all -- --check` clean
-6. **No Stubs**: No placeholder implementations introduced
-7. **No unwrap**: No new unwrap() in production code
-8. **No TODO**: No new TODO/FIXME markers
-9. **Documentation**: SSOT updated if behavior changed
-10. **Benchmark**: Performance within 5% of baseline
+- [SSOT.md](../../SSOT.md)
+- [AGENTS.md](../../AGENTS.md)
+- [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- [SECURITY.md](../../SECURITY.md)

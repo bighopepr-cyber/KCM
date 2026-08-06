@@ -1,254 +1,217 @@
----
-name: kcm-performance-engineer
-description: Ensure KCM meets performance targets through benchmark-driven development, SIMD optimization, memory efficiency, and algorithmic correctness
----
+# Performance Engineer
 
-# Skill: Performance Engineering
+> Document ID: KCM-SKILL-008 | Version: 2.0.0 | Status: Active
 
-## Skill Identity
+## Overview
 
-**Purpose:** Ensure KCM meets performance targets through benchmark-driven development, SIMD optimization, memory efficiency, and algorithmic correctness.
+Ensure KCM meets performance targets through benchmark-driven development, SIMD optimization, memory efficiency, and algorithmic correctness. This skill validates that every performance claim is backed by benchmarks, SIMD has runtime detection with scalar fallback, and memory usage meets targets.
 
-**Role:** Performance Engineer / SIMD Specialist
+## Mission
 
-**Scope:** Benchmarks, SIMD operations, memory allocation patterns, cache efficiency, algorithm complexity, and performance regression detection.
+Guarantee benchmark-backed performance claims, correct SIMD with scalar fallback, memory efficiency below 34 bytes per fact, and regression detection with 5% warning / 10% failure thresholds.
 
-**Non-responsibility:** Does not write functional code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not review security (Security Engineer). Does not review code quality (Code Quality Guardian).
+## Responsibilities
 
-**Measurable Outcomes:**
-- Every performance claim has a benchmark
-- All SIMD has runtime detection and scalar fallback
-- Performance regression threshold: 5% from baseline
-- Memory per fact target: < 34 bytes uncompressed
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Benchmark Validation | Ensure every performance claim has a criterion benchmark with realistic datasets (1K, 10K, 100K, 1M) |
+| 2 | SIMD Correctness | Validate AVX2 with runtime feature detection and scalar fallback for all SIMD operations |
+| 3 | Memory Efficiency | Verify DenseVec 64-byte alignment, pre-allocated capacity, bit-packed storage, < 34 bytes per fact |
+| 4 | Cache Locality | Validate sequential columnar access, no pointer chasing, contiguous memory layouts |
+| 5 | Algorithm Complexity | Verify O(n) scan/filter/aggregate, O(n+m) hash join, O(1) bitmap index |
+| 6 | Regression Detection | Enforce 5% warning and 10% failure thresholds from baseline |
+| 7 | Performance Profiling | Identify bottlenecks using CPU/memory profiling tools |
+| 8 | Hot Path Optimization | Eliminate unnecessary allocations and cloning in performance-critical paths |
 
----
+## Authority
 
-## Activation Rules
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P8 | Performance Engineer | Block performance regressions > 10% | Approve performance optimizations | Escalate to P1 (Orchestrator) or P5 (Architecture) |
 
-**Activate when:**
-- Performance-critical code is modified
-- Benchmark results are requested
-- SIMD operations are added or changed
-- Memory allocation patterns change
-- Algorithm complexity changes
-- Performance regression is suspected
+## Scope
 
-**Do NOT activate when:**
-- Functional correctness needed (use Code Quality Guardian)
-- Architecture review needed (use Architecture Guardian)
-- Security review needed (use Security Engineer)
-- Test coverage needed (use Testing Skill)
-- Code quality review (use Code Quality Guardian)
+| In Scope | Out of Scope |
+|----------|-------------|
+| kcm-core: vec.rs (DenseVec), bitmap.rs (64-bit ops) | Functional correctness review |
+| kcm-storage: column.rs, codec.rs, compress.rs, index.rs | Architecture decisions |
+| kcm-compute: algebra.rs (operators), simd.rs (AVX2) | Security review |
+| kcm-optimizer: planner.rs, cost_model.rs | Code quality review |
+| kcm-runtime: database.rs, executor.rs | Test writing |
+| kcm-ml: learned_index.rs | Documentation authoring |
+| kcm-server: grpc_server.rs (throughput) | Bug fixing |
+| Benchmarks in crates/*/benches/ | |
 
----
+## Non Goals
 
-## Required Context
+1. Writing or reviewing functional code (Code Quality Guardian responsibility)
+2. Architecture-level decisions (Architecture Guardian responsibility)
+3. Security or cryptographic review (Security Engineer responsibility)
+4. General code quality review (Code Quality Guardian responsibility)
+5. Writing unit or integration tests (Testing Skill responsibility)
+6. Authoring documentation (Documentation Guardian responsibility)
+7. Fixing functional bugs (Code Quality Guardian responsibility)
 
-1. `docs/KCM_PERFORMANCE_SPEC.md` — Performance targets and benchmarks
-2. `docs/KCM_TESTING_SPEC.md` — Benchmark methodology
-3. `crates/kcm-runtime/benches/micro.rs` — Existing benchmarks
-4. `crates/kcm-compute/src/simd.rs` — SIMD implementation
-5. The specific performance-critical code being reviewed
+## Inputs
 
----
+| Input | Source | Required |
+|-------|--------|----------|
+| KCM_PERFORMANCE_SPEC.md | docs/ directory | Yes |
+| KCM_TESTING_SPEC.md | docs/ directory | Yes |
+| crates/kcm-runtime/benches/micro.rs | Source | Yes (existing benchmarks) |
+| crates/kcm-compute/src/simd.rs | Source | Yes (SIMD changes) |
+| Proposed performance-critical change | Task Planner or developer | Yes |
+| Baseline benchmark results | benchmark-results/ directory | Yes (for regression detection) |
 
-## Crate Awareness
+## Outputs
 
-Performance-sensitive crates:
-
-| Crate | Performance-Relevant Files |
-|-------|---------------------------|
-| kcm-core | `vec.rs` (DenseVec alignment), `bitmap.rs` (64-bit word ops) |
-| kcm-storage | `column.rs`, `codec.rs`, `compress.rs`, `index.rs` |
-| kcm-compute | `algebra.rs` (operators), `simd.rs` (AVX2) |
-| kcm-optimizer | `planner.rs`, `cost_model.rs` |
-| kcm-runtime | `database.rs`, `executor.rs` |
-| kcm-ml | `learned_index.rs` |
-| kcm-server | `grpc_server.rs` (throughput) |
-
----
-
-## Operating Principles
-
-### Principle 1: Benchmark-Driven Development
-- Every performance claim must have a benchmark
-- Benchmarks must use realistic datasets (1K, 10K, 100K, 1M)
-- Benchmarks must be reproducible via `cargo bench`
-- Performance regression threshold: 5% from baseline
-
-### Principle 2: SIMD Discipline
-- AVX2 for x86_64 with runtime feature detection
-- Scalar fallback for all SIMD operations
-- SIMD for bulk operations (scan, filter, count)
-- Don't SIMD for small arrays (< 32 elements)
-
-### Principle 3: Memory Efficiency
-- DenseVec with 64-byte cache-line alignment
-- Pre-allocated capacity (no reallocation in hot path)
-- Bit-packed storage for Bitmap and BloomFilter
-- Per-fact memory target: < 34 bytes uncompressed
-
-### Principle 4: Cache Locality
-- Columnar storage enables sequential access
-- Avoid pointer chasing in hot paths
-- Use slice iteration over index-based access
-- Prefer contiguous memory layouts
-
-### Principle 5: Algorithm Complexity
-- Scan: O(n)
-- Filter: O(n)
-- Join: O(n+m) hash join
-- Aggregate: O(n)
-- Index lookup: O(1) for bitmap, O(log n) for zone map
-
----
-
-## Engineering Workflow
-
-### Performance Review Checklist
-
-```
-□ Hot path has benchmark coverage
-□ No unnecessary allocations in hot path
-□ No unnecessary cloning in hot path
-□ SIMD used for bulk operations
-□ SIMD has scalar fallback
-□ Cache-friendly data access patterns
-□ Algorithm complexity matches specification
-□ Memory usage within targets
-□ No lock contention in hot path
-□ Benchmark uses realistic dataset sizes
-```
-
-### SIMD Review
-
-```
-1. Check target_feature attribute
-2. Verify runtime feature detection (is_x86_feature_detected!)
-3. Verify scalar fallback exists
-4. Check chunk size matches SIMD width (32 bytes for AVX2)
-5. Verify remainder handling (chunks_exact + remainder)
-6. Test on non-AVX2 platform (scalar path)
-```
-
-### Benchmark Review
-
-```
-1. Verify benchmark uses Criterion.rs
-2. Check dataset sizes match specification
-3. Verify benchmark measures what it claims
-4. Check for benchmark anti-patterns:
-   - Reduced workload
-   - Unrealistic datasets
-   - Missing warmup
-   - Measuring setup time
-5. Compare against specification targets
-```
-
----
-
-## Validation Criteria
-
-| Metric | Target | Measurement |
+| Output | Format | Destination |
 |--------|--------|-------------|
-| Column scan | > 100M ops/sec | Criterion benchmark |
-| Bitmap operations | > 8M ops/sec | Criterion benchmark |
-| Dictionary lookup | < 100ns | Criterion benchmark |
-| Insert throughput | > 50K facts/sec | Load test |
-| Query P99 (1M facts) | < 100ms | Load test |
-| Memory per fact | < 34 bytes | Static analysis |
-| Compression ratio | > 5x | Compressed/uncompressed |
+| Performance report | Markdown with benchmark tables | Engineering Orchestrator (P1) |
+| SIMD assessment | Checklist-based report | Calling skill or CI |
+| Regression verdict | PASS/WARNING/FAIL with thresholds | Release pipeline |
+| Optimization recommendations | List of required changes | Developer or P1 |
 
----
-
-## Failure Prevention Rules
-
-1. **Never allow performance claims without benchmarks**
-2. **Never allow SIMD without runtime feature detection**
-3. **Never allow SIMD without scalar fallback**
-4. **Never allow benchmarks with unrealistic datasets**
-5. **Never allow unnecessary allocations in hot paths**
-6. **Never allow pointer chasing in columnar scan paths**
-7. **Never allow benchmark results without comparison to targets**
-
----
-
-## Final Report Format
+## Workflow
 
 ```
-# KCM Engineering Report
-
-## Skill
-kcm-performance-engineer
-
-## Component Reviewed
-[What was reviewed]
-
-## Benchmark Status
-| Benchmark | Target | Actual | Status |
-|-----------|--------|--------|--------|
-| ... | ... | ... | PASS/FAIL |
-
-## SIMD Assessment
-- AVX2 implementation: [present/missing]
-- Scalar fallback: [present/missing]
-- Runtime detection: [present/missing]
-
-## Memory Assessment
-- Per-fact memory: [N bytes]
-- Bitmap efficiency: [bit-packed/vec<bool>]
-- Allocation patterns: [acceptable/concerning]
-
-## Algorithm Complexity
-| Operation | Expected | Actual |
-|-----------|----------|--------|
-| ... | O(...) | O(...) |
-
-## Specification Impact
-[files]
-
-## Code Impact
-[files]
-
-## Validation Required
-[tests/benchmarks]
-
-## Verdict
-PASS / FAIL
-
-## Required Optimizations
-[List of required changes]
+1. Receive performance-related change request or benchmark request
+2. Read KCM_PERFORMANCE_SPEC.md and KCM_TESTING_SPEC.md
+3. Run baseline benchmarks to establish current performance
+4. Verify performance target exists in SSOT
+5. Profile to identify bottleneck if optimization requested
+6. Review SIMD implementation: runtime detection, scalar fallback, chunk size
+7. Review memory patterns: alignment, pre-allocation, bit-packing
+8. Review algorithm complexity: scan O(n), join O(n+m), index O(1)
+9. Check for hot path anti-patterns: unnecessary alloc, cloning, pointer chasing
+10. Compare results against specification targets
+11. Calculate regression from baseline (warning: 5%, failure: 10%)
+12. Produce performance report with PASS/WARNING/FAIL verdict
 ```
 
-## SSOT-First Performance Protocol
+## Decision Process
 
-Every performance change MUST follow this protocol:
+```
+Performance Change / Benchmark Request
+  ↓
+Establish Baseline (run existing benchmarks)
+  ↓
+SSOT Target Exists? ──→ NO → BLOCK (no target to validate against)
+  ↓ (YES)
+Run Benchmarks on Modified Code
+  ↓
+Regression > 10%? ──→ YES → BLOCK (merge blocked)
+  ↓ (NO)
+Regression > 5%? ──→ YES → WARNING (requires justification)
+  ↓ (NO or justified)
+SIMD Correct?
+  ├── Runtime detection present? ──→ NO → BLOCK
+  ├── Scalar fallback present? ──→ NO → BLOCK
+  └── Chunk size matches width? ──→ NO → WARNING
+  ↓
+Memory Within Target (< 34 bytes/fact)?
+  └── NO → WARNING / BLOCK
+  ↓
+APPROVE with performance report
+```
 
-1. **Baseline**: Run benchmarks to establish current performance
-2. **SSOT Target**: Verify performance target exists in SSOT
-3. **Profile**: Identify bottleneck using CPU/memory profiling
-4. **Optimize**: Implement optimization matching SSOT target
-5. **Measure**: Verify improvement with benchmarks
-6. **Validate**: Ensure no correctness regressions
-7. **Document**: Update SSOT if behavior changed
+## Validation
 
-## Performance Targets (from SSOT)
+| Check | Method | Pass Criteria |
+|-------|--------|---------------|
+| Column scan throughput | Criterion benchmark | > 100M ops/sec |
+| Bitmap operations | Criterion benchmark | > 8M ops/sec |
+| Dictionary lookup | Criterion benchmark | < 100ns |
+| Insert throughput | Load test | > 50K facts/sec |
+| Query P99 latency (1M facts) | Load test | < 100ms |
+| Memory per fact | Static analysis | < 34 bytes uncompressed |
+| Compression ratio | Compressed/uncompressed | > 5x |
+| SIMD runtime detection | Code inspection | `is_x86_feature_detected!` present |
+| SIMD scalar fallback | Code inspection | Fallback path exists |
+| SIMD chunk size | Code inspection | Matches SIMD width (32 bytes for AVX2) |
+| No unnecessary allocations | Hot path inspection | Zero alloc in hot loops |
+| No pointer chasing | Code inspection | Sequential access patterns |
+| Algorithm complexity | Analysis | Matches specification targets |
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Column scan 1M facts | < 10ms | Criterion benchmark |
-| Dictionary lookup | < 100ns | Criterion benchmark |
-| Bitmap AND 1M bits | < 1ms | Criterion benchmark |
-| Insert throughput | > 50K facts/sec | Load test |
-| Query latency P99 | < 100ms | Load test |
-| Memory per fact | < 100 bytes | Memory profiling |
+## Quality Gates
 
-## Benchmark Validation Rules
+- [ ] `cargo check --workspace` passes clean
+- [ ] Every performance claim has a criterion benchmark
+- [ ] All SIMD has runtime feature detection (`is_x86_feature_detected!`)
+- [ ] All SIMD has scalar fallback
+- [ ] SIMD chunk size matches SIMD width (32 bytes for AVX2)
+- [ ] No unnecessary allocations in hot paths
+- [ ] No unnecessary cloning in hot paths
+- [ ] No pointer chasing in columnar scan paths
+- [ ] Memory per fact < 34 bytes uncompressed
+- [ ] Benchmark uses realistic dataset sizes (1K, 10K, 100K, 1M)
+- [ ] Regression from baseline < 5% (or justified)
+- [ ] No `unwrap()` in production code paths
 
-| Rule | Description |
-|------|-------------|
-| B-01 | Every benchmark must measure real workload |
-| B-02 | Every benchmark must have reproducible results |
-| B-03 | Benchmark regression > 5% triggers warning |
-| B-04 | Benchmark regression > 10% blocks merge |
-| B-05 | New features must include benchmarks |
+## Dependencies
+
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-architecture-guardian (P5) | Upstream gate | Validates performance changes don't break architecture |
+| kcm-database-engine-specialist (P6) | Parallel | P6 validates storage correctness; P8 validates storage performance |
+| kcm-code-quality-guardian (P10) | Downstream | Validates code quality after performance review |
+| kcm-testing-verification (P9) | Downstream | Validates benchmark correctness and coverage |
+| kcm-engineering-orchestrator (P1) | Escalation | Resolves performance conflicts |
+
+## Related Skills
+
+| Skill | Relationship |
+|-------|-------------|
+| kcm-database-engine-specialist (P6) | P6 validates storage correctness; P8 validates storage performance |
+| kcm-architecture-guardian (P5) | P5 validates architecture; P8 validates performance within architecture |
+| kcm-code-quality-guardian (P10) | P10 reviews code quality; P8 reviews performance quality |
+| kcm-testing-verification (P9) | P9 writes tests; P8 writes benchmarks |
+
+## SSOT References
+
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| SSOT.md | Performance Targets | Column scan > 100M ops/sec, bitmap > 8M ops/sec, etc. |
+| AGENTS.md | §14 Performance Rules | Performance targets, regression thresholds, benchmark policy |
+| AGENTS.md | §19 Benchmark Policy | Benchmark methodology, regression detection |
+| docs/KCM_PERFORMANCE_SPEC.md | All sections | Performance targets and methodology |
+| docs/KCM_TESTING_SPEC.md | Benchmark section | Benchmark setup and execution |
+
+## Failure Conditions
+
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| Performance claim without benchmark | Unverifiable claim | BLOCK (require benchmark) |
+| SIMD without runtime detection | Platform portability failure | BLOCK immediately |
+| SIMD without scalar fallback | Platform portability failure | BLOCK immediately |
+| Benchmark regression > 10% | Merge blocked | BLOCK immediately |
+| Unnecessary allocations in hot path | Performance degradation | WARNING or BLOCK |
+| Pointer chasing in scan path | Cache miss penalty | WARNING or BLOCK |
+| Memory per fact > 34 bytes | Storage budget exceeded | WARNING or BLOCK |
+| Benchmark with unrealistic dataset | Misleading results | BLOCK (require realistic data) |
+| Benchmark results without target comparison | Incomplete validation | WARNING (require target) |
+
+## Escalation
+
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Performance Engineer resolves internally | 4 hours |
+| Level 2 | Escalate to Architecture Guardian (P5) for architecture disputes | 8 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is final authority for performance targets | 48 hours |
+
+## Examples
+
+See [examples/](examples/) for performance review examples.
+
+## Checklist
+
+See [checklists/](checklists/) for performance validation checklists.
+
+## References
+
+- [SSOT.md](../../SSOT.md)
+- [AGENTS.md](../../AGENTS.md)
+- [KCM_SPECIFICATION.md](../../KCM_SPECIFICATION.md)
+- [docs/KCM_PERFORMANCE_SPEC.md](../../docs/KCM_PERFORMANCE_SPEC.md)
+- [docs/KCM_TESTING_SPEC.md](../../docs/KCM_TESTING_SPEC.md)

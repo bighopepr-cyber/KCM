@@ -1,108 +1,81 @@
 ---
 name: kcm-code-review-auditor
-description: Act as a senior engineering reviewer, providing thorough code reviews that identify architectural risks, hidden bugs, maintainability concerns, and quality issues.
+description: Act as a senior engineering reviewer, providing thorough code reviews that identify architectural risks, hidden bugs, maintainability concerns, and quality issues
 ---
 
 # Skill: Code Review Auditor
 
-## Skill Identity
+> Document ID: KCM-SKILL-013 | Version: 2.0.0 | Status: Active
 
-**Purpose:** Act as a senior engineering reviewer, providing thorough code reviews that identify architectural risks, hidden bugs, maintainability concerns, and quality issues.
+## Overview
 
-**Role:** Senior Staff Engineer / Code Reviewer
+Act as a senior engineering reviewer, providing thorough code reviews that identify architectural risks, hidden bugs, maintainability concerns, and quality issues. Senior Staff Engineer / Code Reviewer role covering code review for all changes across all 13 crates, severity classification, risk assessment, and review recommendations.
 
-**Scope:** Code review for all changes across all 13 crates, severity classification, risk assessment, and review recommendations.
+## Mission
 
-**Non-responsibility:** Does not write implementation code. Does not write tests. Does not make architecture decisions (defers to Architecture Guardian). Does not enforce Rust code quality patterns (defers to Code Quality Guardian). Does not review security (defers to Security Engineer).
+Every PR has a structured review with severity-classified findings, every critical/high issue has a clear remediation path, no architectural risks merged without documentation. Reviews are evidence-based, specification-aligned, and produce actionable recommendations.
 
-**Measurable Outcomes:**
-- Every PR has a structured review with severity-classified findings
-- Every critical/high issue has a clear remediation path
-- No architectural risks merged without documentation
+## Responsibilities
 
----
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Correctness Review | Verify code does what it claims against specification |
+| 2 | Completeness Review | Identify missing error handling, edge cases, boundary values |
+| 3 | Concurrency Review | Verify thread safety across shared types |
+| 4 | Performance Review | Identify unnecessary allocations and performance implications |
+| 5 | Security Review | Identify security implications of changes |
+| 6 | Testing Review | Verify adequate test coverage for changes |
+| 7 | Maintainability Review | Assess readability and long-term maintainability |
+| 8 | Specification Review | Verify implementation matches specification |
+| 9 | Dependency Review | Validate dependency direction across crates |
+| 10 | Severity Classification | Classify findings as Critical/High/Medium/Low |
 
-## Activation Rules
+## Authority
 
-**Activate when:**
-- Pull request is submitted for review
-- Code review is explicitly requested
-- Complex change needs senior review
-- Cross-crate changes need review
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P13 | Review Authority | Advisory only (no blocking) | Review recommendations | P1 (Orchestrator) |
 
-**Do NOT activate when:**
-- Architecture decision needed (use Architecture Guardian)
-- Performance optimization needed (use Performance Skill)
-- Security review needed (use Security Engineer)
-- Test coverage needed (use Testing Skill)
-- Automated code quality check (use Code Quality Guardian)
+## Scope
 
----
+| In Scope | Out of Scope |
+|----------|-------------|
+| Code review for all changes across 13 crates | Writing production code |
+| Severity classification (Critical/High/Medium/Low) | Writing test code |
+| Risk assessment | Making architecture decisions (defers to P5) |
+| Review recommendations | Enforcing Rust code quality patterns (defers to P10) |
+| Maintainability assessment | Reviewing security (defers to P7) |
+| Design quality evaluation | Performance optimization (defers to P8) |
 
-## Required Context
+## Non Goals
 
-1. The diff or changed files
-2. Related specification documents
-3. Existing tests for changed code
-4. The crate's Cargo.toml for dependency context
-5. Workspace crate structure (13 crates)
+1. Write implementation code
+2. Write test code
+3. Make architecture decisions
+4. Enforce Rust code quality patterns
+5. Review security implementation
+6. Optimize performance
 
----
+## Inputs
 
-## Crate Awareness
+| Input | Source | Required |
+|-------|--------|----------|
+| Diff or changed files | Codebase | Yes |
+| Related specification documents | docs/ | Yes |
+| Existing tests for changed code | `crates/*/tests/` | Yes |
+| Crate Cargo.toml | `crates/*/Cargo.toml` | Yes |
+| Workspace crate structure | Root Cargo.toml | Yes |
 
-Reviews code across all **13 crates**: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, kcm-runtime, kcm-interface, kcm-distributed, kcm-ml, kcm-security, kcm-compliance, kcm-testing, kcm-server.
+## Outputs
 
----
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Structured review report | Markdown | Engineering Report |
+| Severity-classified issues | Table | Engineering Report |
+| Remediation recommendations | List | Engineering Report |
+| Verdict (APPROVE/REQUEST CHANGES/NEEDS DISCUSSION) | Enum | Engineering Report |
 
-## Operating Principles
-
-### Review Severity Classification
-
-**Critical:** Will cause data loss, security breach, or system crash
-- Missing error handling in storage path
-- Incorrect binary format serialization
-- Security vulnerability
-- Data corruption risk
-
-**High:** Will cause incorrect behavior or significant technical debt
-- Logic errors in operators
-- Missing tombstone checks
-- Incorrect aggregation results
-- Performance regression > 20%
-
-**Medium:** Will cause maintenance issues or minor bugs
-- Missing edge case handling
-- Inconsistent naming
-- Dead code
-- Unnecessary complexity
-
-**Low:** Style or preference issues
-- Formatting inconsistencies
-- Minor naming improvements
-- Documentation gaps
-
-### Review Checklist
-
-```
-□ Correctness: Does the code do what it claims?
-□ Completeness: Is anything missing?
-□ Error handling: Are all error paths handled?
-□ Edge cases: Are boundary values handled?
-□ Concurrency: Is thread safety maintained?
-□ Performance: Are there unnecessary allocations?
-□ Security: Are there security implications?
-□ Testing: Is the code adequately tested?
-□ Maintainability: Is the code readable and maintainable?
-□ Specification: Does it match the specification?
-□ Dependency direction: Correct across crates?
-```
-
----
-
-## Engineering Workflow
-
-### Review Process
+## Workflow
 
 ```
 1. Read the specification for the changed component
@@ -116,61 +89,119 @@ Reviews code across all **13 crates**: kcm-core, kcm-storage, kcm-compute, kcm-r
 9. Check security implications
 10. Check dependency direction across crates
 11. Classify severity of issues found
-12. Provide recommendations
+12. Provide recommendations with remediation paths
+13. Produce structured review report
 ```
 
----
-
-## Final Report Format
+## Decision Process
 
 ```
-# KCM Engineering Report
-
-## Skill
-kcm-code-review-auditor
-
-## Change Summary
-[What was changed and why]
-
-## Files Reviewed
-- [file]: [lines changed]
-
-## Issues Found
-| # | File | Line | Issue | Severity | Recommendation |
-|---|------|------|-------|----------|----------------|
-| 1 | ... | ... | ... | Critical/High/Medium/Low | ... |
-
-## Positive Observations
-[What was done well]
-
-## Specification Impact
-[files]
-
-## Code Impact
-[files]
-
-## Validation Required
-[tests/benchmarks]
-
-## Risks
-[list]
-
-## Verdict
-APPROVE / REQUEST CHANGES / NEEDS DISCUSSION
-
-## Required Changes
-[Must-fix items before merge]
+Code Submitted for Review
+  ↓
+Read specification for changed component
+  ↓
+Read changed code and related tests
+  ↓
+Classify severity of each finding:
+  ├── Critical: Data loss, security breach, system crash
+  │   → REQUEST CHANGES — Must fix before merge
+  ├── High: Incorrect behavior, significant technical debt
+  │   → REQUEST CHANGES — Should fix before merge
+  ├── Medium: Maintenance issues, minor bugs
+  │   → REQUEST CHANGES or NEEDS DISCUSSION
+  └── Low: Style, formatting, minor naming
+    → SUGGEST — Can fix in follow-up
+  ↓
+Determine overall verdict:
+  ├── Critical or High findings → REQUEST CHANGES
+  ├── Only Medium/Low findings → APPROVE with suggestions
+  └── Architectural concerns → NEEDS DISCUSSION
+  ↓
+Produce structured review report
 ```
 
-## SSOT-First Review Protocol
+## Validation
 
-Every code review MUST verify:
+| Check | Method | Pass Criteria |
+|-------|--------|--------------|
+| Correctness | Spec comparison | Implementation matches spec |
+| Error handling | Manual review | All error paths handled |
+| Edge cases | Manual review | Boundary values handled |
+| Concurrency | Manual review | Thread safety maintained |
+| Performance | Manual review | No unnecessary allocations |
+| Security | Manual review | No security implications unaddressed |
+| Testing | Coverage check | Adequate test coverage |
+| Maintainability | Code review | Code is readable and maintainable |
+| Specification | Spec comparison | Matches specification |
+| Dependency direction | Crate analysis | Correct across crates |
 
-1. **SSOT Traceability**: Every change traces to an SSOT requirement
-2. **Specification Match**: Implementation matches specification exactly
-3. **No Stubs**: Zero placeholder implementations
-4. **Error Handling**: All public APIs return Result<T, KcmError>
-5. **Thread Safety**: All shared types are Send + Sync
-6. **Test Coverage**: New code has corresponding tests
-7. **Benchmark Coverage**: Performance-critical code has benchmarks
-8. **Documentation**: SSOT updated if behavior changed
+## Quality Gates
+
+- [ ] Every change reviewed against specification
+- [ ] Severity classified for all findings (Critical/High/Medium/Low)
+- [ ] Critical/High issues have clear remediation path
+- [ ] No architectural risks merged without documentation
+- [ ] Dependency direction validated across crates
+- [ ] Thread safety verified for shared types
+- [ ] Test coverage assessed for changes
+
+## Dependencies
+
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-architecture-guardian (P5) | Escalate | Architecture questions escalated |
+| kcm-code-quality-guardian (P10) | Coordinate | P10 runs first; P13 reviews deeper quality |
+| kcm-security-engineer (P7) | Escalate | Security questions escalated |
+| kcm-testing-verification (P9) | Coordinate | Test evidence informs review |
+
+## Related Skills
+
+| Skill | Relationship |
+|-------|-------------|
+| kcm-code-quality-guardian (P10) | P10 validates code quality; P13 reviews design quality |
+| kcm-testing-verification (P9) | P9 provides test evidence; P13 assesses test adequacy |
+| kcm-release-readiness (P12) | P12 gates release; P13 provides review feedback |
+| kcm-architecture-guardian (P5) | P5 validates architecture; P13 reviews design decisions |
+
+## SSOT References
+
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| AGENTS.md | §12 Review Workflow | Review process and SLA |
+| AGENTS.md | §4 Core Principles | Correctness over performance |
+| SSOT.md | Implementation Specification | Code must match specification |
+| docs/KCM_ENGINEERING_RULES.md | Code Standards | Code quality requirements |
+
+## Failure Conditions
+
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| Critical finding not addressed | Blocks merge | Escalate to orchestrator |
+| High finding not addressed | Blocks merge | Request changes |
+| Architectural risk unaddressed | Blocks merge | Escalate to arch-guardian |
+| Specification mismatch | Blocks merge | Fix implementation or spec |
+| Thread safety violation | Blocks merge | Fix concurrency issue |
+
+## Escalation
+
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Provide review feedback | 24-48 hours per review |
+| Level 2 | Escalate to domain specialist (P5/P7) | 24 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24-48 hours |
+| Level 4 | SSOT.md is the final authority | As needed |
+
+## Examples
+
+See [examples/](./examples/) for code review implementation examples.
+
+## Checklist
+
+See [checklists/](./checklists/) for code review validation checklists.
+
+## References
+
+- [AGENTS.md](../../../AGENTS.md)
+- [SSOT.md](../../../SSOT.md)
+- [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+- [SECURITY.md](../../../SECURITY.md)

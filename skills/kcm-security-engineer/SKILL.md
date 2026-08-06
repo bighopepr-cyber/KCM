@@ -1,312 +1,231 @@
----
-name: kcm-security-engineer
-description: Ensure KCM security implementation is cryptographically correct, follows best practices, and protects against known attack vectors
----
+# Security Engineer
 
-# Skill: Security Engineering
+> Document ID: KCM-SKILL-007 | Version: 2.0.0 | Status: Active
 
-## Skill Identity
+## Overview
 
-**Purpose:** Ensure KCM's security implementation is cryptographically correct, follows security best practices, and protects against known attack vectors.
+Ensure KCM's security implementation is cryptographically correct, follows security best practices, and protects against known attack vectors. This skill validates encryption, RBAC, audit logging, GDPR compliance, data classification, and gRPC/TLS transport security.
 
-**Role:** Security Engineer / Cryptographer
+## Mission
 
-**Scope:** Encryption (AES-256-GCM), key management, RBAC, audit logging, data classification, GDPR compliance, gRPC/TLS security, and all security-sensitive code paths across kcm-security, kcm-compliance, and kcm-server.
+Guarantee AES-256-GCM encryption with BLAKE3 KDF, zero hardcoded keys, RBAC with no privilege escalation, immutable audit events, and TLS-enforced gRPC transport across all security-sensitive code paths.
 
-**Non-responsibility:** Does not review general code quality (Code Quality Guardian). Does not write functional tests (Testing Skill). Does not review architecture (Architecture Guardian). Does not review code design quality (Code Review Auditor).
+## Responsibilities
 
-**Measurable Outcomes:**
-- All encryption uses AES-256-GCM with BLAKE3 KDF
-- Zero hardcoded keys or passwords
-- RBAC has no privilege escalation paths
-- Audit events are immutable after creation
-- gRPC transport uses TLS with proper certificate validation
-- GDPR operations verify consent before execution
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Encryption Validation | Verify AES-256-GCM with BLAKE3 KDF, CSPRNG key generation, 12-byte random nonce, AEAD |
+| 2 | RBAC Enforcement | Validate 5 permission levels, ACL → Role → Deny algorithm, context isolation, no privilege escalation |
+| 3 | Audit Log Integrity | Ensure hash-chained audit events, O(1) eviction via VecDeque, 100K capacity, immutability |
+| 4 | Key Management | Verify keys derived via KDF, never logged or stored in code, zeroized on drop |
+| 5 | GDPR Compliance | Validate consent verification before operations, 6 operations, data subject rights |
+| 6 | Data Classification | Enforce 4-tier classification system with retention policies |
+| 7 | Transport Security | Ensure TLS required for gRPC, certificate validation, authentication on all endpoints |
+| 8 | Threat Assessment | Assess security impact of all changes touching security-sensitive code |
 
----
+## Authority
 
-## Activation Rules
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P7 | Security Engineer | Block security and compliance violations | Approve security changes | Escalate to P4 (Spec Lock) or P1 (Orchestrator) |
 
-**Activate when:**
-- Encryption code is modified
-- RBAC or permission logic changes
-- Audit logging changes
-- Key management code changes
-- Security-sensitive operations are added
-- User input handling changes
-- Data classification logic changes
-- gRPC server security changes (TLS, auth)
-- Compliance logic changes
+## Scope
 
-**Do NOT activate when:**
-- General code quality review (use Code Quality Guardian)
-- Performance optimization (use Performance Skill)
-- Architecture review (use Architecture Guardian)
-- Test-only changes (use Testing Skill)
+| In Scope | Out of Scope |
+|----------|-------------|
+| kcm-security: encryption.rs, rbac.rs, audit.rs | General code quality review |
+| kcm-compliance: gdpr.rs, data_classification.rs | Architecture-level decisions |
+| kcm-server: grpc_server.rs, grpc_main.rs (TLS, auth) | Performance optimization |
+| All security-sensitive code paths across crates | Functional test writing |
+| gRPC proto definitions (security implications) | Query engine correctness |
+| Input validation on all public interfaces | Storage format validation |
+| Null-pointer guards on all FFI functions | Documentation authoring |
 
----
+## Non Goals
 
-## Required Context
+1. Reviewing general code quality or style (Code Quality Guardian responsibility)
+2. Writing functional unit or integration tests (Testing Skill responsibility)
+3. Architecture-level decisions (Architecture Guardian responsibility)
+4. Code design quality review (Code Review Auditor responsibility)
+5. Performance optimization of security code (Performance Engineer responsibility)
+6. Authoring security documentation (Documentation Guardian responsibility)
 
-1. `docs/KCM_SECURITY_TRUST_SPEC.md` — Security specification
-2. `crates/kcm-security/src/encryption.rs` — Encryption implementation
-3. `crates/kcm-security/src/rbac.rs` — RBAC implementation
-4. `crates/kcm-security/src/audit.rs` — Audit logging
-5. `crates/kcm-compliance/src/gdpr.rs` — GDPR compliance
-6. `crates/kcm-compliance/src/data_classification.rs` — Data classification
-7. `crates/kcm-server/src/grpc_server.rs` — gRPC server security
-8. `crates/kcm-interface/proto/kcm.proto` — Proto definitions (security implications)
+## Inputs
 
----
+| Input | Source | Required |
+|-------|--------|----------|
+| KCM_SECURITY_TRUST_SPEC.md | docs/ directory | Yes |
+| crates/kcm-security/src/encryption.rs | Source | Yes (for encryption changes) |
+| crates/kcm-security/src/rbac.rs | Source | Yes (for RBAC changes) |
+| crates/kcm-security/src/audit.rs | Source | Yes (for audit changes) |
+| crates/kcm-compliance/src/gdpr.rs | Source | Yes (for compliance changes) |
+| crates/kcm-compliance/src/data_classification.rs | Source | Yes (for classification changes) |
+| crates/kcm-server/src/grpc_server.rs | Source | Yes (for gRPC security changes) |
+| crates/kcm-interface/proto/kcm.proto | Source | Yes (for proto changes) |
 
-## Crate Awareness
+## Outputs
 
-### Primary Scope: kcm-security
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Security assessment report | Markdown report with tables | Engineering Orchestrator (P1) |
+| Cryptographic verification | Algorithm/key/nonce checklist | Release pipeline |
+| Vulnerability report | List of security findings | Security team and P1 |
 
-| File | Responsibility |
-|------|---------------|
-| `encryption.rs` | AES-256-GCM, BLAKE3 KDF, CSPRNG key generation |
-| `rbac.rs` | Role-based access control, 5 permission levels, ACL → Role → Deny |
-| `audit.rs` | Audit logging, 5 event types, O(1) eviction |
-
-### Secondary Scope: kcm-compliance
-
-| File | Responsibility |
-|------|---------------|
-| `gdpr.rs` | GDPR data subject management, consent verification |
-| `data_classification.rs` | 4-tier classification system |
-
-### Tertiary Scope: kcm-server
-
-| File | Responsibility |
-|------|---------------|
-| `grpc_server.rs` | gRPC server — TLS configuration, authentication, authorization |
-| `grpc_main.rs` | gRPC main — server startup, TLS setup |
-
----
-
-## Operating Principles
-
-### Principle 1: Cryptographic Correctness
-- AES-256-GCM for authenticated encryption (AEAD)
-- BLAKE3 for key derivation and hashing
-- CSPRNG (getrandom) for key generation
-- 12-byte random nonce per encryption
-- 256-bit keys only
-
-### Principle 2: No Fake Security
-- No XOR "encryption"
-- No hardcoded keys
-- No time-based key generation
-- No weak hash functions (MD5, SHA1)
-- No ECB mode
-
-### Principle 3: Defense in Depth
-- Encryption at rest
-- RBAC for access control
-- Audit logging for accountability
-- Data classification for retention
-- GDPR for data subject rights
-- TLS for transport security (gRPC)
-
-### Principle 4: Secure Defaults
-- Encryption enabled by default
-- Audit logging enabled by default
-- RBAC deny by default
-- No insecure fallbacks
-- TLS required for gRPC connections
-
-### Principle 5: Key Management
-- Keys derived from passwords via KDF
-- Random keys from OS CSPRNG
-- Keys never stored in code
-- Keys never logged
-
----
-
-## Engineering Workflow
-
-### Encryption Review
+## Workflow
 
 ```
-1. Verify algorithm is AES-256-GCM (not XOR, not AES-CBC)
-2. Verify key derivation uses BLAKE3 KDF (not raw hash)
-3. Verify key generation uses CSPRNG (not time-based)
-4. Verify nonce is 12 bytes and random
-5. Verify encryption provides AEAD (confidentiality + integrity)
-6. Verify file encryption roundtrip test exists
-7. Verify wrong key produces decryption error
+1. Receive security-related change request
+2. Read KCM_SECURITY_TRUST_SPEC.md
+3. Perform threat assessment for the change
+4. Verify encryption algorithm is AES-256-GCM (not XOR, not AES-CBC)
+5. Verify key derivation uses BLAKE3 KDF (not raw hash)
+6. Verify key generation uses CSPRNG (not time-based)
+7. Verify nonce is 12 bytes and random
+8. Verify encryption provides AEAD (confidentiality + integrity)
+9. Verify RBAC has 5 permission levels with no privilege escalation
+10. Verify audit log has hash-chained integrity and O(1) eviction
+11. Verify GDPR consent verification before operations
+12. Verify TLS required for gRPC connections with certificate validation
+13. Verify no hardcoded keys or credentials in codebase
+14. Produce security assessment report with PASS/FAIL verdict
 ```
 
-### RBAC Review
+## Decision Process
 
 ```
-1. Verify 5 permission levels (Read, Write, Delete, Execute, Admin)
-2. Verify Role/User/ACLManager structure
-3. Verify authorization algorithm (ACL → Role → Deny)
-4. Verify no privilege escalation paths
-5. Verify context isolation works
-6. Verify concurrent access safety
+Security Change Request
+  ↓
+Identify Security Domain (Encryption/RBAC/Audit/GDPR/Classification/TLS)
+  ↓
+Read Relevant Specification
+  ↓
+Threat Assessment
+  ↓
+Cryptographic Correctness Check
+  ↓
+Correct? ──→ NO → BLOCK (vulnerability found)
+  ↓ (YES)
+Access Control Check
+  ↓
+No Escalation? ──→ NO → BLOCK (privilege escalation)
+  ↓ (YES)
+Transport Security Check
+  ↓
+TLS Enforced? ──→ NO → BLOCK (plaintext risk)
+  ↓ (YES)
+Compliance Check
+  ↓
+Consent Verified? ──→ NO → BLOCK (GDPR violation)
+  ↓ (YES)
+APPROVE with security report
 ```
 
-### Audit Review
+## Validation
 
-```
-1. Verify 5 event types (Query, Insert, Delete, Rule, Denied)
-2. Verify audit log has capacity limit
-3. Verify O(1) eviction (VecDeque, not Vec)
-4. Verify thread safety (Arc<Mutex>)
-5. Verify events are immutable once logged
-```
+| Check | Method | Pass Criteria |
+|-------|--------|---------------|
+| Encryption algorithm | Code inspection | AES-256-GCM |
+| Key derivation | Code inspection | BLAKE3 KDF with context string |
+| Key generation | Code inspection | CSPRNG (getrandom) |
+| Nonce | Code inspection | 12 bytes random |
+| AEAD | Code inspection | Authenticated encryption |
+| Encryption roundtrip | Test | encrypt → decrypt = identity |
+| Wrong key handling | Test | Decryption fails |
+| RBAC permissions | Code inspection | 5 levels (Read, Write, Delete, Execute, Admin) |
+| Authorization algorithm | Code inspection | ACL → Role → Deny |
+| Context isolation | Test | Per-context permissions enforced |
+| Audit event types | Code inspection | 5 types (Query, Insert, Delete, Rule, Denied) |
+| Audit capacity | Code inspection | 100K max events |
+| Audit eviction | Code inspection | O(1) VecDeque |
+| GDPR consent | Code inspection | 3 states verified before operations |
+| GDPR operations | Code inspection | 6 operations implemented |
+| Data classification | Code inspection | 4 tiers with retention policies |
+| gRPC TLS | Code inspection | TLS required |
+| gRPC authentication | Code inspection | Enforced on all endpoints |
+| gRPC authorization | Code inspection | Checks on protected operations |
 
-### Compliance Review
+## Quality Gates
 
-```
-1. Verify GDPR consent verification before operations
-2. Verify data classification enforcement
-3. Verify data subject rights implementation
-4. Verify retention policy enforcement
-```
+- [ ] `cargo check --workspace` passes clean
+- [ ] All encryption uses AES-256-GCM with BLAKE3 KDF
+- [ ] Zero hardcoded keys, tokens, or credentials
+- [ ] CSPRNG for all random number generation
+- [ ] 12-byte random nonce per encryption
+- [ ] RBAC has no privilege escalation paths
+- [ ] Audit events are immutable after creation
+- [ ] Audit log uses O(1) VecDeque eviction
+- [ ] GDPR consent verified before operations
+- [ ] TLS required for all gRPC connections
+- [ ] Certificate validation enabled
+- [ ] No `unsafe` without documented `// SAFETY:` justification
+- [ ] Security changes reviewed by P7 (Security Engineer)
 
-### gRPC/TLS Review
+## Dependencies
 
-```
-1. Verify TLS is required for gRPC connections
-2. Verify certificate validation is enabled
-3. Verify authentication is enforced on all endpoints
-4. Verify authorization checks on protected operations
-5. Verify no plaintext transport for sensitive data
-```
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-specification-lock (P4) | Upstream gate | Validates frozen security contracts |
+| kcm-architecture-guardian (P5) | Upstream gate | Validates security architecture |
+| kcm-code-quality-guardian (P10) | Downstream | Validates code quality after security review |
+| kcm-testing-verification (P9) | Downstream | Validates security test coverage |
+| kcm-engineering-orchestrator (P1) | Escalation | Resolves security conflicts |
 
----
+## Related Skills
 
-## Validation Criteria
+| Skill | Relationship |
+|-------|-------------|
+| kcm-specification-lock (P4) | P4 validates frozen security contracts; P7 validates security implementation |
+| kcm-architecture-guardian (P5) | P5 validates security architecture; P7 validates cryptographic correctness |
+| kcm-compliance (kcm-compliance crate) | P7 enforces compliance via kcm-compliance implementation |
+| kcm-testing-verification (P9) | P9 writes security tests; P7 validates security semantics |
+| kcm-database-engine-specialist (P6) | P6 handles storage; P7 handles storage encryption |
 
-| Component | Criterion | Pass Condition |
-|-----------|-----------|---------------|
-| Encryption | Algorithm | AES-256-GCM |
-| Encryption | Key derivation | BLAKE3 KDF |
-| Encryption | Key generation | CSPRNG (getrandom) |
-| Encryption | Nonce | 12 bytes random |
-| Encryption | Roundtrip | encrypt→decrypt = identity |
-| Encryption | Wrong key | Decryption fails |
-| RBAC | Permissions | 5 levels |
-| RBAC | Authorization | ACL → Role → Deny |
-| RBAC | Context isolation | Per-context permissions |
-| Audit | Event types | 5 types |
-| Audit | Capacity | 100K max |
-| Audit | Eviction | O(1) VecDeque |
-| GDPR | Consent | 3 states |
-| GDPR | Operations | 6 operations |
-| Classification | Levels | 4 tiers |
-| gRPC/TLS | Transport | TLS required |
-| gRPC/TLS | Authentication | Enforced on all endpoints |
-| gRPC/TLS | Authorization | Checks on protected ops |
+## SSOT References
 
----
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| SSOT.md | Security Model | AES-256-GCM, BLAKE3, RBAC 5 levels |
+| AGENTS.md | §13 Security Rules | Non-negotiable security rules |
+| AGENTS.md | §13.2 Security Model | Encryption, RBAC, audit, compliance specs |
+| docs/PRD3.md | §4 | Security and compliance specifications |
+| docs/KCM_SECURITY_TRUST_SPEC.md | All sections | Security specification |
+| crates/kcm-security/proto/kcm.proto | All sections | gRPC proto security implications |
 
-## Failure Prevention Rules
+## Failure Conditions
 
-1. **Never allow XOR or weak encryption**
-2. **Never allow hardcoded keys or passwords**
-3. **Never allow time-based key generation**
-4. **Never allow keys to be logged or stored in code**
-5. **Never allow RBAC to have privilege escalation paths**
-6. **Never allow audit events to be modified after creation**
-7. **Never allow encryption without authentication (AEAD)**
-8. **Never allow GDPR operations without consent verification**
-9. **Never allow gRPC without TLS**
-10. **Never allow plaintext transport for sensitive data**
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| XOR or weak encryption used | Vulnerability — data breach risk | BLOCK immediately |
+| Hardcoded keys or passwords | Vulnerability — credential exposure | BLOCK immediately |
+| Time-based key generation | Vulnerability — predictable keys | BLOCK immediately |
+| Keys logged or stored in code | Vulnerability — credential exposure | BLOCK immediately |
+| RBAC privilege escalation | Vulnerability — unauthorized access | BLOCK immediately |
+| Audit events modifiable after creation | Vulnerability — tampering risk | BLOCK immediately |
+| Encryption without AEAD | Vulnerability — no integrity check | BLOCK immediately |
+| GDPR operations without consent | Compliance violation | BLOCK immediately |
+| gRPC without TLS | Vulnerability — plaintext transport | BLOCK immediately |
 
----
+## Escalation
 
-## Final Report Format
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Security Engineer resolves internally | 2 hours (critical) / 4 hours (standard) |
+| Level 2 | Escalate to Specification Lock (P4) for contract disputes | 8 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is final authority for security specifications | 48 hours |
 
-```
-# KCM Engineering Report
+## Examples
 
-## Skill
-kcm-security-engineer
+See [examples/](examples/) for security review examples.
 
-## Component Reviewed
-[Encryption/RBAC/Audit/GDPR/Classification/gRPC-TLS]
+## Checklist
 
-## Cryptographic Assessment
-| Check | Status | Details |
-|-------|--------|---------|
-| Algorithm | AES-256-GCM / OTHER | ... |
-| Key derivation | BLAKE3 KDF / OTHER | ... |
-| Key generation | CSPRNG / OTHER | ... |
-| Nonce | 12 bytes random / OTHER | ... |
-| AEAD | Yes / No | ... |
+See [checklists/](checklists/) for security validation checklists.
 
-## Access Control Assessment
-| Check | Status |
-|-------|--------|
-| 5 permission levels | PASS/FAIL |
-| Authorization algorithm | PASS/FAIL |
-| Context isolation | PASS/FAIL |
-| No privilege escalation | PASS/FAIL |
+## References
 
-## Transport Security Assessment
-| Check | Status |
-|-------|--------|
-| TLS required | PASS/FAIL |
-| Certificate validation | PASS/FAIL |
-| Authentication enforced | PASS/FAIL |
-
-## Compliance Assessment
-| Check | Status |
-|-------|--------|
-| GDPR consent verification | PASS/FAIL |
-| Data classification enforcement | PASS/FAIL |
-
-## Specification Impact
-[files]
-
-## Code Impact
-[files]
-
-## Verdict
-PASS / FAIL
-
-## Security Vulnerabilities
-[List of vulnerabilities found]
-```
-
-## SSOT-First Security Protocol
-
-Every security change MUST follow this protocol:
-
-1. **Identify SSOT Requirement**: Find the requirement in PRD3.md §4 or KCM_SECURITY_TRUST_SPEC
-2. **Verify Current Implementation**: Check if current code matches SSOT
-3. **Threat Assessment**: Assess security impact of change
-4. **Implement**: Write code matching security specification exactly
-5. **Test**: Write security tests validating against specification
-6. **Audit**: Run security test suite
-7. **Validate**: Full quality gate suite
-
-## Security Engine Quality Standards
-
-| Standard | Requirement | Verification |
-|----------|-------------|-------------|
-| RBAC | 5 permission levels enforced | Security tests |
-| Encryption | AES-256-GCM with 12-byte nonce | Encryption tests |
-| Key Derivation | BLAKE3 with context string | Key tests |
-| Key Zeroization | write_volatile in Drop | Code review |
-| Audit Log | Hash-chained integrity | Audit tests |
-| GDPR | Consent management, right to deletion | Compliance tests |
-| Data Classification | 4 tiers with retention policies | Classification tests |
-
-## Security Invariants
-
-These invariants MUST be maintained in all changes:
-
-| Invariant | Enforcement |
-|-----------|-------------|
-| Key never logged or persisted | Code review |
-| Nonce never reused | Random generation |
-| Audit chain integrity maintained | Hash verification |
-| RBAC checked before every operation | Authorization tests |
-| Sensitive data zeroized on drop | Drop implementation |
-| No timing side channels | Constant-time operations |
+- [SSOT.md](../../SSOT.md)
+- [AGENTS.md](../../AGENTS.md)
+- [KCM_SPECIFICATION.md](../../KCM_SPECIFICATION.md)
+- [docs/PRD3.md](../../docs/PRD3.md)
+- [docs/KCM_SECURITY_TRUST_SPEC.md](../../docs/KCM_SECURITY_TRUST_SPEC.md)

@@ -1,266 +1,206 @@
----
-name: kcm-architecture-guardian
-description: Maintain architectural integrity and PRD alignment across all KCM changes
----
+# Architecture Guardian
 
-# Skill: Architecture Guardian
+> Document ID: KCM-SKILL-005 | Version: 2.0.0 | Status: Active
 
-## Skill Identity
+## Overview
 
-**Purpose:** Maintain architectural integrity of the KCM system across all changes, ensuring every implementation decision aligns with the PRD specifications and architectural principles.
+Maintain architectural integrity of the KCM system across all changes, ensuring every implementation decision aligns with the PRD specifications and architectural principles. This skill enforces dependency direction, interface contracts, separation of concerns, and system invariants across all 13 crates.
 
-**Role:** Principal Software Architect
+## Mission
 
-**Scope:** All crates, all modules, all architectural decisions, dependency boundaries, and system invariants.
+Ensure zero dependency direction violations, zero circular dependencies, consistent public API contracts (`Result<T, KcmError>`), and PRD traceability for all architectural decisions.
 
-**Non-responsibility:** Does not write implementation code. Does not perform performance optimization. Does not write tests. Does not review code quality (Code Quality Guardian). Does not review security (Security Engineer).
+## Responsibilities
 
-**Measurable Outcomes:**
-- Zero dependency direction violations in workspace
-- Every public API returns `Result<T, KcmError>`
-- Zero circular dependencies
-- Every storage format change is versioned
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Dependency Hygiene | Enforce unidirectional dependency flow: core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server |
+| 2 | API Contract Enforcement | Validate all public APIs return `Result<T, KcmError>` and match specification |
+| 3 | Separation of Concerns | Prevent cross-layer violations between storage, compute, reasoning, and interface |
+| 4 | Format Versioning | Ensure every storage format change includes a version bump |
+| 5 | Invariant Preservation | Maintain all system invariants: column equal length, tombstone persistence, WAL self-containment |
+| 6 | PRD Traceability | Trace every architectural decision to a PRD requirement |
+| 7 | Architecture Documentation | Document non-trivial architectural decisions as ADRs |
 
----
+## Authority
 
-## Activation Rules
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P5 | Architecture Guardian | Block architecture violations | Approve architectural decisions | Escalate to P1 (Orchestrator) or SSOT.md |
 
-**Activate when:**
-- Any new crate, module, or major component is added
-- Dependency graph changes (new dependency, version bump, removal)
-- Public API changes (new function, changed signature, removed function)
-- Storage format changes (file format, WAL format, column layout)
-- Architecture decisions that affect multiple crates
-- PRD/specification alignment questions arise
-- Pull request touches 3+ crates simultaneously
+## Scope
 
-**Do NOT activate when:**
-- Bug fix within a single module (use Code Quality Guardian)
-- Test-only changes (use Testing Skill)
-- Documentation-only changes (use Documentation Guardian)
-- Performance optimization within existing architecture (use Performance Skill)
-- Security implementation (use Security Engineer)
+| In Scope | Out of Scope |
+|----------|-------------|
+| All crate boundaries and dependency directions | Writing implementation code |
+| Public API signatures and return types | Performance optimization |
+| Storage format versioning and layout | Security implementation |
+| System invariants across crates | General code quality review |
+| Cross-crate interface contracts | Test writing |
+| PRD/specification alignment | Documentation authoring |
+| Architecture Decision Records | Bug fix details within a single module |
 
----
+## Non Goals
 
-## Required Context
+1. Writing or modifying production implementation code
+2. Performing performance benchmarks or optimizations
+3. Writing unit or integration tests
+4. Reviewing code quality or style (Code Quality Guardian responsibility)
+5. Reviewing security or cryptographic correctness (Security Engineer responsibility)
+6. Authoring documentation (Documentation Guardian responsibility)
 
-Before making any architectural decision, read these files in order:
+## Inputs
 
-1. `docs/PRD.md` — Core specification (highest priority)
-2. `docs/PRD2.md` — Persistence, optimizer, monitoring
-3. `docs/PRD3.md` — Distributed, ML, security, compliance
-4. `PRD-TESTING& BRACHMARCK.md` — Testing and benchmarks (note: space before BRACHMARCK)
-5. `docs/KCM_SPECIFICATION.md` — Technical constitution
-6. `docs/KCM_ARCHITECTURE.md` — System architecture
-7. `Cargo.toml` (workspace root) — Dependency graph
-8. The specific crate's `Cargo.toml` being modified
+| Input | Source | Required |
+|-------|--------|----------|
+| PRD documents (PRD.md, PRD2.md, PRD3.md) | docs/ directory | Yes |
+| KCM_SPECIFICATION.md | docs/ directory | Yes |
+| KCM_ARCHITECTURE.md | docs/ directory | Yes |
+| Workspace Cargo.toml | Root directory | Yes |
+| Crate-specific Cargo.toml | Crate directory | Yes |
+| Proposed change description | Task Planner or developer | Yes |
+| Existing source files in affected crates | crates/ directory | Yes |
 
----
+## Outputs
 
-## Crate Architecture
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Architecture decision | Markdown ADR | docs/adr/ directory |
+| Validation report | Markdown report | Engineering Orchestrator (P1) |
+| PRD alignment status | Markdown report | Task Planner (P2) |
+| Blocking verdict | PASS/FAIL with rationale | Calling skill or CI |
 
-The workspace contains **13 crates**:
-
-```
-kcm-core          → Types, DenseVec, Bitmap, Dictionary (zero internal deps)
-kcm-storage       → Columns, Codecs, WAL, FileFormat, Index, Backup, Recovery, Errors, DictCodec
-kcm-compute       → Algebra operators, SIMD AVX2
-kcm-reasoning     → Rules, Forward-chaining inference
-kcm-optimizer     → Cost model, Planner, Statistics, Rewriting, Adaptive
-kcm-runtime       → Database, Transactions, Metrics, Health, Executor
-kcm-interface     → C FFI, Python, REST, KQL parser
-kcm-distributed   → Sharding (Hash/Range/ConsistentHash), 2PC Coordinator
-kcm-ml            → Learned Index, Confidence Learner, Rule Discovery
-kcm-security      → RBAC, AES-256-GCM encryption, Audit Log
-kcm-compliance    → GDPR Manager, Data Classification
-kcm-testing       → Load/Stress/Security/Recovery test infrastructure, Metrics Dashboard
-kcm-server        → gRPC server, gRPC main, main entry point
-```
-
-**Dependency flow:**
-```
-core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
-```
-
----
-
-## Operating Principles
-
-### Principle 1: Specification Traceability
-Every architectural decision must trace to a PRD requirement. If a decision cannot be traced, it must be documented as a new architectural decision with rationale.
-
-### Principle 2: Dependency Hygiene
-- kcm-core must have ZERO internal dependencies
-- No circular crate dependencies allowed
-- Dependencies flow downward only: core → storage → compute/reasoning/optimizer/distributed/ml → runtime → interface → server
-- New external dependencies require justification
-
-### Principle 3: Separation of Concerns
-- Storage layer knows nothing about query execution
-- Compute layer knows nothing about persistence
-- Reasoning layer knows nothing about storage format
-- Interface layer knows nothing about internal data structures
-- Server layer knows nothing about internal data structures
-
-### Principle 4: Interface Stability
-- Public APIs must return `Result<T, KcmError>`
-- Breaking changes require version bump
-- C FFI functions must validate null pointers
-- Builder pattern methods consume `self`
-- gRPC proto definitions must be stable
-
-### Principle 5: Data Integrity Invariants
-- Schema column lengths must always be equal
-- Tombstone bitmap size must equal column capacity
-- WAL entries must be self-contained (no external references)
-- File format must be deterministic and versioned
-
----
-
-## Engineering Workflow
-
-### Before Implementation
+## Workflow
 
 ```
-1. Read PRD requirement
-2. Locate specification section
-3. Check existing architecture for conflicts
-4. Verify dependency direction is correct
-5. Confirm no circular dependencies introduced
-6. Document architectural decision if non-trivial
+1. Receive change request or trigger activation
+2. Read PRD requirement and locate specification section
+3. Read KCM_SPECIFICATION.md and KCM_ARCHITECTURE.md
+4. Identify affected crates and dependency graph impact
+5. Verify no circular dependencies introduced
+6. Verify dependency direction is correct (unidirectional flow)
+7. Check existing architecture for conflicts
+8. Verify public API contracts match specification
+9. Confirm no cross-layer violations
+10. Validate storage format changes are versioned
+11. Document architectural decision if non-trivial
+12. Produce validation report with PASS/FAIL verdict
 ```
 
-### During Implementation
+## Decision Process
 
 ```
-1. Verify each public API matches specification
-2. Check error handling uses KcmError variants correctly
-3. Confirm no cross-layer violations
-4. Validate storage format changes are backward compatible
-5. Check that new code doesn't break existing invariants
+Change Request
+  ↓
+Identify Affected Crates
+  ↓
+Check Dependency Direction ──→ VIOLATION → BLOCK
+  ↓ (OK)
+Check Circular Dependencies ──→ VIOLATION → BLOCK
+  ↓ (OK)
+Check API Contract ──→ MISMATCH → BLOCK
+  ↓ (OK)
+Check Separation of Concerns ──→ VIOLATION → BLOCK
+  ↓ (OK)
+Check Format Versioning ──→ MISSING → BLOCK
+  ↓ (OK)
+Check PRD Traceability ──→ UNTRACEABLE → DOCUMENT NEW ADR
+  ↓ (OK)
+APPROVE with report
 ```
 
-### After Implementation
+## Validation
 
-```
-1. Run `cargo check --workspace` — must compile clean
-2. Verify dependency graph hasn't changed unexpectedly
-3. Confirm all public APIs documented
-4. Validate PRD traceability for new code
-```
+| Check | Method | Pass Criteria |
+|-------|--------|---------------|
+| Dependency direction | `cargo tree` analysis | Unidirectional flow only |
+| Circular dependencies | `cargo tree --workspace` | Zero cycles |
+| API contract | Source inspection | All public functions return `Result<T, KcmError>` |
+| Format versioning | Header inspection | Version byte present and incremented |
+| System invariants | Invariant checklist | All invariants preserved |
+| Separation of concerns | Cross-layer import analysis | No cross-layer violations |
+| Crate count | Workspace analysis | Exactly 13 crates |
+| PRD traceability | Requirement mapping | Every change traces to a PRD section |
 
----
+## Quality Gates
 
-## Files Validated
+- [ ] `cargo check --workspace` passes clean
+- [ ] No circular dependencies in workspace
+- [ ] Unidirectional dependency flow maintained
+- [ ] All public APIs return `Result<T, KcmError>`
+- [ ] Storage format changes versioned
+- [ ] No `unwrap()` in production code paths
+- [ ] No placeholder implementations
+- [ ] PRD traceability documented
+- [ ] Architecture Decision Record created for non-trivial decisions
 
-| Crate | Files |
-|-------|-------|
-| kcm-core | `types.rs`, `vec.rs`, `bitmap.rs`, `dictionary.rs` |
-| kcm-storage | `column.rs`, `codec.rs`, `compress.rs`, `file_format.rs`, `wal.rs`, `index.rs`, `dict_codec.rs`, `errors.rs`, `backup.rs`, `recovery.rs` |
-| kcm-compute | `algebra.rs`, `simd.rs` |
-| kcm-reasoning | `rule.rs`, `inference.rs` |
-| kcm-optimizer | `cost_model.rs`, `planner.rs`, `statistics.rs`, `rewriting.rs`, `adaptive.rs` |
-| kcm-runtime | `database.rs`, `transaction.rs`, `executor.rs`, `async_executor.rs`, `metrics.rs`, `health.rs` |
-| kcm-interface | `lib.rs`, `rest_api.rs`, `kql_parser.rs`, `python.rs` |
-| kcm-distributed | `sharding.rs`, `coordinator.rs` |
-| kcm-ml | `learned_index.rs`, `confidence_learner.rs`, `rule_discovery.rs` |
-| kcm-security | `rbac.rs`, `encryption.rs`, `audit.rs` |
-| kcm-compliance | `gdpr.rs`, `data_classification.rs` |
-| kcm-testing | `security_tests.rs`, `load_tests.rs`, `stress_tests.rs`, `regression_detector.rs`, `metrics_dashboard.rs` |
-| kcm-server | `grpc_server.rs`, `grpc_main.rs`, `main.rs` |
+## Dependencies
 
----
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-task-planner (P2) | Provides context | Supplies task plan and change description |
+| kcm-specification-lock (P4) | Upstream gate | Validates frozen contracts before architecture review |
+| kcm-code-quality-guardian (P10) | Downstream | Validates code quality after architecture approval |
+| kcm-testing-verification (P9) | Downstream | Validates test coverage after architecture approval |
+| kcm-documentation-guardian (P11) | Downstream | Validates documentation after architecture approval |
+| kcm-engineering-orchestrator (P1) | Escalation | Resolves architecture conflicts |
 
-## Validation Criteria
+## Related Skills
 
-| Criterion | Pass Condition |
-|-----------|---------------|
-| PRD Traceability | Every new function traces to a PRD requirement |
-| Dependency Direction | No upward or circular dependencies |
-| API Consistency | All public functions return Result<T, KcmError> |
-| Format Compatibility | File format changes are versioned |
-| Invariant Preservation | All system invariants maintained |
-| Separation of Concerns | No cross-layer violations |
-| Crate Count | 13 crates in workspace |
+| Skill | Relationship |
+|-------|-------------|
+| kcm-specification-lock (P4) | P4 validates frozen contracts; P5 validates architecture |
+| kcm-database-engine-specialist (P6) | P6 implements storage; P5 validates storage architecture |
+| kcm-code-quality-guardian (P10) | P10 reviews code quality; P5 reviews architectural quality |
+| kcm-code-review-auditor (P13) | P13 reviews code design; P5 reviews system design |
 
----
+## SSOT References
 
-## Failure Prevention Rules
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| SSOT.md | Repository Structure | 13-crate architecture and dependency flow |
+| AGENTS.md | §6 Repository Structure Rules | Crate map, dependency flow, dependency policy |
+| AGENTS.md | §7 SSOT Authority | SSOT-first development rules |
+| docs/PRD.md | §3-4 | Core storage and compute specifications |
+| docs/PRD2.md | §2-5 | Storage, runtime, optimizer specifications |
+| docs/PRD3.md | §1-2 | Distributed and ML architecture |
+| docs/KCM_SPECIFICATION.md | All sections | Technical constitution |
+| docs/KCM_ARCHITECTURE.md | All sections | System architecture |
 
-1. **Never allow a crate to depend on a crate above it in the hierarchy**
-2. **Never add an external dependency without justification**
-3. **Never change a public API without updating the specification**
-4. **Never modify the file format without version bump**
-5. **Never allow `unwrap()` in production code paths**
-6. **Never allow a function to silently swallow errors**
-7. **Never allow placeholder implementations in production code**
+## Failure Conditions
 
----
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| Circular dependency introduced | Build failure, architectural violation | BLOCK immediately |
+| Dependency direction violated | Layering violation, maintenance risk | BLOCK immediately |
+| Public API doesn't return Result | Contract violation | BLOCK immediately |
+| Format change without version bump | Data corruption risk | BLOCK immediately |
+| Cross-layer violation | Maintainability degradation | BLOCK immediately |
+| `unwrap()` in production code | Panic risk | BLOCK immediately |
+| Non-trivial decision undocumented | Knowledge loss | DOCUMENT before proceeding |
 
-## Final Report Format
+## Escalation
 
-```
-# KCM Engineering Report
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Architecture Guardian resolves internally | 4 hours |
+| Level 2 | Escalate to Specification Lock (P4) for contract disputes | 8 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is final authority | 48 hours |
 
-## Skill
-kcm-architecture-guardian
+## Examples
 
-## Decision
-[What architectural decision was made]
+See [examples/](examples/) for architecture review examples.
 
-## PRD Reference
-[Which PRD section requires this]
+## Checklist
 
-## Impact Assessment
-- Affected crates: [list]
-- Dependency changes: [yes/no + details]
-- API changes: [yes/no + details]
-- Format changes: [yes/no + details]
+See [checklists/](checklists/) for architecture validation checklists.
 
-## Invariant Check
-- [ ] Dependency direction correct
-- [ ] No circular dependencies
-- [ ] Public API returns Result
-- [ ] Format changes versioned
-- [ ] System invariants preserved
+## References
 
-## Specification Impact
-[files]
-
-## Code Impact
-[files]
-
-## Validation Required
-[tests/benchmarks]
-
-## Verdict
-APPROVED / REJECTED / NEEDS DISCUSSION
-
-## Rationale
-[Why this verdict]
-```
-
-## SSOT-First Architecture Protocol
-
-Every architecture change MUST follow this protocol:
-
-1. **Identify SSOT Requirement**: Find the architecture requirement
-2. **Verify Current Architecture**: Check if current code matches SSOT
-3. **Assess Impact**: Evaluate impact on system architecture
-4. **Plan Change**: Define how change maintains architecture integrity
-5. **Implement**: Write code matching architecture specification
-6. **Validate**: Verify architecture consistency maintained
-
-## Architecture Invariants
-
-These invariants MUST be maintained in all changes:
-
-| Invariant | Enforcement |
-|-----------|-------------|
-| Single responsibility | Each crate has one responsibility |
-| Dependency direction | Dependencies flow upward only |
-| No circular dependencies | Enforced by Cargo |
-| Interface segregation | Public APIs are minimal |
-| Encapsulation | Internal details not exposed |
-| Consistency | Similar operations have similar interfaces |
+- [SSOT.md](../../SSOT.md)
+- [AGENTS.md](../../AGENTS.md)
+- [KCM_SPECIFICATION.md](../../KCM_SPECIFICATION.md)
+- [docs/PRD.md](../../docs/PRD.md)
+- [docs/PRD2.md](../../docs/PRD2.md)
+- [docs/PRD3.md](../../docs/PRD3.md)

@@ -1,263 +1,244 @@
 ---
 name: kcm-release-readiness
-description: Validate that the KCM codebase is ready for production release by verifying build, tests, performance, security, and quality standards.
+description: Validate that the KCM codebase is ready for production release by verifying build, tests, performance, security, and quality standards
 ---
 
 # Skill: Release Readiness
 
-## Skill Identity
+> Document ID: KCM-SKILL-012 | Version: 2.0.0 | Status: Active
 
-**Purpose:** Validate that the KCM codebase is ready for production release by verifying build, tests, performance, security, and quality standards.
+## Overview
 
-**Role:** Release Engineer
+Validate that the KCM codebase is ready for production release by verifying build, tests, performance, security, and quality standards. Release Engineer role covering build verification, test suite validation, performance benchmarking, security checks, quality gates, and production readiness assessment for all 13 crates.
 
-**Scope:** Build verification, test suite validation, performance benchmarking, security checks, quality gates, and production readiness assessment for all 13 crates.
+## Mission
 
-**Non-responsibility:** Does not write code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not review security (Security Engineer).
+All 13 crates build successfully, all tests pass with 100% pass rate, no performance regression > 5%, no known security vulnerabilities, all documentation up to date. Release is blocked until all quality gates pass.
 
-**Measurable Outcomes:**
-- `cargo build --release --workspace` passes (0 errors)
-- `cargo test --workspace` passes (100% pass rate, >= 372 tests)
-- `cargo clippy --workspace -- -D warnings` passes (0 warnings)
-- `cargo fmt --all -- --check` passes
-- No performance regression > 5%
-- All 13 crates build successfully
+## Responsibilities
 
----
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Build Verification | Validate debug and release builds for all 13 crates |
+| 2 | Test Suite Validation | Verify all test categories pass (unit, integration, property, security, load, stress, recovery) |
+| 3 | Performance Benchmarking | Verify benchmarks within targets, no regression > 5% |
+| 4 | Security Verification | Check for hardcoded keys, weak encryption, RBAC/audit functionality |
+| 5 | Documentation Verification | Ensure all specs up to date, audit report current, README accurate |
+| 6 | Version Management | Apply correct version bump per change type |
+| 7 | Changelog Management | Document all changes in changelog |
+| 8 | SSOT Validation | Run `bash scripts/validate-ssot.sh` and verify compliance |
 
-## Activation Rules
+## Authority
 
-**Activate when:**
-- Release candidate is prepared
-- Production deployment is planned
-- Quality gate verification is needed
-- CI/CD pipeline validation is needed
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P12 | Release Authority | Can block releases | Release readiness decisions | P1 (Orchestrator) |
 
-**Do NOT activate when:**
-- Development-phase code review (use Code Quality Guardian)
-- Architecture changes (use Architecture Guardian)
-- Performance optimization (use Performance Skill)
-- Security implementation (use Security Engineer)
+## Scope
 
----
+| In Scope | Out of Scope |
+|----------|-------------|
+| Build verification for all 13 crates | Writing production code (P10) |
+| Test suite validation | Architecture review (P5) |
+| Performance benchmark validation | Performance optimization (P8) |
+| Security vulnerability scanning | Security implementation (P7) |
+| Documentation completeness check | Test writing (P9) |
+| Version bumping and changelog | Code quality review (P10) |
 
-## Required Context
+## Non Goals
 
-1. `docs/KCM_DOCUMENT_AUDIT_REPORT.md` — Current audit status
-2. `docs/KCM_PERFORMANCE_SPEC.md` — Performance targets
-3. `docs/KCM_TESTING_SPEC.md` — Testing standards
-4. `.github/workflows/ci.yml` — CI pipeline
-5. `tools/build.sh` — Build script
-6. `tools/test.sh` — Test script
+1. Write production implementation code
+2. Review architecture or design patterns
+3. Optimize performance
+4. Implement security features
+5. Write test code
+6. Make architecture decisions
 
----
+## Inputs
 
-## Crate Awareness
+| Input | Source | Required |
+|-------|--------|----------|
+| Audit status | `docs/KCM_DOCUMENT_AUDIT_REPORT.md` | Yes |
+| Performance targets | `docs/KCM_PERFORMANCE_SPEC.md` | Yes |
+| Testing standards | `docs/KCM_TESTING_SPEC.md` | Yes |
+| CI pipeline config | `.github/workflows/ci.yml` | Yes |
+| Build script | `tools/build.sh` | Yes |
+| Test script | `tools/test.sh` | Yes |
 
-Build validation covers all **13 crates**:
+## Outputs
 
-| Crate | Key Validation |
-|-------|---------------|
-| kcm-core | Core types compile, all tests pass |
-| kcm-storage | Storage engine compiles, format tests pass |
-| kcm-compute | Operators and SIMD compile |
-| kcm-reasoning | Rules and inference compile |
-| kcm-optimizer | Cost model and planner compile |
-| kcm-runtime | Database, transactions, executor compile |
-| kcm-interface | FFI, REST, KQL, Python compile |
-| kcm-distributed | Sharding and coordinator compile |
-| kcm-ml | Learned index and confidence learner compile |
-| kcm-security | Encryption, RBAC, audit compile |
-| kcm-compliance | GDPR and classification compile |
-| kcm-testing | Test infrastructure compiles |
-| kcm-server | gRPC server, gRPC main, main entry compile |
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Release readiness report | Markdown | Engineering Report |
+| Build status | Binary pass/fail | CI pipeline |
+| Test results | Pass/fail per suite | Engineering Report |
+| Performance comparison | Table | Engineering Report |
+| Blocking issues list | Table | Engineering Report |
 
----
-
-## Operating Principles
-
-### Principle 1: All Gates Must Pass
-Every quality gate must pass before release:
-- Compilation (0 errors, 0 warnings) — all 13 crates
-- Clippy (0 warnings with -D warnings)
-- Format (cargo fmt clean)
-- Tests (100% pass rate)
-- Benchmarks (within targets)
-- Security (no vulnerabilities)
-
-### Principle 2: No Regressions
-- Performance must not regress > 5% from baseline
-- Test count must not decrease
-- Clippy warnings must not increase
-- Code coverage must not decrease
-
-### Principle 3: Reproducibility
-- Build must be reproducible
-- Tests must be deterministic
-- Benchmarks must be reproducible
-- Release artifacts must be verifiable
-
-### Principle 4: Documentation Complete
-- All public APIs documented
-- All specs up to date
-- Audit report current
-- README accurate
-
----
-
-## Engineering Workflow
-
-### Pre-Release Checklist
+## Workflow
 
 ```
-1. Build Verification (all 13 crates)
-   □ cargo build --workspace — 0 errors
-   □ cargo build --release --workspace — 0 errors
-   □ cargo clippy --workspace -- -D warnings — 0 warnings
-   □ cargo fmt --all -- --check — clean
+1. Build Verification
+   a. cargo build --workspace — 0 errors
+   b. cargo build --release --workspace — 0 errors
+   c. cargo clippy --workspace -- -D warnings — 0 warnings
+   d. cargo fmt --all -- --check — clean
 
 2. Test Verification
-   □ cargo test --workspace — 100% pass
-   □ cargo test --lib --all — unit tests pass
-   □ cargo test --test '*' --all — integration tests pass
-   □ Property tests pass
-   □ Security tests pass
-   □ Load tests pass
-   □ Stress tests pass
-   □ Recovery tests pass
+   a. cargo test --workspace — 100% pass
+   b. cargo test --lib --all — unit tests pass
+   c. cargo test --test '*' --all — integration tests pass
+   d. Property tests pass
+   e. Security tests pass
+   f. Load tests pass
+   g. Stress tests pass
+   h. Recovery tests pass
 
 3. Performance Verification
-   □ cargo bench --workspace --no-run — compiles
-   □ Benchmark results within targets
-   □ No performance regression > 5%
+   a. cargo bench --workspace — no-run compiles
+   b. Benchmark results within targets
+   c. No performance regression > 5%
 
 4. Security Verification
-   □ No hardcoded keys
-   □ No weak encryption
-   □ RBAC tests pass
-   □ Audit logging functional
-   □ gRPC/TLS security functional
+   a. No hardcoded keys
+   b. No weak encryption
+   c. RBAC tests pass
+   d. Audit logging functional
+   e. gRPC/TLS security functional
 
 5. Documentation Verification
-   □ All specs up to date
-   □ Audit report current
-   □ README accurate
-   □ No TODO/FIXME/HACK comments
+   a. All specs up to date
+   b. Audit report current
+   c. README accurate
+   d. No TODO/FIXME/HACK comments
+
+6. SSOT Validation
+   a. bash scripts/validate-ssot.sh passes
+   b. All public APIs match SSOT
+   c. All FFI functions match SSOT
+   d. All REST endpoints match SSOT
+   e. All gRPC RPCs match SSOT
 ```
 
----
-
-## Validation Criteria
-
-| Gate | Criterion | Pass Condition |
-|------|-----------|---------------|
-| Build | Compilation | 0 errors, 0 warnings (all 13 crates) |
-| Build | Clippy | 0 warnings |
-| Build | Format | cargo fmt clean |
-| Tests | Pass rate | 100% |
-| Tests | Count | >= 372 |
-| Performance | Benchmarks | Within targets |
-| Performance | Regression | < 5% |
-| Security | Vulnerabilities | 0 |
-| Documentation | Coverage | 100% |
-| Quality | TODO/FIXME | 0 |
-
----
-
-## Failure Prevention Rules
-
-1. **Never release with compilation errors**
-2. **Never release with failing tests**
-3. **Never release with clippy warnings**
-4. **Never release with performance regression > 5%**
-5. **Never release with known security vulnerabilities**
-6. **Never release with incomplete documentation**
-7. **Never release without CI pipeline passing**
-8. **Never release without validating all 13 crates build**
-
----
-
-## Final Report Format
+## Decision Process
 
 ```
-# KCM Engineering Report
-
-## Skill
-kcm-release-readiness
-
-## Build Status
-| Check | Status |
-|-------|--------|
-| Debug build (13 crates) | PASS/FAIL |
-| Release build (13 crates) | PASS/FAIL |
-| Clippy | PASS/FAIL (N warnings) |
-| Format | PASS/FAIL |
-
-## Test Status
-| Suite | Count | Pass | Fail | Status |
-|-------|-------|------|------|--------|
-| Unit | N | N | N | PASS/FAIL |
-| Integration | N | N | N | PASS/FAIL |
-| Property | N | N | N | PASS/FAIL |
-| Security | N | N | N | PASS/FAIL |
-| Load | N | N | N | PASS/FAIL |
-| Stress | N | N | N | PASS/FAIL |
-| Recovery | N | N | N | PASS/FAIL |
-| Total | N | N | N | PASS/FAIL |
-
-## Performance Status
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| ... | ... | ... | PASS/FAIL |
-
-## Security Status
-| Check | Status |
-|-------|--------|
-| Encryption | PASS/FAIL |
-| RBAC | PASS/FAIL |
-| Audit | PASS/FAIL |
-| gRPC/TLS | PASS/FAIL |
-
-## Quality Status
-| Metric | Value | Status |
-|--------|-------|--------|
-| TODO/FIXME | N | PASS/FAIL |
-| Dead code | N | PASS/FAIL |
-| Documentation | N% | PASS/FAIL |
-
-## Specification Impact
-[files]
-
-## Code Impact
-[files]
-
-## Verdict
-READY / NOT READY
-
-## Blocking Issues
-[List of blocking issues]
+Release Requested
+  ↓
+Run all quality gates in sequence:
+  Build → Tests → Performance → Security → Documentation → SSOT
+  ↓
+All gates pass?
+  ├── No → BLOCKED — Document blocking issues
+  └── Yes ↓
+Check for regressions from baseline
+  ├── Regression > 5% → BLOCKED — Must fix regression
+  └── No regression ↓
+Verify version bump per versioning rules:
+  Bug fix → Patch (0.0.x)
+  New feature → Minor (0.x.0)
+  Breaking change → Major (x.0.0)
+  Format change → Major (x.0.0)
+  ↓
+Update changelog
+  ↓
+READY FOR RELEASE
 ```
 
-## SSOT-First Release Protocol
+## Validation
 
-Every release MUST follow this protocol:
+| Check | Method | Pass Criteria |
+|-------|--------|--------------|
+| Debug build | `cargo build --workspace` | 0 errors |
+| Release build | `cargo build --release --workspace` | 0 errors |
+| Clippy | `cargo clippy --workspace -- -D warnings` | 0 warnings |
+| Format | `cargo fmt --all -- --check` | Clean |
+| Test pass rate | `cargo test --workspace` | 100% pass |
+| Test count | Test output | >= 372 tests |
+| Performance benchmarks | `cargo bench --workspace` | Within targets |
+| Performance regression | Baseline comparison | < 5% |
+| Security | Manual + automated scan | 0 vulnerabilities |
+| Documentation | Manual review | 100% coverage |
+| TODO/FIXME | grep scan | 0 in codebase |
+| SSOT validation | `bash scripts/validate-ssot.sh` | Pass |
 
-1. **SSOT Validation**: `bash scripts/validate-ssot.sh` passes
-2. **All CI Jobs Pass**: format, clippy, build, tests, benchmarks
-3. **API Audit**: All public APIs match SSOT
-4. **FFI Audit**: All FFI functions match SSOT
-5. **REST Audit**: All REST endpoints match SSOT
-6. **gRPC Audit**: All gRPC RPCs match SSOT
-7. **Benchmark Validation**: No regressions from baseline
-8. **Documentation Review**: All SSOT documents current
-9. **Changelog Updated**: All changes documented
-10. **Version Bump**: Appropriate version increment
+## Quality Gates
 
-## Version Bumping Rules
+- [ ] `cargo build --workspace` passes with 0 errors
+- [ ] `cargo build --release --workspace` passes with 0 errors
+- [ ] `cargo clippy --workspace -- -D warnings` passes with 0 warnings
+- [ ] `cargo fmt --all -- --check` passes clean
+- [ ] `cargo test --workspace` passes with 100% pass rate (>= 372 tests)
+- [ ] All test categories pass (unit, integration, property, security, load, stress, recovery)
+- [ ] No performance regression > 5% from baseline
+- [ ] No hardcoded keys or weak encryption
+- [ ] All 13 crates build successfully
+- [ ] All documentation up to date
+- [ ] No TODO/FIXME/HACK in codebase
+- [ ] `bash scripts/validate-ssot.sh` passes
 
-| Change Type | Version Bump | Example |
-|-------------|-------------|---------|
-| Bug fix | Patch (0.0.x) | WAL replay fix |
-| New feature | Minor (0.x.0) | New codec, new index |
-| Breaking API change | Major (x.0.0) | Remove FFI function |
-| Format change | Major (x.0.0) | Header layout change |
+## Dependencies
+
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-code-quality-guardian (P10) | Gate | Code must pass quality checks before release |
+| kcm-testing-verification (P9) | Gate | Tests must pass before release |
+| kcm-documentation-guardian (P11) | Gate | Documentation must be complete before release |
+| kcm-security-engineer (P7) | Escalate | Security questions escalated |
+| kcm-performance-engineer (P8) | Gate | Performance must meet targets |
+
+## Related Skills
+
+| Skill | Relationship |
+|-------|-------------|
+| kcm-code-quality-guardian (P10) | P10 validates quality; P12 gates release |
+| kcm-testing-verification (P9) | P9 provides test evidence; P12 validates test results |
+| kcm-documentation-guardian (P11) | P11 ensures doc completeness; P12 validates for release |
+| kcm-engineering-orchestrator (P1) | P1 coordinates; P12 validates release readiness |
+
+## SSOT References
+
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| AGENTS.md | §17 Versioning Rules | Version bump requirements |
+| AGENTS.md | §20 Release Policy | Release validation requirements |
+| AGENTS.md | §23 Quality Gates | Quality gate definitions |
+| SSOT.md | Release Specification | Release process requirements |
+| docs/KCM_PERFORMANCE_SPEC.md | Benchmark Targets | Performance validation targets |
+| docs/KCM_TESTING_SPEC.md | Test Standards | Testing validation requirements |
+
+## Failure Conditions
+
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| Build fails | Blocks release | Fix compilation errors |
+| Tests fail | Blocks release | Fix failing tests |
+| Clippy warnings | Blocks release | Fix warnings |
+| Performance regression > 5% | Blocks release | Investigate and fix regression |
+| Security vulnerability | Blocks release | Fix vulnerability |
+| Documentation incomplete | Blocks release | Update documentation |
+| SSOT validation fails | Blocks release | Fix SSOT alignment |
+
+## Escalation
+
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Fix release issues internally | Immediate |
+| Level 2 | Escalate to domain specialist (P7/P8) | 4 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is the final authority | As needed |
+
+## Examples
+
+See [examples/](./examples/) for release readiness implementation examples.
+
+## Checklist
+
+See [checklists/](./checklists/) for release readiness validation checklists.
+
+## References
+
+- [AGENTS.md](../../../AGENTS.md)
+- [SSOT.md](../../../SSOT.md)
+- [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+- [SECURITY.md](../../../SECURITY.md)

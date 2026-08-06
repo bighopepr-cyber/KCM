@@ -5,238 +5,201 @@ description: Enforce Rust production code quality standards, prevent placeholder
 
 # Skill: Code Quality Guardian
 
-## Skill Identity
+> Document ID: KCM-SKILL-010 | Version: 2.0.0 | Status: Active
 
-**Purpose:** Enforce Rust production code quality standards, prevent placeholder implementations, detect incomplete code, and ensure every function is production-ready.
+## Overview
 
-**Role:** Senior Rust Engineer
+Enforce Rust production code quality standards, prevent placeholder implementations, detect incomplete code, and ensure every function is production-ready. Senior Rust Engineer role covering all source code quality, error handling, ownership patterns, naming conventions, and implementation completeness across all 13 crates.
 
-**Scope:** All Rust source code quality, error handling, ownership patterns, naming conventions, and implementation completeness across all 13 crates.
+## Mission
 
-**Non-responsibility:** Does not validate architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not optimize performance (Performance Skill). Does not review security (Security Engineer). Does not review design quality (Code Review Auditor).
+Zero unwrap() in production code, zero TODO/FIXME/HACK in codebase, all public functions return `Result<T, KcmError>`, `cargo clippy --workspace -- -D warnings` passes clean, `cargo fmt --all -- --check` passes clean.
 
-**Measurable Outcomes:**
-- Zero `unwrap()` in production code
-- Zero TODO/FIXME/HACK in codebase
-- All public functions return `Result<T, KcmError>`
-- `cargo clippy --workspace -- -D warnings` passes clean
-- `cargo fmt --all -- --check` passes clean
+## Responsibilities
 
----
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Placeholder Detection | Detect and reject hardcoded values, empty bodies, TODO/FIXME/HACK comments |
+| 2 | Error Handling Validation | Ensure all public functions return `Result<T, KcmError>`, no unwrap/panic in production |
+| 3 | Ownership Correctness | Validate &T/&mut T/Arc<T>/Box<T> usage, minimize cloning |
+| 4 | Naming Convention Enforcement | Types: PascalCase, functions: snake_case, constants: SCREAMING_SNAKE_CASE |
+| 5 | Complexity Control | Functions < 50 lines, cyclomatic complexity < 10, no > 3 levels nesting |
+| 6 | Dead Code Detection | Detect unused imports, unused parameters, unreachable code |
+| 7 | Thread Safety Validation | All shared types are Send + Sync, no unsafe without documented justification |
+| 8 | SSOT Compliance | Implementation matches specification, no stubs, determinism verified |
 
-## Activation Rules
+## Authority
 
-**Activate when:**
-- New Rust code is written or modified
-- Code review is requested
-- Pull request contains Rust changes
-- Clippy warnings are reported
-- Code quality concerns arise
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P10 | Quality Authority | Can reject code quality issues | Code quality standards decisions | P1 (Orchestrator) |
 
-**Do NOT activate when:**
-- Architecture decisions needed (use Architecture Guardian)
-- Performance optimization needed (use Performance Skill)
-- Security review needed (use Security Engineer)
-- Test coverage needed (use Testing Skill)
-- Design quality review (use Code Review Auditor)
+## Scope
 
----
+| In Scope | Out of Scope |
+|----------|-------------|
+| All Rust source code quality across 13 crates | Architecture decisions (P5) |
+| Error handling patterns | Test writing (P9) |
+| Ownership and borrowing patterns | Performance optimization (P8) |
+| Naming conventions | Security implementation (P7) |
+| Function length and complexity | Design quality review (P13) |
+| Placeholder and stub detection | Specification changes (P4) |
 
-## Required Context
+## Non Goals
 
-1. The specific `.rs` file being modified
-2. The crate's `Cargo.toml` for dependency context
-3. Adjacent modules that interact with the changed code
-4. `docs/KCM_ENGINEERING_RULES.md` for coding standards
+1. Make architecture or design decisions
+2. Write test code
+3. Optimize performance
+4. Implement security features
+5. Review design quality or maintainability
 
----
+## Inputs
 
-## Crate Awareness
+| Input | Source | Required |
+|-------|--------|----------|
+| Modified .rs file | Codebase | Yes |
+| Crate Cargo.toml | `crates/*/Cargo.toml` | Yes |
+| Adjacent interacting modules | Codebase | Yes |
+| Coding standards | `docs/KCM_ENGINEERING_RULES.md` | Yes |
 
-Validates code quality across all **13 crates**:
+## Outputs
 
-| Crate | Key Files |
-|-------|-----------|
-| kcm-core | `types.rs`, `vec.rs`, `bitmap.rs`, `dictionary.rs` |
-| kcm-storage | `column.rs`, `codec.rs`, `compress.rs`, `file_format.rs`, `wal.rs`, `index.rs`, `dict_codec.rs`, `errors.rs`, `backup.rs`, `recovery.rs` |
-| kcm-compute | `algebra.rs`, `simd.rs` |
-| kcm-reasoning | `rule.rs`, `inference.rs` |
-| kcm-optimizer | `cost_model.rs`, `planner.rs`, `statistics.rs`, `rewriting.rs`, `adaptive.rs` |
-| kcm-runtime | `database.rs`, `transaction.rs`, `executor.rs`, `async_executor.rs`, `metrics.rs`, `health.rs` |
-| kcm-interface | `lib.rs`, `rest_api.rs`, `kql_parser.rs`, `python.rs` |
-| kcm-distributed | `sharding.rs`, `coordinator.rs` |
-| kcm-ml | `learned_index.rs`, `confidence_learner.rs`, `rule_discovery.rs` |
-| kcm-security | `rbac.rs`, `encryption.rs`, `audit.rs` |
-| kcm-compliance | `gdpr.rs`, `data_classification.rs` |
-| kcm-testing | `security_tests.rs`, `load_tests.rs`, `stress_tests.rs`, `regression_detector.rs`, `metrics_dashboard.rs` |
-| kcm-server | `grpc_server.rs`, `grpc_main.rs`, `main.rs` |
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Quality assessment report | Markdown | Engineering Report |
+| Clippy compliance | Binary pass/fail | CI pipeline |
+| Format compliance | Binary pass/fail | CI pipeline |
+| Issue list with severity | Table | Engineering Report |
 
----
-
-## Operating Principles
-
-### Principle 1: No Placeholder Code
-Every function must have a real implementation. Detect and reject:
-- Functions that return hardcoded values
-- Functions with empty bodies
-- Functions with TODO/FIXME/HACK comments
-- Functions that always return Ok(()) or None
-- Functions that ignore their parameters
-
-### Principle 2: Correct Error Handling
-- All public functions return `Result<T, KcmError>`
-- No `unwrap()` in production code (test-only with justification)
-- No `panic!()` in production code
-- Errors must be descriptive and actionable
-- Use `thiserror` for error type derivation where appropriate
-
-### Principle 3: Ownership Correctness
-- Use `&T` for read-only access
-- Use `&mut T` for mutation
-- Use `Arc<T>` for shared ownership across threads
-- Use `Box<T>` for heap allocation when needed
-- Avoid unnecessary cloning
-
-### Principle 4: Naming Conventions
-- Types: PascalCase
-- Functions/methods: snake_case
-- Constants: SCREAMING_SNAKE_CASE
-- Modules: snake_case
-- Names must be descriptive and meaningful
-
-### Principle 5: Minimal Complexity
-- Functions should be < 50 lines
-- Cyclomatic complexity < 10 per function
-- No deeply nested code (> 3 levels)
-- Extract helper functions for clarity
-
----
-
-## Engineering Workflow
-
-### Code Review Checklist
+## Workflow
 
 ```
-□ Every public function has a real implementation
-□ No unwrap() in production paths
-□ No panic!() in production paths
-□ No TODO/FIXME/HACK comments
-□ All public functions return Result<T, KcmError>
-□ Error messages are descriptive
-□ No unnecessary cloning
-□ No dead code (or #[allow(dead_code)] with justification)
-□ Names are descriptive and follow conventions
-□ Functions are < 50 lines
-□ No deeply nested code
-□ No unused imports
-□ No unused parameters
-□ Proper use of generics (not over-engineered)
+1. Read the modified .rs file
+2. Check for placeholder implementations (todo!, unimplemented!, hardcoded returns)
+3. Check for unwrap() and panic!() in production code
+4. Check for TODO/FIXME/HACK comments
+5. Verify all public functions return Result<T, KcmError>
+6. Validate ownership patterns (no unnecessary cloning)
+7. Check naming conventions
+8. Check function length (< 50 lines)
+9. Check cyclomatic complexity (< 10)
+10. Run cargo clippy --workspace -- -D warnings
+11. Run cargo fmt --all -- --check
+12. Run cargo check --workspace
+13. Run cargo test --workspace
+14. Produce quality report with severity-classified issues
 ```
 
-### Implementation Quality Gates
+## Decision Process
 
 ```
-1. cargo check --workspace          — Must compile
-2. cargo clippy --workspace -- -D warnings — Zero warnings
-3. cargo fmt --all -- --check       — Format compliant
-4. cargo test --workspace            — All tests pass
+Code Submitted for Quality Review
+  ↓
+Run automated checks:
+  cargo check → cargo clippy → cargo fmt → cargo test
+  ↓
+All pass?
+  ├── No → FAIL — Fix issues
+  └── Yes ↓
+Scan for quality issues:
+  unwrap/panic → TODO/FIXME/HACK → Placeholders → Ownership → Naming → Complexity
+  ↓
+Issues found?
+  ├── Critical (unwrap in production path) → FAIL — Must fix
+  ├── High (TODO/FIXME, placeholder) → FAIL — Must fix
+  ├── Medium (naming, complexity) → WARNING — Should fix
+  └── Low (style) → INFO
+  ↓
+PASS if zero Critical/High issues
 ```
 
----
+## Validation
 
-## Validation Criteria
+| Check | Method | Pass Criteria |
+|-------|--------|--------------|
+| Compilation | `cargo check --workspace` | Zero errors |
+| Clippy | `cargo clippy --workspace -- -D warnings` | Zero warnings |
+| Format | `cargo fmt --all -- --check` | Clean (no diff) |
+| unwrap() count | `grep -r "\.unwrap()" crates/ --include="*.rs" \| grep -v tests/ \| grep -v benches/` | 0 in production code |
+| TODO/FIXME/HACK | `grep -r "todo!\|unimplemented!\|FIXME\|TODO" crates/ --include="*.rs"` | 0 in codebase |
+| panic! count | `grep -r "panic!" crates/ --include="*.rs" \| grep -v tests/ \| grep -v benches/` | 0 in production code |
+| Function length | Manual review | < 50 lines average |
+| Error handling | Manual review | All public APIs return Result |
+| Crate coverage | Audit | All 13 crates validated |
 
-| Criterion | Pass Condition |
-|-----------|---------------|
-| Compilation | Zero errors, zero warnings |
-| Clippy | Zero warnings with -D warnings |
-| Format | cargo fmt clean |
-| unwrap() Count | 0 in production code |
-| TODO/FIXME | 0 in codebase |
-| Function Length | < 50 lines average |
-| Error Handling | All public APIs return Result |
-| Crate Coverage | All 13 crates validated |
+## Quality Gates
 
----
+- [ ] `cargo check --workspace` passes with zero errors
+- [ ] `cargo clippy --workspace -- -D warnings` passes with zero warnings
+- [ ] `cargo fmt --all -- --check` passes clean
+- [ ] `cargo test --workspace` all tests pass
+- [ ] Zero `unwrap()` in production code
+- [ ] Zero `panic!()` in production code
+- [ ] Zero TODO/FIXME/HACK comments
+- [ ] All public functions return `Result<T, KcmError>`
+- [ ] No dead code without justification
+- [ ] No unnecessary cloning
+- [ ] All 13 crates validated
 
-## Failure Prevention Rules
+## Dependencies
 
-1. **Reject any function that returns a hardcoded value without computation**
-2. **Reject any `.unwrap()` in non-test code without justification comment**
-3. **Reject any `panic!()` in production code**
-4. **Reject any TODO/FIXME/HACK comment**
-5. **Reject any function that ignores its parameters**
-6. **Reject any function that always returns the same value regardless of input**
-7. **Reject any unnecessary cloning (use references where possible)**
-8. **Reject any unused imports or dead code without justification**
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-testing-verification (P9) | Coordinate | Tests must pass quality checks |
+| kcm-architecture-guardian (P5) | Escalate | Architecture questions escalated |
+| kcm-security-engineer (P7) | Escalate | Security patterns require specialist review |
+| kcm-code-review-auditor (P13) | Coordinate | P10 runs first; P13 reviews deeper quality |
 
----
+## Related Skills
 
-## Final Report Format
+| Skill | Relationship |
+|-------|-------------|
+| kcm-code-review-auditor (P13) | P10 validates code quality; P13 reviews design quality |
+| kcm-testing-verification (P9) | P9 writes tests; P10 ensures code is production-ready |
+| kcm-release-readiness (P12) | P12 gates release; P10 validates code quality |
+| kcm-debugging-root-cause (P14) | P14 finds root cause; P10 ensures fix quality |
 
-```
-# KCM Engineering Report
+## SSOT References
 
-## Skill
-kcm-code-quality-guardian
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| AGENTS.md | §13 Security Rules | unsafe documentation requirements |
+| AGENTS.md | §18 API Stability Rules | Public API return types |
+| SSOT.md | Error Code Enum | Error handling patterns |
+| SSOT.md | Fact Structure | Data model validation |
+| docs/KCM_ENGINEERING_RULES.md | Coding Standards | Rust coding conventions |
 
-## Files Reviewed
-- [file path]: [line count] lines
+## Failure Conditions
 
-## Quality Metrics
-- Compilation: PASS/FAIL
-- Clippy: PASS/FAIL (N warnings)
-- Format: PASS/FAIL
-- unwrap() in production: N count
-- TODO/FIXME: N count
-- Average function length: N lines
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| unwrap() in production code | Blocks merge | Must remove unwrap |
+| TODO/FIXME/HACK found | Blocks merge | Must resolve markers |
+| Placeholder implementation | Blocks merge | Must implement fully |
+| Clippy warnings | Blocks merge | Must fix warnings |
+| Format violations | Blocks merge | Must run cargo fmt |
+| Public API not returning Result | Blocks merge | Must fix return type |
 
-## Issues Found
-| # | File | Line | Issue | Severity |
-|---|------|------|-------|----------|
-| 1 | ... | ... | ... | Critical/High/Medium/Low |
+## Escalation
 
-## Specification Impact
-[files]
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Fix quality issues internally | Immediate |
+| Level 2 | Escalate to domain specialist (P6/P7/P8) | 4 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is the final authority | As needed |
 
-## Code Impact
-[files]
+## Examples
 
-## Validation Required
-[tests/benchmarks]
+See [examples/](./examples/) for code quality implementation examples.
 
-## Verdict
-PASS / FAIL
+## Checklist
 
-## Required Fixes
-[List of required changes]
-```
+See [checklists/](./checklists/) for code quality validation checklists.
 
-## SSOT-First Quality Protocol
+## References
 
-Every quality check MUST verify:
-
-1. **SSOT Compliance**: Implementation matches specification
-2. **No Stubs**: Zero placeholder implementations
-3. **No unwrap**: Zero unwrap() in production code
-4. **No TODO/FIXME**: Zero markers in production code
-5. **Error Handling**: All public APIs return Result<T, KcmError>
-6. **Thread Safety**: All shared types are Send + Sync
-7. **Memory Safety**: No unsafe without documented justification
-8. **Determinism**: Identical input produces identical output
-
-## Automated Quality Checks
-
-```bash
-# Check for stubs/placeholders
-grep -r "todo!\|unimplemented!\|FIXME\|TODO" crates/ --include="*.rs"
-
-# Check for unwrap in production
-grep -r "\.unwrap()" crates/ --include="*.rs" | grep -v tests/ | grep -v benches/
-
-# Check for panic in production
-grep -r "panic!" crates/ --include="*.rs" | grep -v tests/ | grep -v benches/
-
-# Run SSOT validation
-bash scripts/validate-ssot.sh
-```
+- [AGENTS.md](../../../AGENTS.md)
+- [SSOT.md](../../../SSOT.md)
+- [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+- [SECURITY.md](../../../SECURITY.md)

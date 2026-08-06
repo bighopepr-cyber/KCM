@@ -1,93 +1,79 @@
 ---
 name: kcm-documentation-guardian
-description: Maintain documentation as the Single Source of Truth (SSOT) for KCM, ensuring all specifications are consistent, complete, and aligned with implementation.
+description: Maintain documentation as the Single Source of Truth (SSOT) for KCM, ensuring all specifications are consistent, complete, and aligned with implementation
 ---
 
-# Skill: Documentation and Specification Guardian
+# Skill: Documentation Guardian
 
-## Skill Identity
+> Document ID: KCM-SKILL-011 | Version: 2.0.0 | Status: Active
 
-**Purpose:** Maintain documentation as the Single Source of Truth (SSOT) for KCM, ensuring all specifications are consistent, complete, and aligned with implementation.
+## Overview
 
-**Role:** Technical Writer / Specification Engineer
+Maintain documentation as the Single Source of Truth (SSOT) for KCM, ensuring all specifications are consistent, complete, and aligned with implementation. Technical Writer / Specification Engineer role covering all documentation in docs/, all PRD files, README, and specification-code consistency.
 
-**Scope:** All documentation in docs/, all PRD files, README, and specification-code consistency.
+## Mission
 
-**Non-responsibility:** Does not write code (Code Quality Guardian). Does not review architecture (Architecture Guardian). Does not write tests (Testing Skill). Does not review security (Security Engineer).
+Every PRD requirement has a specification section, every specification matches its implementation, zero conflicting specifications, zero documentation duplication. Documentation is versioned, reviewed, and tested as code.
 
-**Measurable Outcomes:**
-- Every PRD requirement has a specification section
-- Every specification matches its implementation
-- Zero conflicting specifications
-- Zero documentation duplication
+## Responsibilities
 
----
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Specification Consistency | Ensure all specifications match PRD requirements and implementation |
+| 2 | Conflict Detection | Identify and resolve conflicting specifications across documents |
+| 3 | Gap Analysis | Find PRD requirements without specification coverage |
+| 4 | Code-Spec Alignment | Verify type definitions, API signatures, and binary formats match code |
+| 5 | Duplication Prevention | Ensure each fact appears in exactly one specification document |
+| 6 | Metadata Validation | Ensure all documents have Document ID, Version, Status |
+| 7 | Cross-Reference Validation | Verify all links resolve to existing files |
+| 8 | Terminology Consistency | Ensure terminology matches KCM_GLOSSARY.md |
 
-## Activation Rules
+## Authority
 
-**Activate when:**
-- Documentation is created or modified
-- Specification-code consistency questions arise
-- New feature needs documentation
-- PRD alignment questions arise
-- Documentation gaps are identified
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P11 | Documentation Authority | Can block undocumented changes | Documentation quality decisions | P1 (Orchestrator) |
 
-**Do NOT activate when:**
-- Code changes without documentation impact (use Code Quality Guardian)
-- Architecture review needed (use Architecture Guardian)
-- Performance review needed (use Performance Skill)
-- Security review needed (use Security Engineer)
+## Scope
 
----
+| In Scope | Out of Scope |
+|----------|-------------|
+| All documentation in docs/ directory | Writing production code (P10) |
+| All PRD files (PRD, PRD2, PRD3, PRD-TESTING) | Architecture review (P5) |
+| Specification-code consistency | Test writing (P9) |
+| Documentation duplication detection | Security review (P7) |
+| Conflict resolution between documents | Performance review (P8) |
+| README accuracy | Code quality review (P10) |
 
-## Required Context
+## Non Goals
 
-1. All files in `docs/` directory
-2. `docs/PRD.md`, `docs/PRD2.md`, `docs/PRD3.md`, `docs/PRD-TESTING& BRACHMARCK.md` (note: space before BRACHMARCK)
-3. `README.md`
-4. The specific source code being documented
-5. `docs/KCM_DOCUMENT_AUDIT_REPORT.md` for current audit status
+1. Write production implementation code
+2. Review architecture or design patterns
+3. Write test code
+4. Implement security features
+5. Create roadmap or marketing documents
+6. Create unnecessary documentation
 
----
+## Inputs
 
-## Operating Principles
+| Input | Source | Required |
+|-------|--------|----------|
+| All files in docs/ directory | Codebase | Yes |
+| PRD files (PRD, PRD2, PRD3, PRD-TESTING) | `docs/specs/` | Yes |
+| README.md | Root directory | Yes |
+| Source code being documented | Codebase | Yes |
+| Current audit status | `docs/KCM_DOCUMENT_AUDIT_REPORT.md` | Yes |
 
-### Principle 1: Single Source of Truth
-```
-PRD → Technical Specification → Implementation → Test
-```
-Every requirement flows from PRD through specification to implementation. No contradictions allowed.
+## Outputs
 
-### Principle 2: No Documentation Duplication
-- Each fact appears in exactly one specification document
-- Cross-references are used instead of duplication
-- If information changes, only one file needs updating
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Consistency report | Markdown | Engineering Report |
+| Conflict resolution | Markdown | Engineering Report |
+| Gap analysis | Table | Engineering Report |
+| Documentation updates | Markdown | docs/ directory |
 
-### Principle 3: Specification-Code Consistency
-- Every public API must be documented in the relevant spec
-- Every spec requirement must have implementation
-- Type definitions must match between spec and code
-- Binary format must match between spec and code
-
-### Principle 4: No Unnecessary Documentation
-- Don't create roadmap documents
-- Don't create marketing documents
-- Don't create generic tutorials
-- Don't create duplicate specifications
-- Only create documentation that serves engineering purposes
-
-### Principle 5: Conflict Detection
-When specifications conflict, priority order:
-1. `PRD-TESTING& BRACHMARCK.md` — Testing and benchmarks (note: space before BRACHMARCK)
-2. `docs/PRD3.md` — Distributed, ML, security, compliance
-3. `docs/PRD2.md` — Persistence, optimizer, monitoring
-4. `docs/PRD.md` — Core types and data model
-
----
-
-## Engineering Workflow
-
-### Documentation Review
+## Workflow
 
 ```
 1. Read the PRD requirement
@@ -95,102 +81,129 @@ When specifications conflict, priority order:
 3. Verify the specification matches the PRD
 4. Verify the implementation matches the specification
 5. Verify tests validate the specification
-6. Report any inconsistencies
+6. Compare all PRD files for overlapping requirements
+7. Compare PRD requirements with specification documents
+8. Compare specification documents with implementation
+9. Document any conflicts with source-of-truth resolution
+10. List all PRD requirements and map to specs, code, and tests
+11. Report missing mappings
 ```
 
-### Conflict Detection
+## Decision Process
 
 ```
-1. Compare all PRD files for overlapping requirements
-2. Compare PRD requirements with specification documents
-3. Compare specification documents with implementation
-4. Document any conflicts with source-of-truth resolution
+Documentation Change Requested
+  ↓
+Identify affected documents
+  ↓
+Check for conflicts with existing specs
+  ├── Conflict found → Resolve by priority order
+  │   1. PRD-TESTING-AND-BENCHMARK.md
+  │   2. PRD3.md (Distributed, ML, security, compliance)
+  │   3. PRD2.md (Storage, runtime, interfaces)
+  │   4. PRD.md (Core types, storage, compute)
+  │   5. SSOT.md (highest authority)
+  └── No conflict ↓
+Check for duplication
+  ├── Duplication found → Consolidate into one document
+  └── No duplication ↓
+Check spec-code alignment
+  ├── Mismatch found → Update spec to match code (or vice versa per SSOT)
+  └── Aligned ↓
+Update documentation
+  ↓
+Verify metadata (Document ID, Version, Status)
+  ↓
+PASS
 ```
 
-### Gap Analysis
+## Validation
 
-```
-1. List all PRD requirements
-2. Map each to specification document
-3. Map each to implementation code
-4. Map each to test coverage
-5. Report missing mappings
-```
+| Check | Method | Pass Criteria |
+|-------|--------|--------------|
+| PRD Traceability | Manual review | Every PRD requirement has spec section |
+| Spec-Code Consistency | Manual review | Spec matches implementation |
+| No Duplication | Grep/diff analysis | Each fact in exactly one document |
+| No Conflicts | Cross-reference check | All documents agree |
+| Coverage | Manual review | Every public API documented |
+| Accuracy | Type comparison | Type definitions match code |
+| Metadata | Document scan | All documents have ID, Version, Status |
+| Cross-references | Link check | All links resolve |
 
----
+## Quality Gates
 
-## Validation Criteria
+- [ ] Every PRD requirement has a corresponding specification section
+- [ ] Every specification matches its implementation
+- [ ] Zero conflicting specifications
+- [ ] Zero documentation duplication
+- [ ] All public APIs documented
+- [ ] All type definitions match between spec and code
+- [ ] All documents have Document ID, Version, Status
+- [ ] All cross-references resolve
+- [ ] Terminology matches KCM_GLOSSARY.md
+- [ ] No roadmap or marketing documents created
 
-| Criterion | Pass Condition |
-|-----------|---------------|
-| PRD Traceability | Every PRD requirement has spec section |
-| Spec-Code Consistency | Spec matches implementation |
-| No Duplication | Each fact in exactly one document |
-| No Conflicts | All documents agree |
-| Coverage | Every public API documented |
-| Accuracy | Type definitions match code |
-| Filename Accuracy | PRD-TESTING& BRACHMARCK.md referenced correctly |
+## Dependencies
 
----
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-architecture-guardian (P5) | Escalate | Architecture questions escalated |
+| kcm-specification-lock (P4) | Coordinate | Spec lock validates contract changes |
+| kcm-code-quality-guardian (P10) | Coordinate | Code quality review before doc update |
+| kcm-engineering-decision-record (P15) | Escalate | Major decisions require EDR |
 
-## Failure Prevention Rules
+## Related Skills
 
-1. **Never allow specification-code mismatches**
-2. **Never allow documentation duplication**
-3. **Never allow conflicting specifications**
-4. **Never allow PRD requirements without spec coverage**
-5. **Never allow public APIs without documentation**
-6. **Never create roadmap or marketing documents**
-7. **Never create unnecessary documentation**
-8. **Never reference PRD-TESTING&BRACHMARCK.md without the space before BRACHMARCK**
+| Skill | Relationship |
+|-------|-------------|
+| kcm-specification-lock (P4) | P4 protects frozen contracts; P11 ensures doc alignment |
+| kcm-architecture-guardian (P5) | P5 validates architecture; P11 ensures doc consistency |
+| kcm-release-readiness (P12) | P12 gates release; P11 validates documentation completeness |
+| kcm-engineering-decision-record (P15) | P15 documents decisions; P11 ensures decision documentation |
 
----
+## SSOT References
 
-## Final Report Format
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| AGENTS.md | §8 Documentation Hierarchy | Document priority and authority |
+| AGENTS.md | §16 Documentation Rules | Documentation requirements and standards |
+| SSOT.md | Single Source of Truth | Highest authority for all documentation |
+| docs/specs/PRD.md | Core Types | Primary specification document |
+| docs/specs/PRD2.md | Storage, Runtime | Secondary specification document |
+| docs/specs/PRD3.md | Distributed, ML, Security | Tertiary specification document |
+| docs/specs/PRD-TESTING-AND-BENCHMARK.md | Testing Targets | Testing specification document |
 
-```
-# KCM Engineering Report
+## Failure Conditions
 
-## Skill
-kcm-documentation-guardian
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| Specification-code mismatch | Blocks merge | Update spec or code |
+| Conflicting specifications | Blocks merge | Resolve by priority order |
+| Documentation duplication | Blocks merge | Consolidate documents |
+| PRD requirement without spec | Blocks merge | Write specification |
+| Public API without documentation | Blocks merge | Document API |
+| Invalid cross-reference | Blocks merge | Fix or remove reference |
 
-## Documents Reviewed
-- [document]: [status]
+## Escalation
 
-## Consistency Check
-| PRD Section | Spec Document | Implementation | Status |
-|-------------|---------------|----------------|--------|
-| ... | ... | ... | CONSISTENT/INCONSISTENT |
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Fix documentation issues internally | Immediate |
+| Level 2 | Escalate to spec-lock (P4) or arch-guardian (P5) | 4 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is the final authority | As needed |
 
-## Conflicts Found
-| Document A | Document B | Issue | Resolution |
-|------------|------------|-------|------------|
-| ... | ... | ... | ... |
+## Examples
 
-## Gaps Found
-| Requirement | Missing From | Impact |
-|-------------|--------------|--------|
-| ... | ... | ... |
+See [examples/](./examples/) for documentation implementation examples.
 
-## Specification Impact
-[files]
+## Checklist
 
-## Code Impact
-[files]
+See [checklists/](./checklists/) for documentation validation checklists.
 
-## Verdict
-PASS / FAIL
+## References
 
-## Required Documentation Changes
-[List of required changes]
-```
-
-## SSOT-First Documentation Protocol
-
-Every documentation change MUST:
-
-1. **Verify Accuracy**: Ensure documentation matches current implementation
-2. **Check Cross-References**: All links resolve to existing files
-3. **Validate Metadata**: Document has Document ID, Version, Status
-4. **Ensure Consistency**: Terminology matches KCM_GLOSSARY.md
-5. **Trace to Code**: Every documented behavior has corresponding implementation
+- [AGENTS.md](../../../AGENTS.md)
+- [SSOT.md](../../../SSOT.md)
+- [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+- [SECURITY.md](../../../SECURITY.md)

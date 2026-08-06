@@ -1,277 +1,222 @@
----
-name: kcm-database-engine-specialist
-description: Ensure KCM storage engine, query engine, transaction system, and indexing infrastructure are correct and production-ready
----
+# Database Engine Specialist
 
-# Skill: Database Engine Specialist
+> Document ID: KCM-SKILL-006 | Version: 2.0.0 | Status: Active
 
-## Skill Identity
+## Overview
 
-**Purpose:** Ensure KCM's storage engine, query engine, transaction system, and indexing infrastructure are correct, consistent, and production-ready as a database system.
+Ensure KCM's storage engine, query engine, transaction system, and indexing infrastructure are correct, consistent, and production-ready as a database system. This skill validates binary format correctness, WAL durability, compression roundtrips, operator correctness, and recovery completeness.
 
-**Role:** Database Engine Architect / Storage Engine Engineer
+## Mission
 
-**Scope:** Storage layer (columns, codecs, WAL, file format, indexes, dict codec, backup, recovery, errors), query execution (parser, planner, optimizer, operators), transaction management (ACID, recovery, versioning), and all data integrity invariants.
+Guarantee deterministic binary format, lossless compression, WAL durability with fsync, complete crash recovery, and correct query execution including tombstone handling and aggregate functions.
 
-**Non-responsibility:** Does not review general code quality (Code Quality Guardian). Does not review security (Security Engineer). Does not write tests (Testing Skill). Does not validate architecture (Architecture Guardian). Does not review design quality (Code Review Auditor).
+## Responsibilities
 
-**Measurable Outcomes:**
-- Binary format is deterministic and versioned
-- WAL entries preserve all Fact fields
-- All operators skip tombstoned rows
-- Recovery is complete and lossless
-- Codec/compression roundtrip tests pass
+| # | Responsibility | Description |
+|---|---------------|-------------|
+| 1 | Binary Format Validation | Verify deterministic file format with 31-byte header, version byte, Blake3 checksum, and tombstone persistence |
+| 2 | WAL Durability | Ensure WAL entries preserve all 10 Fact fields, fsync on flush, and idempotent replay |
+| 3 | Compression Correctness | Validate lossless compression roundtrips (Zstd, LZ4, RLE) |
+| 4 | Codec Correctness | Verify codec roundtrip: encode → decode = identity (Delta, RLE, Gorilla) |
+| 5 | Query Operator Correctness | Validate all operators skip tombstoned rows, correct aggregate functions, column extraction |
+| 6 | Transaction Integrity | Ensure atomicity, complete rollback, and consistent version store |
+| 7 | Recovery Completeness | Validate crash recovery: DB+WAL, WAL-only, and fresh startup scenarios |
+| 8 | Backup Roundtrip | Verify backup → restore produces identical data |
+| 9 | Index Correctness | Validate BitmapIndex, ZoneMap, BloomFilter, CompositeIndex implementations |
 
----
+## Authority
 
-## Activation Rules
+| Priority | Authority Level | Blocking Authority | Approval Authority | Escalation |
+|----------|----------------|-------------------|-------------------|------------|
+| P6 | Database Engine Specialist | Block storage/query/transaction changes | Approve storage engine decisions | Escalate to P5 (Architecture) or P1 (Orchestrator) |
 
-**Activate when:**
-- Storage format changes (file format, WAL, column layout)
-- Codec or compression changes
-- Query operator implementation or modification
-- Optimizer changes
-- Transaction or recovery logic changes
-- Index implementation changes
-- Data integrity concerns arise
-- Backup or recovery logic changes
-- Dict codec changes
+## Scope
 
-**Do NOT activate when:**
-- General code quality review (use Code Quality Guardian)
-- Architecture-level decisions (use Architecture Guardian)
-- Performance-only changes (use Performance Skill)
-- Security review (use Security Engineer)
+| In Scope | Out of Scope |
+|----------|-------------|
+| kcm-storage: column.rs, codec.rs, compress.rs, file_format.rs, wal.rs, index.rs, dict_codec.rs, errors.rs, backup.rs, recovery.rs | General code quality review |
+| kcm-compute: algebra.rs (query operators) | Architecture-level decisions |
+| kcm-optimizer: planner.rs, cost_model.rs, statistics.rs | Security or encryption review |
+| kcm-runtime: database.rs, transaction.rs (transaction logic) | Performance optimization |
+| kcm-server: grpc_server.rs (server-side storage access) | Test writing |
+| Data integrity invariants across all storage operations | Documentation authoring |
 
----
+## Non Goals
 
-## Required Context
+1. Reviewing general code quality or style (Code Quality Guardian responsibility)
+2. Making architecture-level decisions (Architecture Guardian responsibility)
+3. Performance optimization of existing implementations (Performance Engineer responsibility)
+4. Security or cryptographic review (Security Engineer responsibility)
+5. Writing unit or integration tests (Testing Skill responsibility)
+6. Authoring documentation (Documentation Guardian responsibility)
 
-1. `docs/KCM_COLUMNAR_FORMAT_SPEC.md` — Binary format specification
-2. `docs/KCM_COMPRESSION_SPEC.md` — Encoding and compression
-3. `docs/KCM_QUERY_EXECUTION_SPEC.md` — Query pipeline specification
-4. `docs/KCM_RUNTIME_SPEC.md` — Runtime lifecycle
-5. `docs/KCM_DATA_MODEL_SPEC.md` — Data model definition
-6. `docs/KCM_INDEXING_SPEC.md` — Index structures
-7. The specific source file being modified
-8. Related test files for the modified component
+## Inputs
 
----
+| Input | Source | Required |
+|-------|--------|----------|
+| KCM_COLUMNAR_FORMAT_SPEC.md | docs/ directory | Yes (for format changes) |
+| KCM_COMPRESSION_SPEC.md | docs/ directory | Yes (for codec/compression changes) |
+| KCM_QUERY_EXECUTION_SPEC.md | docs/ directory | Yes (for query changes) |
+| KCM_RUNTIME_SPEC.md | docs/ directory | Yes (for transaction changes) |
+| KCM_DATA_MODEL_SPEC.md | docs/ directory | Yes (for data model changes) |
+| KCM_INDEXING_SPEC.md | docs/ directory | Yes (for index changes) |
+| Modified source file | crates/ directory | Yes |
+| Related test files | tests/ directory | Yes |
 
-## Crate Awareness
+## Outputs
 
-Primary responsibility: **kcm-storage** — all files:
+| Output | Format | Destination |
+|--------|--------|-------------|
+| Validation report | Markdown report with tables | Engineering Orchestrator (P1) |
+| Data integrity assessment | Checklist-based report | Calling skill or CI |
+| Storage engine verdict | PASS/FAIL with details | Release pipeline |
 
-| File | Responsibility |
-|------|---------------|
-| `column.rs` | Column<T>, Schema |
-| `codec.rs` | Delta, RLE, Gorilla codecs |
-| `compress.rs` | Zstd, LZ4, RLE compressors |
-| `file_format.rs` | Binary DB format |
-| `wal.rs` | Write-Ahead Log |
-| `index.rs` | BitmapIndex, ZoneMap, BloomFilter, CompositeIndex |
-| `dict_codec.rs` | Dictionary encoding |
-| `errors.rs` | Storage-specific error types |
-| `backup.rs` | Backup and restore |
-| `recovery.rs` | Crash recovery |
-
-Secondary responsibility: Related files in other crates:
-
-| Crate | File | Relevance |
-|-------|------|-----------|
-| kcm-compute | `algebra.rs` | Query operators (Scan, Filter, Project, Join, Aggregate) |
-| kcm-optimizer | `planner.rs`, `cost_model.rs`, `statistics.rs` | Query planning |
-| kcm-runtime | `database.rs`, `transaction.rs` | Transaction management |
-| kcm-server | `grpc_server.rs` | Server-side storage access |
-
----
-
-## Operating Principles
-
-### Storage Engine Principles
-
-1. **Binary format must be deterministic** — Same input always produces same bytes
-2. **File format must be versioned** — Version byte in header enables migration
-3. **Checksums must be cryptographic** — Blake3, not CRC32
-4. **Columns must maintain equal length** — Row alignment invariant
-5. **Tombstone bitmap must persist** — Soft-delete survives crash/restart
-6. **WAL must be fsync'd** — Data durability guarantee
-7. **Compression must be lossless** — Roundtrip correctness required
-
-### Query Engine Principles
-
-1. **Operators must skip tombstoned rows** — Soft-delete consistency
-2. **Execution must be deterministic** — Same query → same results
-3. **Optimizer must be idempotent** — Repeated optimization doesn't change plan
-4. **Statistics must be accurate** — Cardinality estimation drives optimization
-5. **SIMD must have runtime detection** — Portable across CPU architectures
-
-### Transaction Principles
-
-1. **WAL replay must preserve all fields** — No data loss during recovery
-2. **Transaction must be atomic** — All changes applied or none
-3. **Rollback must be complete** — Every change reversed
-4. **Version store must be consistent** — Snapshot isolation
-
----
-
-## Engineering Workflow
-
-### Storage Format Review
+## Workflow
 
 ```
-1. Read KCM_COLUMNAR_FORMAT_SPEC.md
-2. Compare spec with implementation byte-by-byte
-3. Verify header fields (magic, version, row_count, col_count, timestamps)
-4. Verify column block format (length, codec_id, compressed_size, data)
-5. Verify tombstone persistence (bitmap_length, bitmap_data)
-6. Verify checksum computation (Blake3 over file content)
-7. Test save/load roundtrip with verification
+1. Receive storage/query/transaction change request
+2. Read relevant specification document(s)
+3. Compare specification with implementation byte-by-byte
+4. Verify header fields (magic, version, row_count, col_count, timestamps)
+5. Verify column block format (length, codec_id, compressed_size, data)
+6. Verify tombstone persistence (bitmap_length, bitmap_data)
+7. Verify checksum computation (Blake3 over file content)
+8. Validate codec/compression roundtrip correctness
+9. Verify query operators skip tombstoned rows
+10. Verify aggregate functions (Count/Sum/Avg/Min/Max) return computed values
+11. Verify WAL entry format and field preservation
+12. Verify crash recovery scenarios
+13. Test save/load roundtrip with verification
+14. Produce validation report with PASS/FAIL verdict
 ```
 
-### Query Engine Review
+## Decision Process
 
 ```
-1. Read KCM_QUERY_EXECUTION_SPEC.md
-2. Verify operator trait implementation (execute, estimated_rows)
-3. Check ScanOp: tombstone skip, context filter, confidence filter
-4. Check FilterOp: all 6 predicate variants
-5. Check ProjectOp: column extraction correctness
-6. Check JoinOp: hash join algorithm, join column support
-7. Check AggregateOp: all 5 functions (Count/Sum/Avg/Min/Max)
-8. Verify optimizer pipeline (filter pushdown, join reorder)
+Storage/Query/Transaction Change
+  ↓
+Identify Component (Format/WAL/Codec/Operator/Transaction/Recovery)
+  ↓
+Read Relevant Specification
+  ↓
+Compare Implementation vs Specification
+  ↓
+Mismatch Found? ──→ YES → BLOCK with fix requirements
+  ↓ (NO)
+Run Roundtrip Tests
+  ↓
+Tests Pass? ──→ NO → BLOCK with test requirements
+  ↓ (YES)
+Check Data Integrity Invariants
+  ↓
+Invariants Preserved? ──→ NO → BLOCK
+  ↓ (YES)
+APPROVE with validation report
 ```
 
-### Transaction Review
+## Validation
 
-```
-1. Read KCM_RUNTIME_SPEC.md transaction section
-2. Verify WAL entry format (34 bytes for Insert, 9 bytes for Delete)
-3. Verify WAL replay preserves all Fact fields
-4. Verify crash recovery (DB+WAL, WAL-only, fresh)
-5. Verify transaction state machine (Active→Committed/RolledBack)
-6. Verify rollback_changes() restores previous state
-```
+| Check | Method | Pass Criteria |
+|-------|--------|---------------|
+| Binary format version | Header inspection | Version byte present and correct |
+| File checksum | Blake3 verification | Verified on load |
+| Tombstone persistence | Save/load roundtrip | Bitmap restored correctly |
+| WAL entry size | Byte inspection | 34 bytes (Insert), 9 bytes (Delete) |
+| WAL field preservation | Field count check | All 10 Fact fields in WAL |
+| WAL fsync | Code inspection | Called on every flush |
+| Codec roundtrip | encode → decode test | Identity |
+| Compression roundtrip | compress → decompress test | Identity |
+| Tombstone skip | Operator execution | All operators check is_deleted |
+| Aggregate functions | Unit tests | Count/Sum/Avg/Min/Max implemented |
+| Recovery DB+WAL | Crash simulation | Correct after crash |
+| Recovery WAL-only | Missing DB test | Correct without DB file |
+| Recovery fresh | Empty state test | Empty schema created |
+| Backup roundtrip | backup → restore test | Identity |
 
----
+## Quality Gates
 
-## Validation Criteria
+- [ ] `cargo check --workspace` passes clean
+- [ ] File format matches specification exactly
+- [ ] WAL entries preserve all Fact fields
+- [ ] Compression roundtrip tests pass
+- [ ] Codec roundtrip tests pass
+- [ ] All operators skip tombstoned rows
+- [ ] All aggregate functions return computed values (not rowids)
+- [ ] Crash recovery is complete and lossless
+- [ ] Backup → restore roundtrip produces identical data
+- [ ] Blake3 checksum covers entire file
+- [ ] No `unwrap()` in production code paths
 
-| Component | Criterion | Pass Condition |
-|-----------|-----------|---------------|
-| File Format | Version byte | Present and correct |
-| File Format | Checksum | Blake3, verified on load |
-| File Format | Tombstone | Persisted and restored |
-| WAL | Entry size | 34 bytes (Insert), 9 bytes (Delete) |
-| WAL | Field preservation | All 10 Fact fields in WAL |
-| WAL | Fsync | Called on every flush |
-| Codecs | Roundtrip | encode→decode = identity |
-| Compression | Roundtrip | compress→decompress = identity |
-| Operators | Tombstone skip | All operators check is_deleted |
-| Aggregate | All functions | Count/Sum/Avg/Min/Max implemented |
-| Recovery | DB+WAL | Correct after crash |
-| Recovery | WAL-only | Correct without DB file |
-| Recovery | Fresh | Empty schema created |
-| Backup | Roundtrip | backup→restore = identity |
+## Dependencies
 
----
+| Skill | Dependency Type | Description |
+|-------|----------------|-------------|
+| kcm-architecture-guardian (P5) | Upstream gate | Validates storage architecture before implementation |
+| kcm-specification-lock (P4) | Upstream gate | Validates frozen format contracts |
+| kcm-code-quality-guardian (P10) | Downstream | Validates code quality after storage review |
+| kcm-testing-verification (P9) | Downstream | Validates test coverage for storage changes |
+| kcm-performance-engineer (P8) | Parallel | Validates storage performance targets |
 
-## Failure Prevention Rules
+## Related Skills
 
-1. **Never allow file format changes without version bump**
-2. **Never allow WAL entries that don't preserve all Fact fields**
-3. **Never allow compression without roundtrip test**
-4. **Never allow operators to skip tombstone check**
-5. **Never allow AggregateOp to return rowids instead of computed values**
-6. **Never allow ProjectOp to pass through without extracting columns**
-7. **Never allow recovery that loses data**
-8. **Never allow checksum to use non-cryptographic hash**
+| Skill | Relationship |
+|-------|-------------|
+| kcm-architecture-guardian (P5) | P5 validates storage architecture; P6 validates storage correctness |
+| kcm-code-quality-guardian (P10) | P10 reviews code quality; P6 reviews data integrity |
+| kcm-performance-engineer (P8) | P8 measures storage performance; P6 validates functional correctness |
+| kcm-testing-verification (P9) | P9 writes storage tests; P6 validates storage semantics |
 
----
+## SSOT References
 
-## Final Report Format
+| Document | Section | Relevance |
+|----------|---------|-----------|
+| SSOT.md | Binary File Format | DB_MAGIC, DB_VERSION, header layout |
+| SSOT.md | WAL Entry Format | WAL_INSERT_SIZE, WAL_DELETE_SIZE |
+| docs/KCM_COLUMNAR_FORMAT_SPEC.md | All sections | Binary format specification |
+| docs/KCM_COMPRESSION_SPEC.md | All sections | Encoding and compression |
+| docs/KCM_QUERY_EXECUTION_SPEC.md | All sections | Query pipeline specification |
+| docs/KCM_RUNTIME_SPEC.md | Transaction section | Transaction lifecycle |
+| docs/KCM_DATA_MODEL_SPEC.md | All sections | Fact structure, 34 bytes, 10 fields |
+| docs/KCM_INDEXING_SPEC.md | All sections | Index structures |
+| AGENTS.md | §5.3 Immutable Contracts | Frozen format contracts |
 
-```
-# KCM Engineering Report
+## Failure Conditions
 
-## Skill
-kcm-database-engine-specialist
+| Condition | Impact | Escalation |
+|-----------|--------|------------|
+| File format mismatch with specification | Data corruption risk | BLOCK immediately |
+| WAL entry doesn't preserve all fields | Data loss risk | BLOCK immediately |
+| Compression not lossless | Data corruption risk | BLOCK immediately |
+| Operator doesn't skip tombstones | Incorrect query results | BLOCK immediately |
+| Aggregate returns rowids instead of values | Incorrect results | BLOCK immediately |
+| Recovery loses data | Data loss risk | BLOCK immediately |
+| Checksum uses non-cryptographic hash | Integrity risk | BLOCK immediately |
+| Format change without version bump | Compatibility risk | BLOCK immediately |
 
-## Component Reviewed
-[Storage/Query/Transaction/Index/Backup/Recovery]
+## Escalation
 
-## Specification Reference
-[Which spec document and section]
+| Level | Path | SLA |
+|-------|------|-----|
+| Level 1 | Database Engine Specialist resolves internally | 4 hours |
+| Level 2 | Escalate to Architecture Guardian (P5) for architecture disputes | 8 hours |
+| Level 3 | Escalate to Engineering Orchestrator (P1) | 24 hours |
+| Level 4 | SSOT.md is final authority for format specifications | 48 hours |
 
-## Implementation Verification
-| Check | Status | Details |
-|-------|--------|---------|
-| ... | PASS/FAIL | ... |
+## Examples
 
-## Data Integrity Assessment
-- [ ] Binary format deterministic
-- [ ] File format versioned
-- [ ] Checksum cryptographic
-- [ ] Columns equal length
-- [ ] Tombstone persisted
-- [ ] WAL fsync'd
-- [ ] Compression lossless
-- [ ] Backup roundtrip correct
+See [examples/](examples/) for storage engine review examples.
 
-## Specification Impact
-[files]
+## Checklist
 
-## Code Impact
-[files]
+See [checklists/](checklists/) for database engine validation checklists.
 
-## Validation Required
-[tests/benchmarks]
+## References
 
-## Verdict
-PASS / FAIL
-
-## Required Fixes
-[List of required changes with file:line references]
-```
-
-## SSOT-First Storage Engine Protocol
-
-Every storage engine change MUST follow this protocol:
-
-1. **Identify SSOT Requirement**: Find the requirement in PRD.md §3-4 or PRD2.md §2-5
-2. **Verify Current Implementation**: Check if current code matches SSOT
-3. **Plan Change**: Define how change maintains SSOT compliance
-4. **Implement**: Write code matching specification exactly
-5. **Test**: Write tests validating against specification
-6. **Benchmark**: Verify performance meets SSOT targets
-7. **Validate**: Run `bash scripts/validate-ssot.sh`
-
-## Storage Engine Quality Standards
-
-| Standard | Requirement | Verification |
-|----------|-------------|-------------|
-| WAL Durability | fsync on every flush | Code review |
-| WAL Integrity | CRC32 on every entry | Test validation |
-| WAL Recovery | Idempotent replay | Recovery tests |
-| File Format | 31-byte header, 10 columns | Format tests |
-| Column Encoding | Per-column codec assignment | Encoding tests |
-| Compression | Roundtrip compress/decompress | Property tests |
-| Dictionary | ID 0 = NULL, bidirectional | Unit tests |
-| Bitmap | O(1) set/get, O(n/64) bulk | Unit tests |
-| DenseVec | 64-byte alignment, no realloc | Memory tests |
-| Index | Bitmap, ZoneMap, BloomFilter | Index tests |
-
-## Storage Engine Invariants
-
-These invariants MUST be maintained in all changes:
-
-| Invariant | Enforcement |
-|-----------|-------------|
-| Column lengths equal | Schema enforces all columns same length |
-| Row IDs monotonically increasing | append_fact increments row_count |
-| Tombstone bitmap consistent | delete_fact sets tombstone, clear_fact clears |
-| WAL entries self-contained | Each entry has complete fact data |
-| File checksum covers entire file | Blake3 over all preceding bytes |
-| Dictionary ID 0 always NULL | Reserved at construction |
-| Confidence ∈ [0.0, 1.0] | Confidence::new validates |
-| No unwrap in production | Clippy + code review |
+- [SSOT.md](../../SSOT.md)
+- [AGENTS.md](../../AGENTS.md)
+- [KCM_SPECIFICATION.md](../../KCM_SPECIFICATION.md)
+- [docs/KCM_COLUMNAR_FORMAT_SPEC.md](../../docs/KCM_COLUMNAR_FORMAT_SPEC.md)
+- [docs/KCM_COMPRESSION_SPEC.md](../../docs/KCM_COMPRESSION_SPEC.md)
+- [docs/KCM_QUERY_EXECUTION_SPEC.md](../../docs/KCM_QUERY_EXECUTION_SPEC.md)
+- [docs/KCM_RUNTIME_SPEC.md](../../docs/KCM_RUNTIME_SPEC.md)
+- [docs/KCM_INDEXING_SPEC.md](../../docs/KCM_INDEXING_SPEC.md)
