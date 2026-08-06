@@ -144,7 +144,6 @@ Undocumented conflicts are recorded in change history rather than resolved by as
 | KCM_RUNTIME_SPEC.md | Runtime lifecycle and concurrency |
 | KCM_PERFORMANCE_SPEC.md | Performance targets and benchmarks |
 | KCM_TESTING_SPEC.md | Testing standards |
-| KCM_ENGINEERING_RULES.md | Development rules |
 | KCM_VERSIONING_SPEC.md | Versioning and compatibility |
 | KCM_GLOSSARY.md | Terminology definitions |
 | KCM_DEPLOYMENT_SPEC.md | Deployment and container specifications |

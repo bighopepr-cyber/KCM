@@ -644,7 +644,7 @@ Format Check → Clippy Lint → Build → Unit Tests → Integration Tests
 
 - [SSOT.md](SSOT.md) — Single Source of Truth
 - [KCM_SPECIFICATION.md](KCM_SPECIFICATION.md) — Technical constitution
-- [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) — Repository structure
+- [docs/handbook/repository-structure.md](docs/handbook/repository-structure.md) — Repository structure
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guidelines
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Community guidelines
 - [SECURITY.md](SECURITY.md) — Security policy

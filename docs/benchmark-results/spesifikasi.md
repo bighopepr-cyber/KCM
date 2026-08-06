@@ -86,7 +86,7 @@ This specification covers:
 ```markdown
 # KCM Benchmark Report
 Generated: 2026-08-06T18:41:51Z
-Version: 0.1.0
+Version: 1.0.0
 
 ## Summary
 | Benchmark | Mean | Std Dev | Change |
@@ -259,7 +259,7 @@ This module does not expose a public API. It is a data directory consumed by:
 | Dependency | Version | Purpose |
 |------------|---------|---------|
 | criterion | 0.5.1 | Benchmark execution |
-| kcm-testing | 0.1.0 | Benchmark test infrastructure |
+| kcm-testing | 1.0.0 | Benchmark test infrastructure |
 
 ## Error Handling
 

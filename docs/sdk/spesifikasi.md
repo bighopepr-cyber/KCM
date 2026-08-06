@@ -884,15 +884,15 @@ main().catch(console.error);
 
 | SDK | OS | Architecture | Engine Version | Status |
 |-----|-----|-------------|---------------|--------|
-| Rust | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Stable |
-| C | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Stable |
-| C++ | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Stable |
-| Python | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Beta |
-| JavaScript | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Beta |
-| TypeScript | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Beta |
-| Go | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Beta |
-| Java | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Beta |
-| .NET | Linux, macOS, Windows | x86_64, aarch64 | 0.1.0 | Beta |
+| Rust | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Stable |
+| C | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Stable |
+| C++ | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Stable |
+| Python | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Beta |
+| JavaScript | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Beta |
+| TypeScript | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Beta |
+| Go | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Beta |
+| Java | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Beta |
+| .NET | Linux, macOS, Windows | x86_64, aarch64 | 1.0.0 | Beta |
 
 ### Language Version Requirements
 

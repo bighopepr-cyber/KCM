@@ -37,23 +37,20 @@
 ```
 KCM/
 ├── AGENTS.md                         # Engineering constitution & governance rules
-├── ARCHITECTURE_CONSISTENCY_MATRIX.md # Component registry & consistency matrix
 ├── CODE_OF_CONDUCT.md                # Community code of conduct
 ├── CONTRIBUTING.md                   # Contribution guidelines
-├── KCM_ENGINEERING_RULES.md          # Engineering rules reference
 ├── KCM_SPECIFICATION.md              # Technical specification
 ├── LICENSE                           # MIT License
 ├── README.md                         # Project overview & quick start
-├── REPOSITORY_STRUCTURE.md           # This document
 ├── ROADMAP.md                        # Release plan & milestones
 ├── SECURITY.md                       # Security policy
 ├── SSOT.md                           # Single Source of Truth index
-├── SSOT_CERTIFICATION_REPORT.md      # SSOT audit certification
+├── VERSION                           # Canonical version source (SemVer 2.0.0)
+├── CHANGELOG.md                      # Version history
 ├── Cargo.toml                        # Workspace root manifest
 ├── Cargo.lock                        # Dependency lockfile
 ├── deny.toml                         # cargo-deny configuration
 ├── kilo.json                         # AI agent configuration
-├── repository-health.md              # Repository health report
 ├── rust-toolchain.toml               # Rust toolchain pinning
 ├── .gitignore                        # Git ignore rules
 ├── .dockerignore                     # Docker ignore rules

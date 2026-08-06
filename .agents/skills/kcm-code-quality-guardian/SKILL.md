@@ -47,7 +47,7 @@ description: Enforce Rust production code quality standards, prevent placeholder
 1. The specific `.rs` file being modified
 2. The crate's `Cargo.toml` for dependency context
 3. Adjacent modules that interact with the changed code
-4. `docs/KCM_ENGINEERING_RULES.md` for coding standards
+4. `docs/governance/engineering-rules.md` for coding standards
 
 ---
 

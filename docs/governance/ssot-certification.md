@@ -23,7 +23,7 @@ The KCM repository has been restructured to SSOT v3.0 conforming to Microsoft Pr
 | 6 | No stale references in documentation | PASS — validate-ssot.sh v3.0 verifies |
 | 7 | CI/CD enforces SSOT compliance | PASS — ci.yml includes SSOT validation |
 | 8 | Repository structure matches SSOT | PASS — verified against SSOT.md |
-| 9 | Edition 2024 across all crates | PASS — 30/30 Cargo.toml updated |
+| 9 | Edition 2021 across all crates | PASS — 13/13 Cargo.toml verified |
 | 10 | workspace.dependencies centralized | PASS — all shared deps in [workspace.dependencies] |
 | 11 | [workspace.lints] defined | PASS — clippy + rustc lints shared |
 | 12 | [workspace.package] defined | PASS — edition, version, license centralized |
@@ -41,19 +41,19 @@ The KCM repository has been restructured to SSOT v3.0 conforming to Microsoft Pr
 ```
 KCM/
 ├── crates/                    # 13 crates ✓ (flat, sibling-style)
-│   ├── kcm-core/             # edition 2024, workspace deps ✓
-│   ├── kcm-storage/          # edition 2024, workspace deps ✓
-│   ├── kcm-compute/          # edition 2024, workspace deps ✓
-│   ├── kcm-reasoning/        # edition 2024, workspace deps ✓
-│   ├── kcm-optimizer/        # edition 2024, workspace deps ✓
-│   ├── kcm-runtime/          # edition 2024, workspace deps ✓
-│   ├── kcm-interface/        # edition 2024, workspace deps ✓
-│   ├── kcm-distributed/      # edition 2024, workspace deps ✓
-│   ├── kcm-ml/               # edition 2024, workspace deps ✓
-│   ├── kcm-security/         # edition 2024, workspace deps ✓
-│   ├── kcm-compliance/       # edition 2024, workspace deps ✓
-│   ├── kcm-testing/          # edition 2024, workspace deps ✓
-│   └── kcm-server/           # edition 2024, workspace deps ✓
+│   ├── kcm-core/             # edition 2021, workspace deps ✓
+│   ├── kcm-storage/          # edition 2021, workspace deps ✓
+│   ├── kcm-compute/          # edition 2021, workspace deps ✓
+│   ├── kcm-reasoning/        # edition 2021, workspace deps ✓
+│   ├── kcm-optimizer/        # edition 2021, workspace deps ✓
+│   ├── kcm-runtime/          # edition 2021, workspace deps ✓
+│   ├── kcm-interface/        # edition 2021, workspace deps ✓
+│   ├── kcm-distributed/      # edition 2021, workspace deps ✓
+│   ├── kcm-ml/               # edition 2021, workspace deps ✓
+│   ├── kcm-security/         # edition 2021, workspace deps ✓
+│   ├── kcm-compliance/       # edition 2021, workspace deps ✓
+│   ├── kcm-testing/          # edition 2021, workspace deps ✓
+│   └── kcm-server/           # edition 2021, workspace deps ✓
 ├── scripts/                   # Tools + scripts ✓
 │   └── kcm-cli/               # 17 CLI tools ✓
 ├── docs/                      # 3 subfolders ONLY ✓
@@ -90,7 +90,7 @@ KCM/
 | docs/tutorials/ | Merged into handbook |
 | docs/specs/ecosystem/ | Redundant with ROADMAP.md |
 | docs/specs/repository/ | Redundant with AGENTS.md |
-| edition 2021 (30 crates) | Upgraded to edition 2024 |
+| edition 2021 (13 crates) | Verified |
 | Hardcoded dependency versions | Centralized to [workspace.dependencies] |
 | No [workspace.lints] | Added shared lint configuration |
 | No [workspace.package] | Added centralized package metadata |
@@ -116,6 +116,6 @@ bash scripts/validate-ssot.sh  # All 24 checks must pass
 | Flat crate structure (Google Piper style) | PASS |
 | AI agent governance (16 skills) | PASS |
 | SSOT traceability | PASS |
-| Edition 2024 | PASS |
+| Edition 2021 | PASS |
 | Centralized dependencies | PASS |
 | Centralized lints | PASS |

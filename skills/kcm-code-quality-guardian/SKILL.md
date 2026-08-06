@@ -60,7 +60,7 @@ Zero unwrap() in production code, zero TODO/FIXME/HACK in codebase, all public f
 | Modified .rs file | Codebase | Yes |
 | Crate Cargo.toml | `crates/*/Cargo.toml` | Yes |
 | Adjacent interacting modules | Codebase | Yes |
-| Coding standards | `docs/KCM_ENGINEERING_RULES.md` | Yes |
+| Coding standards | `docs/governance/engineering-rules.md` | Yes |
 
 ## Outputs
 
@@ -167,7 +167,7 @@ PASS if zero Critical/High issues
 | AGENTS.md | §18 API Stability Rules | Public API return types |
 | SSOT.md | Error Code Enum | Error handling patterns |
 | SSOT.md | Fact Structure | Data model validation |
-| docs/KCM_ENGINEERING_RULES.md | Coding Standards | Rust coding conventions |
+| docs/governance/engineering-rules.md | Coding Standards | Rust coding conventions |
 
 ## Failure Conditions
 

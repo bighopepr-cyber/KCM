@@ -79,16 +79,13 @@ KCM/
 ├── README.md                        # Project overview and quick start
 ├── KCM_SPECIFICATION.md             # Root specification summary
 ├── ROADMAP.md                       # Release plan and targets
-├── ARCHITECTURE_CONSISTENCY_MATRIX.md # Component registry and contracts
-├── SSOT_CERTIFICATION_REPORT.md     # SSOT compliance certification
-├── KCM_ENGINEERING_RULES.md         # Engineering rules summary
 ├── AGENTS.md                        # AI engineering governance (16 skills)
 ├── CONTRIBUTING.md                  # Contribution guidelines (Microsoft style)
 ├── CODE_OF_CONDUCT.md               # Code of conduct (Microsoft style)
 ├── SECURITY.md                      # Security policy (Microsoft style)
 ├── LICENSE                          # MIT
 ├── VERSION                          # Canonical version source (SemVer 2.0.0)
-├── Cargo.toml                       # Workspace manifest (edition 2024)
+├── Cargo.toml                       # Workspace manifest (edition 2021)
 ├── Cargo.lock                       # Dependency lockfile
 └── rust-toolchain.toml              # Rust toolchain pinning
 ```
@@ -159,7 +156,7 @@ kcm-testing (core + storage + runtime + reasoning + security + distributed + com
 ## 7. Workspace Configuration
 
 - **Edition:** 2024 (Rust 1.85+)
-- **Resolver:** v3 (implicit in edition 2024)
+- **Resolver:** v2 (explicit in workspace Cargo.toml)
 - **Dependency Management:** `[workspace.dependencies]` for all shared deps
 - **Lints:** `[workspace.lints]` for shared clippy/rustc configuration
 - **Profile:** release with LTO, single codegen unit, strip symbols
@@ -178,7 +175,7 @@ SSOT compliance is validated by `scripts/validate-ssot.sh`. The script verifies:
 - No phantom document references
 - Workspace compiles
 - No stale counts in documentation
-- Edition 2024 in all Cargo.toml files
+- Edition 2021 in all Cargo.toml files
 - workspace.dependencies used in all member crates
 
 ## 9. SSOT Traceability Chain

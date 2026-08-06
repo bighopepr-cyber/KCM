@@ -192,7 +192,7 @@ Document root cause, fix, and prevention
 | AGENTS.md | §11.2 Emergency Workflow | Emergency debugging process |
 | SSOT.md | Implementation Specification | Expected behavior reference |
 | SSOT.md | Error Code Enum | Error handling validation |
-| docs/KCM_ENGINEERING_RULES.md | Code Standards | Fix quality requirements |
+| docs/governance/engineering-rules.md | Code Standards | Fix quality requirements |
 
 ## Failure Conditions
 

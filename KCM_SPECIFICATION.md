@@ -119,7 +119,7 @@ KcmError
 ## 9. Workspace Configuration
 
 - **Edition:** 2024 (Rust 1.85+)
-- **Resolver:** v3 (implicit)
+- **Resolver:** v2 (explicit)
 - **Dependencies:** `[workspace.dependencies]` centralized
 - **Lints:** `[workspace.lints]` shared across crates
 

@@ -18,7 +18,7 @@ Contribution guidelines specific to the `{{CRATE_NAME}}` crate.
 
 ### Rust Requirements
 
-- Edition 2024
+- Edition 2021
 - All public APIs return `Result<T, KcmError>`
 - No `unwrap()` in production code
 - No `panic!()` in production code

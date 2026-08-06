@@ -170,7 +170,7 @@ Produce structured review report
 | AGENTS.md | §12 Review Workflow | Review process and SLA |
 | AGENTS.md | §4 Core Principles | Correctness over performance |
 | SSOT.md | Implementation Specification | Code must match specification |
-| docs/KCM_ENGINEERING_RULES.md | Code Standards | Code quality requirements |
+| docs/governance/engineering-rules.md | Code Standards | Code quality requirements |
 
 ## Failure Conditions
 

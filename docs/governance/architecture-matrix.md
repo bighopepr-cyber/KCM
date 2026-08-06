@@ -95,5 +95,5 @@ All 4 gRPC RPCs documented and implemented. See `crates/kcm-interface/proto/kcm.
 | All FFI functions match | PASS |
 | All REST endpoints match | PASS |
 | All gRPC RPCs match | PASS |
-| Edition 2024 across all crates | PASS |
+| Edition 2021 across all crates | PASS |
 | workspace.dependencies used | PASS |

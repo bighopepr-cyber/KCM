@@ -35,6 +35,6 @@ Pipeline for version releases.
 
 | Change Type | Bump | Example |
 |-------------|------|---------|
-| Bug fix | Patch | 0.1.0 → 0.1.1 |
-| New feature | Minor | 0.1.0 → 0.2.0 |
-| Breaking change | Major | 0.1.0 → 1.0.0 |
+| Bug fix | Patch | 1.0.0 → 1.0.1 |
+| New feature | Minor | 1.0.0 → 1.1.0 |
+| Breaking change | Major | 1.0.0 → 2.0.0 |

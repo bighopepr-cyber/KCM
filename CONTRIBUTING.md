@@ -10,7 +10,7 @@ This project adheres to the [Microsoft Open Source Code of Conduct](https://open
 
 ### Prerequisites
 
-- Rust 1.85+ (edition 2024)
+- Rust 1.85+ (edition 2021)
 - Cargo (comes with Rust)
 - Git
 
@@ -123,7 +123,7 @@ All SDKs implement the same core operations:
 
 ### Rust Edition
 
-All code must use **Rust edition 2024**. Do not use edition 2021 patterns.
+All code must use **Rust edition 2021**. Do not use older edition patterns.
 
 ### Non-Negotiable Rules
 

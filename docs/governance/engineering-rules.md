@@ -46,8 +46,8 @@
 - All inter-crate communication through public API only
 - New modules must have corresponding tests
 - Feature-gated dependencies must have `#[cfg(feature)]`
-- Edition 2024 across all crates
-- Resolver v3 (implicit in edition 2024)
+- Edition 2021 across all crates
+- Resolver v2 (explicit in workspace Cargo.toml)
 
 ## 4. Testing Rules
 

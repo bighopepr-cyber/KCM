@@ -18,7 +18,7 @@ Documents the completeness and consistency of KCM's specification documents agai
 
 | Document | Location | Status |
 |----------|----------|--------|
-| KCM_ARCHITECTURE.md | docs/specs/ | **MISSING** — Partially covered by ARCHITECTURE_CONSISTENCY_MATRIX.md at root |
+| KCM_ARCHITECTURE.md | docs/specs/ | **MISSING** — Partially covered by docs/governance/architecture-matrix.md |
 | KCM_DATA_MODEL_SPEC.md | docs/specs/ | **CREATED** |
 | KCM_COLUMNAR_FORMAT_SPEC.md | docs/specs/ | **CREATED** |
 | KCM_QUERY_EXECUTION_SPEC.md | docs/specs/ | **CREATED** |
@@ -29,7 +29,7 @@ Documents the completeness and consistency of KCM's specification documents agai
 | KCM_RUNTIME_SPEC.md | docs/specs/ | **CREATED** |
 | KCM_PERFORMANCE_SPEC.md | docs/specs/ | **CREATED** |
 | KCM_TESTING_SPEC.md | docs/specs/ | **CREATED** |
-| KCM_ENGINEERING_RULES.md | root | **EXISTS** |
+| engineering-rules.md | docs/governance/ | **MOVED** from root KCM_ENGINEERING_RULES.md |
 | KCM_VERSIONING_SPEC.md | docs/specs/ | **CREATED** |
 | KCM_GLOSSARY.md | docs/specs/ | **CREATED** |
 | KCM_DEPLOYMENT_SPEC.md | docs/specs/ | **CREATED** |
@@ -103,9 +103,9 @@ Documents the completeness and consistency of KCM's specification documents agai
 | SSOT.md | ✓ Complete |
 | KCM_SPECIFICATION.md | ✓ Complete |
 | ROADMAP.md | ✓ Complete |
-| ARCHITECTURE_CONSISTENCY_MATRIX.md | ✓ Complete |
-| SSOT_CERTIFICATION_REPORT.md | ✓ Complete |
-| KCM_ENGINEERING_RULES.md | ✓ Complete |
+| docs/governance/architecture-matrix.md | ✓ Moved from root |
+| docs/governance/ssot-certification.md | ✓ Moved from root |
+| docs/governance/engineering-rules.md | ✓ Moved from root |
 | AGENTS.md | ✓ Complete |
 | CONTRIBUTING.md | ✓ Complete |
 | CODE_OF_CONDUCT.md | ✓ Complete |
@@ -150,12 +150,12 @@ Documents the completeness and consistency of KCM's specification documents agai
 
 | Gap | Severity | Status |
 |-----|----------|--------|
-| KCM_ARCHITECTURE.md not in docs/specs/ | Medium | Partially covered by root ACM |
+| KCM_ARCHITECTURE.md not in docs/specs/ | Medium | Partially covered by docs/governance/architecture-matrix.md |
 | Some spec documents reference non-existent sub-docs | Low | References are aspirational |
 
 ## 7. Recommendations
 
-1. **KCM_ARCHITECTURE.md:** Consider creating or moving ARCHITECTURE_CONSISTENCY_MATRIX.md into docs/specs/
+1. **KCM_ARCHITECTURE.md:** Consider creating or moving docs/governance/architecture-matrix.md into docs/specs/
 2. **Cross-references:** Update derived spec references to point to actual created documents
 3. **Version alignment:** Ensure all Document IDs use consistent versioning
 
@@ -166,4 +166,4 @@ All 16 documents in the SSOT Document Map have been created or verified. The spe
 ## 9. References
 
 - **Authoritative Source:** SSOT.md §6 (Document Map)
-- **Related:** KCM_SPECIFICATION.md, SSOT_CERTIFICATION_REPORT.md
+- **Related:** KCM_SPECIFICATION.md, docs/governance/ssot-certification.md
