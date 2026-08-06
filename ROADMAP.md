@@ -1,9 +1,10 @@
 # KCM Roadmap
 
-**Document ID:** KCM-ROADMAP-001  
-**Version:** 2.0.0  
-**Status:** Active  
+**Document ID:** KCM-ROADMAP-001
+**Version:** 3.0.0
+**Status:** Active
 **Owner:** Engineering Orchestrator (P1)
+**Standard:** Microsoft Pragmatic Rust Guidelines 2026
 
 ---
 

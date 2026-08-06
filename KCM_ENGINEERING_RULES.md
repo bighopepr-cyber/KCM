@@ -1,10 +1,11 @@
 # KCM Engineering Rules
 
-**Document ID:** KCM-ENG-001  
-**Version:** 2.0.0  
-**Status:** Active  
-**Owner:** Code Quality Guardian (P10)  
-**Authoritative Source:** AGENTS.md §Non-Negotiable Rules
+**Document ID:** KCM-ENG-001
+**Version:** 3.0.0
+**Status:** Active
+**Owner:** Code Quality Guardian (P10)
+**Standard:** Microsoft Pragmatic Rust Guidelines 2026
+**Authoritative Source:** SSOT.md §4, AGENTS.md §Non-Negotiable Rules
 
 ---
 
@@ -25,7 +26,7 @@
 | 11 | Every benchmark validates a documented requirement | Benchmark suite |
 | 12 | No documentation describes non-existent behavior | SSOT validation |
 
-## 2. Rust Conventions
+## 2. Rust Conventions (Pragmatic Guidelines 2026)
 
 - Use `parking_lot` for mutexes/rwlocks (not std)
 - Use `Send + Sync` bounds on all shared types
@@ -35,6 +36,8 @@
 - Use `div_ceil` instead of manual ceiling division
 - Use `clamp` instead of chained `min/max`
 - Use `or_default()` instead of `or_insert_with(Vec::new)`
+- Prefer `#[cfg_attr]` over multiple `#[cfg]` on same item
+- Use workspace.dependencies for all shared dependencies
 
 ## 3. Architecture Rules
 
@@ -43,6 +46,8 @@
 - All inter-crate communication through public API only
 - New modules must have corresponding tests
 - Feature-gated dependencies must have `#[cfg(feature)]`
+- Edition 2024 across all crates
+- Resolver v3 (implicit in edition 2024)
 
 ## 4. Testing Rules
 
@@ -71,6 +76,7 @@
 - Key generation uses CSPRNG
 - All user input validated
 - Audit logging for all write operations
+- Supply chain audit via `cargo audit` / `cargo deny`
 
 ## 7. Process Rules
 
@@ -78,3 +84,4 @@
 - CI must pass before merge
 - Breaking changes require ADR
 - Version bump on every release
+- SSOT traceability required for every change

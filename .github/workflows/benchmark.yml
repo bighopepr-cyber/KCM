@@ -5,15 +5,39 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Monday
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   benchmark:
     name: Run Benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo bench --workspace 2>&1 | tee benchmark-results/output.txt
-      - uses: actions/upload-artifact@v4
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
         with:
-          name: benchmark-results
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-bench-
+      
+      - name: Run benchmarks
+        run: cargo bench --workspace 2>&1 | tee benchmark-results/output.txt
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_id }}
           path: benchmark-results/
+          retention-days: 90

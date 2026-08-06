@@ -1,9 +1,12 @@
 [package]
 name = "kcm-optimizer"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Query optimizer for KCM"
 
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
+
+[lints]
+workspace = true

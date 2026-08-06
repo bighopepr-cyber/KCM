@@ -1,9 +1,12 @@
 [package]
 name = "kcm-compute"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Compute engine for KCM"
 
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
+
+[lints]
+workspace = true

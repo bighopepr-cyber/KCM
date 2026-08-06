@@ -1,20 +1,20 @@
 [package]
 name = "kcm-runtime"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Runtime and transaction layer for KCM"
 
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
 kcm-optimizer = { path = "../kcm-optimizer" }
-parking_lot = "0.12"
-rayon = "1.7"
-tokio = { version = "1.35", features = ["full"] }
+parking_lot.workspace = true
+rayon.workspace = true
+tokio.workspace = true
 
 [dev-dependencies]
-criterion = "0.5"
-tempfile = "3"
+criterion.workspace = true
+tempfile.workspace = true
 kcm-distributed = { path = "../kcm-distributed" }
 kcm-reasoning = { path = "../kcm-reasoning" }
 kcm-compute = { path = "../kcm-compute" }
@@ -23,3 +23,6 @@ kcm-testing = { path = "../kcm-testing" }
 [[bench]]
 name = "micro"
 harness = false
+
+[lints]
+workspace = true

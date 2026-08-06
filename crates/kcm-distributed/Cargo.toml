@@ -1,10 +1,13 @@
 [package]
 name = "kcm-distributed"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Distributed architecture for KCM"
 
 [dependencies]
 kcm-core = { path = "../kcm-core" }
-parking_lot = "0.12"
-rayon = "1.7"
+parking_lot.workspace = true
+rayon.workspace = true
+
+[lints]
+workspace = true

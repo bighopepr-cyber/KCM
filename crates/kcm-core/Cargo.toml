@@ -1,18 +1,21 @@
 [package]
 name = "kcm-core"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Core types and data structures for KCM"
 
 [dependencies]
-parking_lot = "0.12"
-serde = { version = "1.0", features = ["derive"], optional = true }
+parking_lot.workspace = true
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
-criterion = "0.5"
-proptest = "1.0"
-static_assertions = "1.1"
+criterion.workspace = true
+proptest.workspace = true
+static_assertions.workspace = true
 
 [features]
 default = []
 serialization = ["serde"]
+
+[lints]
+workspace = true

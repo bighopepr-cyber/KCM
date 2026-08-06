@@ -1,17 +1,49 @@
 # KCM Code Owners
-/crates/kcm-core/          @kcm/core-team
-/crates/kcm-storage/       @kcm/storage-team
-/crates/kcm-compute/       @kcm/compute-team
-/crates/kcm-reasoning/     @kcm/reasoning-team
-/crates/kcm-optimizer/     @kcm/optimizer-team
-/crates/kcm-runtime/       @kcm/runtime-team
-/crates/kcm-interface/     @kcm/interface-team
-/crates/kcm-server/        @kcm/platform-team
-/crates/kcm-security/      @kcm/security-team
-/crates/kcm-compliance/    @kcm/compliance-team
-/crates/kcm-testing/       @kcm/qa-team
-/deployment/               @kcm/devops-team
-/.github/                  @kcm/devops-team
-/scripts/                  @kcm/devops-team
-/docs/                     @kcm/documentation-team
-/website/                  @kcm/documentation-team
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global fallback
+*                           @kcm/engineering-lead
+
+# Core engine crates
+/crates/kcm-core/           @kcm/core-team
+/crates/kcm-storage/        @kcm/storage-team
+/crates/kcm-compute/        @kcm/compute-team
+/crates/kcm-reasoning/      @kcm/reasoning-team
+/crates/kcm-optimizer/      @kcm/optimizer-team
+/crates/kcm-runtime/        @kcm/runtime-team
+/crates/kcm-interface/      @kcm/interface-team
+/crates/kcm-distributed/    @kcm/distributed-team
+/crates/kcm-ml/             @kcm/ml-team
+/crates/kcm-security/       @kcm/security-team
+/crates/kcm-compliance/     @kcm/compliance-team
+/crates/kcm-testing/        @kcm/qa-team
+/crates/kcm-server/         @kcm/platform-team
+
+# Infrastructure
+/deployment/                @kcm/devops-team
+/.github/                   @kcm/devops-team
+/scripts/                   @kcm/devops-team
+/Cargo.toml                 @kcm/core-team @kcm/devops-team
+
+# Documentation
+/docs/                      @kcm/documentation-team
+/README.md                  @kcm/documentation-team
+/KCM_SPECIFICATION.md       @kcm/documentation-team @kcm/specification-lock
+/ROADMAP.md                 @kcm/documentation-team
+/AGENTS.md                  @kcm/engineering-lead
+/CONTRIBUTING.md            @kcm/documentation-team
+/CODE_OF_CONDUCT.md         @kcm/documentation-team
+/SECURITY.md                @kcm/security-team
+
+# AI governance
+/skills/                    @kcm/engineering-lead
+/.agents/                   @kcm/engineering-lead
+
+# SDKs
+/sdk/                       @kcm/sdk-team
+
+# Tests
+/tests/                     @kcm/qa-team
+
+# Benchmarks
+/benchmark-results/         @kcm/performance-team

@@ -2,6 +2,7 @@
 /target/
 **/target/
 **/*.rs.bk
+Cargo.lock
 
 # Build artifacts
 *.d
@@ -52,7 +53,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-dist/
 .cache/
 .pnp.*
 
@@ -73,7 +73,6 @@ dist/
 *.bak
 *.orig
 *.rej
-*~
 
 # Kilo
 .kilo/
@@ -97,3 +96,7 @@ deployment/**/.terraform/
 
 # Tools build artifacts
 scripts/**/target/
+
+# Benchmark results (generated)
+benchmark-results/raw/
+benchmark-results/ci-output.txt

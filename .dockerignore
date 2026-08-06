@@ -1,27 +1,67 @@
-target/
+# KCM Docker Ignore
+# Exclude everything not needed for building the Docker image
+
+# Version control
 .git/
+.gitignore
 .github/
+.gitattributes
+
+# Documentation
 docs/
-benchmark-results/
-skills/
-sdk/
-examples/
-.kilo/
-.kcm_snapshots/
 *.md
-*.yml
-*.yaml
+LICENSE
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# Development / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts (will be rebuilt in container)
+target/
+**/target/
+
+# Benchmark results
+benchmark-results/
+
+# AI governance
+skills/
+.agents/
+.kilo/
+
+# KCM snapshots
+.kcm_snapshots/
+
+# SDKs (not needed for server build)
+sdk/
+
+# Examples
+examples/
+
+# Scripts
+scripts/
 *.sh
 *.py
-*.html
-*.css
-*.js
-*.svg
-*.txt
-.gitignore
-.dockerignore
-Dockerfile
-docker-compose.yml
-Cargo.lock
+
+# Deployment configs (not needed in container)
+deployment/grafana/
+deployment/prometheus/
+deployment/terraform/
+deployment/helm/
+
+# CI/CD
+.github/
+
+# Rust toolchain (handled by Dockerfile)
 rust-toolchain.toml
+
+# Cargo lock (regenerated in container)
+Cargo.lock
+
+# Config files
 kilo.json
+.dockerignore

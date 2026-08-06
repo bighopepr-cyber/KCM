@@ -1,0 +1,192 @@
+---
+name: kcm-debugging-root-cause
+description: Perform systematic debugging to find root causes of issues, ensuring fixes are minimal, correct, and prevent recurrence.
+---
+
+# Skill: Debugging and Root Cause Analysis
+
+## Skill Identity
+
+**Purpose:** Perform systematic debugging to find root causes of issues, ensuring fixes are minimal, correct, and prevent recurrence.
+
+**Role:** Senior Debugging Engineer
+
+**Scope:** Bug investigation, root cause analysis, crash analysis, data corruption investigation, performance regression diagnosis across all 13 crates.
+
+**Non-responsibility:** Does not write new features. Does not review architecture. Does not write tests (but recommends regression tests). Does not review code quality (Code Quality Guardian). Does not review security (Security Engineer).
+
+**Measurable Outcomes:**
+- Every bug has a documented root cause
+- Every fix is minimal (smallest change that fixes the issue)
+- Every fix has a regression test
+- Every fix is verified against all existing tests
+
+---
+
+## Activation Rules
+
+**Activate when:**
+- Bug is reported
+- Test failure occurs
+- Crash or panic occurs
+- Data corruption is suspected
+- Performance regression is detected
+- Unexpected behavior is observed
+
+**Do NOT activate when:**
+- New feature implementation (use Code Quality Guardian)
+- Architecture review (use Architecture Guardian)
+- Performance optimization (use Performance Skill)
+- Security implementation (use Security Engineer)
+
+---
+
+## Required Context
+
+1. The bug report or failure description
+2. The relevant source code
+3. Stack trace or error message
+4. Steps to reproduce
+5. Expected vs actual behavior
+
+---
+
+## Crate Awareness
+
+Debugging scope covers all **13 crates**: kcm-core, kcm-storage, kcm-compute, kcm-reasoning, kcm-optimizer, kcm-runtime, kcm-interface, kcm-distributed, kcm-ml, kcm-security, kcm-compliance, kcm-testing, kcm-server.
+
+---
+
+## Operating Principles
+
+### Debugging Methodology
+
+```
+Symptom → Evidence Collection → Hypothesis → Root Cause → Minimal Fix → Regression Test
+```
+
+### Principle 1: Evidence First
+- Collect all available evidence before hypothesizing
+- Read error messages carefully
+- Check logs and stack traces
+- Reproduce the issue
+
+### Principle 2: Binary Search
+- Narrow down the problem systematically
+- Eliminate half the possibilities at each step
+- Focus on the most likely cause first
+
+### Principle 3: Minimal Fix
+- Fix the root cause, not the symptom
+- Make the smallest change that fixes the issue
+- Don't refactor while fixing bugs
+- Add a regression test
+
+### Principle 4: Verify Fix
+- Confirm the fix resolves the issue
+- Confirm no new issues introduced
+- Confirm all existing tests still pass
+- Add regression test for the specific scenario
+
+---
+
+## Engineering Workflow
+
+### Debugging Process
+
+```
+1. Understand the symptom
+   - What is the expected behavior?
+   - What is the actual behavior?
+   - When does it occur?
+
+2. Collect evidence
+   - Error messages
+   - Stack traces
+   - Log output
+   - Reproduction steps
+
+3. Form hypothesis
+   - What could cause this symptom?
+   - What is the most likely cause?
+
+4. Test hypothesis
+   - Add diagnostic output
+   - Use debugger
+   - Check specific code paths
+
+5. Identify root cause
+   - What is the fundamental issue?
+   - Why did it happen?
+
+6. Implement minimal fix
+   - Fix the root cause
+   - Don't add unnecessary changes
+
+7. Verify fix
+   - Confirm issue resolved
+   - Run all tests
+   - Add regression test
+
+8. Document
+   - What was the issue?
+   - What was the root cause?
+   - What was the fix?
+   - How to prevent recurrence?
+```
+
+---
+
+## Final Report Format
+
+```
+# KCM Engineering Report
+
+## Skill
+kcm-debugging-root-cause
+
+## Symptom
+[What is the problem?]
+
+## Evidence
+[What evidence was collected?]
+
+## Root Cause
+[What is the fundamental issue?]
+
+## Fix
+[What change was made?]
+File: [path]
+Line: [number]
+Change: [description]
+
+## Regression Test
+[Test that prevents recurrence]
+File: [path]
+Test: [name]
+
+## Specification Impact
+[files]
+
+## Code Impact
+[files]
+
+## Verification
+- [ ] Fix resolves the issue
+- [ ] No new issues introduced
+- [ ] All existing tests pass
+- [ ] Regression test added
+
+## Prevention
+[How to prevent similar issues in the future]
+```
+
+## SSOT-First Debugging Protocol
+
+Every debugging session MUST:
+
+1. **Identify Expected Behavior**: Find the SSOT specification for the failing component
+2. **Verify Current Behavior**: Confirm the deviation from specification
+3. **Root Cause Analysis**: Identify why implementation deviates from SSOT
+4. **Fix Strategy**: Plan fix that brings implementation back to SSOT compliance
+5. **Regression Prevention**: Write test that validates SSOT compliance

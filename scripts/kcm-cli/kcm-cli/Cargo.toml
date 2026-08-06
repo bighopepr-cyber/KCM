@@ -1,9 +1,9 @@
 [package]
 name = "kcm-cli"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Command-line interface for KCM Knowledge Columnar Model"
-license = "MIT"
+license.workspace = true
 
 [[bin]]
 name = "kcm"
@@ -14,7 +14,10 @@ kcm-core = { path = "../../crates/kcm-core" }
 kcm-storage = { path = "../../crates/kcm-storage" }
 kcm-runtime = { path = "../../crates/kcm-runtime" }
 kcm-interface = { path = "../../crates/kcm-interface" }
-clap = { version = "4", features = ["derive"] }
-serde_json = "1.0"
-anyhow = "1.0"
-colored = "2.0"
+clap.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+colored.workspace = true
+
+[lints]
+workspace = true

@@ -1,9 +1,10 @@
 # Architecture Consistency Matrix
 
-**Document ID:** KCM-ACM-001  
-**Version:** 2.0.0  
-**Status:** Active  
+**Document ID:** KCM-ACM-001
+**Version:** 3.0.0
+**Status:** Active
 **Owner:** Architecture Guardian (P5)
+**Standard:** Microsoft Pragmatic Rust Guidelines 2026
 
 ---
 
@@ -94,3 +95,5 @@ All 4 gRPC RPCs documented and implemented. See `crates/kcm-interface/proto/kcm.
 | All FFI functions match | PASS |
 | All REST endpoints match | PASS |
 | All gRPC RPCs match | PASS |
+| Edition 2024 across all crates | PASS |
+| workspace.dependencies used | PASS |

@@ -35,29 +35,81 @@ exclude = [
     "examples/rust",
 ]
 
-resolver = "2"
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "MIT"
+repository = "https://github.com/bighopepr-cyber/KCM"
+description = "Knowledge Columnar Model — columnar knowledge representation, storage, query, and reasoning engine"
+authors = ["KCM Contributors"]
 
 [workspace.dependencies]
+# Core dependencies
 parking_lot = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Compression
 zstd = "0.13"
 lz4 = "1.24"
+
+# Hashing
 blake3 = "1.5"
+
+# Error handling
 thiserror = "2.0"
+
+# Logging
 log = "0.4"
 env_logger = "0.11"
+
+# Parallelism
 rayon = "1.7"
+
+# Async
 tokio = { version = "1.35", features = ["full"] }
-pyo3 = { version = "0.22", features = ["extension-module"] }
+
+# Python bindings
+pyo3 = { version = "0.22", features = ["extension-module", "auto-initialize"] }
+
+# Web/HTTP
 actix-web = "4"
+
+# gRPC
 tonic = "0.12"
 prost = "0.13"
+tonic-build = "0.12"
+
+# Crypto
 aes-gcm = "0.10"
 getrandom = "0.2"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+anyhow = "1.0"
+colored = "2.0"
+chrono = "0.4"
+
+# Testing/Dev
 tempfile = "3"
 criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.0"
+static_assertions = "1.1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+unimplemented = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
 
 [profile.release]
 opt-level = 3

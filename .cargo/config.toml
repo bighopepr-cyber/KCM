@@ -1,0 +1,24 @@
+# KCM Cargo Configuration
+# Microsoft Pragmatic Rust Guidelines 2026
+
+[build]
+# Use mold linker for faster builds (if available)
+# rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+[Target.'cfg(target_os = "linux")']
+# Linux-specific optimizations
+rustflags = ["-C", "target-cpu=native"]
+
+[Target.'cfg(target_os = "macos")']
+# macOS-specific optimizations
+rustflags = ["-C", "target-cpu=native"]
+
+[registries.crates-io]
+protocol = "sparse"
+
+[net]
+git-fetch-with-cli = true
+retry = 3
+
+[term]
+verbose = true

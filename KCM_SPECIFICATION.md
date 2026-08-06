@@ -1,10 +1,11 @@
 # KCM Specification — Technical Constitution
 
-**Document ID:** KCM-SPEC-001  
-**Version:** 2.0.0  
-**Status:** Active  
-**Owner:** Specification Lock (P4)  
-**Authoritative Sources:** PRD.md (P4), PRD2.md (P3), PRD3.md (P2), AGENTS.md (P5)
+**Document ID:** KCM-SPEC-001
+**Version:** 3.0.0
+**Status:** Active
+**Owner:** Specification Lock (P4)
+**Standard:** Microsoft Pragmatic Rust Guidelines 2026
+**Authoritative Sources:** SSOT.md (P1), PRD.md (P5), PRD2.md (P4), PRD3.md (P3), AGENTS.md (P6)
 
 > **Authority Notice:** Full specifications live in `docs/specs/`. This is the root summary.
 
@@ -115,21 +116,19 @@ KcmError
 | Thread Pool | rayon ThreadPool |
 | Async | tokio Runtime |
 
-## 9. Conflict Resolution
+## 9. Workspace Configuration
 
-| Priority | Document | Authority |
-|----------|----------|-----------|
-| P1 | PRD-TESTING-AND-BENCHMARK.md | Performance, validation, testing |
-| P2 | PRD3.md | Distributed, ML, security, compliance |
-| P3 | PRD2.md | Storage, runtime, interfaces |
-| P4 | PRD.md | Core types, storage, compute, reasoning |
-| P5 | AGENTS.md | Engineering constitution |
+- **Edition:** 2024 (Rust 1.85+)
+- **Resolver:** v3 (implicit)
+- **Dependencies:** `[workspace.dependencies]` centralized
+- **Lints:** `[workspace.lints]` shared across crates
 
 ## 10. References
 
-- `docs/specs/PRD.md` — Core types, storage, compute, reasoning (P4)
-- `docs/specs/PRD2.md` — Storage, runtime, interfaces (P3)
-- `docs/specs/PRD3.md` — Distributed, ML, security, compliance (P2)
-- `docs/specs/PRD-TESTING-AND-BENCHMARK.md` — Testing, benchmarks (P1)
-- `AGENTS.md` — Engineering constitution (P5)
+- `docs/specs/PRD.md` — Core types, storage, compute, reasoning (P5)
+- `docs/specs/PRD2.md` — Storage, runtime, interfaces (P4)
+- `docs/specs/PRD3.md` — Distributed, ML, security, compliance (P3)
+- `docs/specs/PRD-TESTING-AND-BENCHMARK.md` — Testing, benchmarks (P2)
+- `AGENTS.md` — Engineering constitution (P6)
+- `SSOT.md` — Single Source of Truth (P1)
 - `docs/handbook/handbook.md` — Development guide

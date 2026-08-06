@@ -1,16 +1,19 @@
 [package]
 name = "kcm-security"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Security and access control for KCM"
 
 [dependencies]
 kcm-core = { path = "../kcm-core" }
-parking_lot = "0.12"
-blake3 = "1.5"
-aes-gcm = "0.10"
-getrandom = "0.2"
+parking_lot.workspace = true
+blake3.workspace = true
+aes-gcm.workspace = true
+getrandom.workspace = true
 
 [dev-dependencies]
 kcm-compliance = { path = "../kcm-compliance" }
-tempfile = "3"
+tempfile.workspace = true
+
+[lints]
+workspace = true

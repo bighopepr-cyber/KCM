@@ -1,7 +1,7 @@
 [package]
 name = "kcm-testing"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
 description = "Testing infrastructure for KCM"
 
 [dependencies]
@@ -10,9 +10,12 @@ kcm-storage = { path = "../kcm-storage" }
 kcm-runtime = { path = "../kcm-runtime" }
 kcm-reasoning = { path = "../kcm-reasoning" }
 kcm-security = { path = "../kcm-security" }
-parking_lot = "0.12"
-tempfile = "3"
+parking_lot.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
 kcm-distributed = { path = "../kcm-distributed" }
 kcm-compliance = { path = "../kcm-compliance" }
+
+[lints]
+workspace = true
