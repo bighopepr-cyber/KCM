@@ -102,18 +102,18 @@ impl ACLManager {
     }
 
     pub fn check_permission(&self, user_id: &str, context: ContextID, perm: Permission) -> bool {
-        if let Some(perms) = self.context_acl.read().get(&context) {
-            if perms.iter().any(|(uid, p)| uid == user_id && *p == perm) {
-                return true;
-            }
+        if let Some(perms) = self.context_acl.read().get(&context)
+            && perms.iter().any(|(uid, p)| uid == user_id && *p == perm)
+        {
+            return true;
         }
         if let Some(user) = self.users.read().get(user_id) {
             let roles = self.roles.read();
             for role_name in &user.roles {
-                if let Some(role) = roles.get(role_name) {
-                    if role.has_permission(perm) {
-                        return true;
-                    }
+                if let Some(role) = roles.get(role_name)
+                    && role.has_permission(perm)
+                {
+                    return true;
                 }
             }
         }

@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use kcm_storage::compress::{Compressor, Lz4Compressor, RleCompressor, ZstdCompressor};
 
 fn bench_compression(c: &mut Criterion) {

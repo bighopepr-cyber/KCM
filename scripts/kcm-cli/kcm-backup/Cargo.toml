@@ -10,9 +10,9 @@ name = "kcm-backup"
 path = "src/main.rs"
 
 [dependencies]
-kcm-core = { path = "../../crates/kcm-core" }
-kcm-storage = { path = "../../crates/kcm-storage" }
-kcm-runtime = { path = "../../crates/kcm-runtime" }
+kcm-core = { path = "../../../crates/kcm-core" }
+kcm-storage = { path = "../../../crates/kcm-storage" }
+kcm-runtime = { path = "../../../crates/kcm-runtime" }
 clap.workspace = true
 anyhow.workspace = true
 chrono.workspace = true

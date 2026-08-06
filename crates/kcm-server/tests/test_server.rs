@@ -1,4 +1,4 @@
-use actix_web::{test, web, App};
+use actix_web::{App, test, web};
 use kcm_interface::rest_api::ApiState;
 use kcm_runtime::database::KnowledgeDatabase;
 use kcm_runtime::health::HealthCheck;

@@ -131,7 +131,7 @@ fn main() -> Result<()> {
                         ObjectID((i % 500) as u32),
                         0.95,
                     )
-                    .unwrap_or_else(|e| panic!("Invalid fact at index {}: {}", i, e))
+                    .expect("benchmark fact creation should always succeed")
                 })
                 .collect();
             db.insert_batch(&facts)?;
@@ -185,9 +185,7 @@ fn main() -> Result<()> {
                             ObjectID((i % 500) as u32),
                             0.95,
                         )
-                        .unwrap_or_else(|e| {
-                            panic!("Invalid fact at batch {} index {}: {}", b, i, e)
-                        })
+                        .expect("benchmark fact creation should always succeed")
                     })
                     .collect();
                 db.insert_batch(&facts)?;

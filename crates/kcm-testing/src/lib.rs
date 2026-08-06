@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
+
 pub mod bench_fixtures;
 pub mod load_tests;
 pub mod metrics_dashboard;

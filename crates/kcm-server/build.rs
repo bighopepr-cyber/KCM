@@ -1,12 +1,13 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Use vendored protoc from protoc-bin-vendored crate.
-    // This eliminates the need for any external protoc installation.
-    // Works on Linux, macOS, Windows, CI, Docker, and Codespaces.
     let vendored = protoc_bin_vendored::protoc_bin_path()
         .map_err(|e| format!("Failed to get vendored protoc: {}", e))?;
-    std::env::set_var("PROTOC", &vendored);
+    // SAFETY: This is called in build.rs before any threads are spawned.
+    #[allow(unsafe_code)]
+    unsafe {
+        std::env::set_var("PROTOC", &vendored);
+    }
 
-    let proto_root = "../../crates/kcm-interface/proto";
+    let proto_root = "../kcm-interface/proto";
     let proto_file = format!("{}/kcm.proto", proto_root);
 
     println!("cargo:rerun-if-changed={}", proto_file);

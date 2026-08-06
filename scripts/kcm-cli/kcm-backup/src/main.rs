@@ -72,7 +72,7 @@ fn main() -> Result<()> {
                     .context("Failed to create full backup")?
             };
 
-            let final_path = if let Some(ref requested) = output {
+            let final_path = if let Some(requested) = output {
                 std::fs::copy(&backup_path, requested)
                     .context("Failed to copy backup to output path")?;
                 requested.clone()

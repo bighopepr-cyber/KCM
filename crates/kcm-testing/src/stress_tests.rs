@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 pub struct StressTestScenario {
@@ -24,8 +24,12 @@ impl StressTestResults {
     pub fn to_report(&self) -> String {
         format!(
             "Stress Test: {}\n  Operations: {} (failed: {})\n  Elapsed: {:.2}s\n  Peak QPS: {:.0}\n  Failure Rate: {:.4}%\n  Graceful Degradation: {}",
-            self.scenario, self.total_ops, self.failed_ops,
-            self.elapsed_secs, self.peak_qps, self.failure_rate * 100.0,
+            self.scenario,
+            self.total_ops,
+            self.failed_ops,
+            self.elapsed_secs,
+            self.peak_qps,
+            self.failure_rate * 100.0,
             self.graceful_degradation,
         )
     }
@@ -52,8 +56,12 @@ impl StressTestConfigResults {
     pub fn to_report(&self) -> String {
         format!(
             "Stress Config Test: {}\n  Operations: {} (failed: {})\n  Elapsed: {:.2}s\n  QPS: {:.0}\n  Failure Rate: {:.4}%\n  Graceful Degradation: {}",
-            self.scenario, self.total_ops, self.failed_ops,
-            self.elapsed_secs, self.actual_qps, self.failure_rate * 100.0,
+            self.scenario,
+            self.total_ops,
+            self.failed_ops,
+            self.elapsed_secs,
+            self.actual_qps,
+            self.failure_rate * 100.0,
             self.graceful_degradation,
         )
     }

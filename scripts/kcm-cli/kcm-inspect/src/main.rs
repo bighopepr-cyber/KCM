@@ -34,7 +34,9 @@ fn main() -> Result<()> {
                 let _ = db.insert(&Fact::new(SubjectID(i), PredicateID(0), ObjectID(i), 0.5)?);
             }
             println!("  Rows:      {}", db.fact_count());
-            println!("  Columns:   10 (Subject, Predicate, Object, Confidence, Evidence, Timestamp, Context, Version, Priority, Owner)");
+            println!(
+                "  Columns:   10 (Subject, Predicate, Object, Confidence, Evidence, Timestamp, Context, Version, Priority, Owner)"
+            );
             println!("  Fact size: 34 bytes");
             Ok(())
         }

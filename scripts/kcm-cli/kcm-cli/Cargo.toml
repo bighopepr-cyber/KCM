@@ -10,10 +10,10 @@ name = "kcm"
 path = "src/main.rs"
 
 [dependencies]
-kcm-core = { path = "../../crates/kcm-core" }
-kcm-storage = { path = "../../crates/kcm-storage" }
-kcm-runtime = { path = "../../crates/kcm-runtime" }
-kcm-interface = { path = "../../crates/kcm-interface" }
+kcm-core = { path = "../../../crates/kcm-core" }
+kcm-storage = { path = "../../../crates/kcm-storage" }
+kcm-runtime = { path = "../../../crates/kcm-runtime" }
+kcm-interface = { path = "../../../crates/kcm-interface" }
 clap.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true

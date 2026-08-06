@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use kcm_core::bitmap::Bitmap;
 use kcm_core::dictionary::Dictionary;
 use kcm_core::types::*;

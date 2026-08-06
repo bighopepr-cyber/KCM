@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::time::Instant;
 
 pub struct LoadTestScenario {
@@ -31,8 +31,13 @@ impl LoadTestResults {
     pub fn to_report(&self) -> String {
         format!(
             "Load Test: {}\n  Operations: {} (failed: {})\n  Elapsed: {:.2}s\n  QPS: {:.0}\n  Avg Latency: {:.2}ms\n  P99 Latency: {:.2}ms",
-            self.scenario, self.total_operations, self.failed_operations,
-            self.elapsed_secs, self.actual_qps, self.avg_latency_ms, self.p99_latency_ms,
+            self.scenario,
+            self.total_operations,
+            self.failed_operations,
+            self.elapsed_secs,
+            self.actual_qps,
+            self.avg_latency_ms,
+            self.p99_latency_ms,
         )
     }
 }

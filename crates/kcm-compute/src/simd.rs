@@ -11,103 +11,118 @@ mod x86_impl {
 
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_filter_eq_u8(data: &[u8], value: u8) -> Vec<bool> {
-        let mut result = Vec::with_capacity(data.len());
-        let value_vec = _mm256_set1_epi8(value as i8);
-        for chunk in data.chunks_exact(32) {
-            let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
-            let cmp = _mm256_cmpeq_epi8(data_vec, value_vec);
-            let mask = _mm256_movemask_epi8(cmp) as u32;
-            for i in 0..32 {
-                result.push((mask & (1 << i)) != 0);
+        // SAFETY: Caller must ensure AVX2 is available.
+        unsafe {
+            let mut result = Vec::with_capacity(data.len());
+            let value_vec = _mm256_set1_epi8(value as i8);
+            for chunk in data.chunks_exact(32) {
+                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                let cmp = _mm256_cmpeq_epi8(data_vec, value_vec);
+                let mask = _mm256_movemask_epi8(cmp) as u32;
+                for i in 0..32 {
+                    result.push((mask & (1 << i)) != 0);
+                }
             }
-        }
-        let remainder = data.len() % 32;
-        if remainder > 0 {
-            for &v in &data[data.len() - remainder..] {
-                result.push(v == value);
+            let remainder = data.len() % 32;
+            if remainder > 0 {
+                for &v in &data[data.len() - remainder..] {
+                    result.push(v == value);
+                }
             }
+            result
         }
-        result
     }
 
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_filter_ge_u8(data: &[u8], value: u8) -> Vec<bool> {
-        let mut result = Vec::with_capacity(data.len());
-        let value_vec = _mm256_set1_epi8(value as i8);
-        for chunk in data.chunks_exact(32) {
-            let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
-            let cmp = _mm256_max_epu8(data_vec, value_vec);
-            let eq = _mm256_cmpeq_epi8(cmp, data_vec);
-            let mask = _mm256_movemask_epi8(eq) as u32;
-            for i in 0..32 {
-                result.push((mask & (1 << i)) != 0);
+        // SAFETY: Caller must ensure AVX2 is available.
+        unsafe {
+            let mut result = Vec::with_capacity(data.len());
+            let value_vec = _mm256_set1_epi8(value as i8);
+            for chunk in data.chunks_exact(32) {
+                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                let cmp = _mm256_max_epu8(data_vec, value_vec);
+                let eq = _mm256_cmpeq_epi8(cmp, data_vec);
+                let mask = _mm256_movemask_epi8(eq) as u32;
+                for i in 0..32 {
+                    result.push((mask & (1 << i)) != 0);
+                }
             }
-        }
-        let remainder = data.len() % 32;
-        if remainder > 0 {
-            for &v in &data[data.len() - remainder..] {
-                result.push(v >= value);
+            let remainder = data.len() % 32;
+            if remainder > 0 {
+                for &v in &data[data.len() - remainder..] {
+                    result.push(v >= value);
+                }
             }
+            result
         }
-        result
     }
 
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_count_nonzero_u8(data: &[u8]) -> usize {
-        let mut count = 0usize;
-        let zero = _mm256_setzero_si256();
-        for chunk in data.chunks_exact(32) {
-            let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
-            let cmp = _mm256_cmpeq_epi8(data_vec, zero);
-            let mask = _mm256_movemask_epi8(cmp) as u32;
-            count += 32 - mask.count_ones() as usize;
-        }
-        let remainder = data.len() % 32;
-        if remainder > 0 {
-            for &v in &data[data.len() - remainder..] {
-                if v != 0 {
-                    count += 1;
+        // SAFETY: Caller must ensure AVX2 is available.
+        unsafe {
+            let mut count = 0usize;
+            let zero = _mm256_setzero_si256();
+            for chunk in data.chunks_exact(32) {
+                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                let cmp = _mm256_cmpeq_epi8(data_vec, zero);
+                let mask = _mm256_movemask_epi8(cmp) as u32;
+                count += 32 - mask.count_ones() as usize;
+            }
+            let remainder = data.len() % 32;
+            if remainder > 0 {
+                for &v in &data[data.len() - remainder..] {
+                    if v != 0 {
+                        count += 1;
+                    }
                 }
             }
+            count
         }
-        count
     }
 
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_filter_eq_u32(data: &[u32], value: u32) -> Vec<bool> {
-        let mut result = Vec::with_capacity(data.len());
-        let value_vec = _mm256_set1_epi32(value as i32);
-        for chunk in data.chunks_exact(8) {
-            let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
-            let cmp = _mm256_cmpeq_epi32(data_vec, value_vec);
-            let mask = _mm256_movemask_ps(std::mem::transmute::<__m256i, __m256>(cmp));
-            for i in 0..8 {
-                result.push((mask & (1 << i)) != 0);
+        // SAFETY: Caller must ensure AVX2 is available.
+        unsafe {
+            let mut result = Vec::with_capacity(data.len());
+            let value_vec = _mm256_set1_epi32(value as i32);
+            for chunk in data.chunks_exact(8) {
+                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                let cmp = _mm256_cmpeq_epi32(data_vec, value_vec);
+                let mask = _mm256_movemask_ps(std::mem::transmute::<__m256i, __m256>(cmp));
+                for i in 0..8 {
+                    result.push((mask & (1 << i)) != 0);
+                }
             }
+            for &v in &data[(data.len() & !7)..] {
+                result.push(v == value);
+            }
+            result
         }
-        for &v in &data[(data.len() & !7)..] {
-            result.push(v == value);
-        }
-        result
     }
 
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_filter_ge_u32(data: &[u32], value: u32) -> Vec<bool> {
-        let mut result = Vec::with_capacity(data.len());
-        let value_vec = _mm256_set1_epi32(value as i32);
-        for chunk in data.chunks_exact(8) {
-            let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
-            let max = _mm256_max_epu32(data_vec, value_vec);
-            let cmp = _mm256_cmpeq_epi32(max, data_vec);
-            let mask = _mm256_movemask_ps(std::mem::transmute::<__m256i, __m256>(cmp));
-            for i in 0..8 {
-                result.push((mask & (1 << i)) != 0);
+        // SAFETY: Caller must ensure AVX2 is available.
+        unsafe {
+            let mut result = Vec::with_capacity(data.len());
+            let value_vec = _mm256_set1_epi32(value as i32);
+            for chunk in data.chunks_exact(8) {
+                let data_vec = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+                let max = _mm256_max_epu32(data_vec, value_vec);
+                let cmp = _mm256_cmpeq_epi32(max, data_vec);
+                let mask = _mm256_movemask_ps(std::mem::transmute::<__m256i, __m256>(cmp));
+                for i in 0..8 {
+                    result.push((mask & (1 << i)) != 0);
+                }
             }
+            for &v in &data[(data.len() & !7)..] {
+                result.push(v >= value);
+            }
+            result
         }
-        for &v in &data[(data.len() & !7)..] {
-            result.push(v >= value);
-        }
-        result
     }
 }
 

@@ -42,14 +42,14 @@ impl RecoveryManager {
         let db_path = db_path.as_ref();
         let wal_path = wal_path.as_ref();
         let backup_path = format!("{}.backup", db_path.display());
-        if std::path::Path::new(&backup_path).exists() {
-            if let Ok(mut schema) = DatabaseFile::load(&backup_path) {
-                if wal_path.exists() {
-                    Self::replay_wal(&mut schema, wal_path)?;
-                }
-                std::fs::copy(&backup_path, db_path).map_err(|e| KcmError::Io(e.to_string()))?;
-                return Ok(schema);
+        if std::path::Path::new(&backup_path).exists()
+            && let Ok(mut schema) = DatabaseFile::load(&backup_path)
+        {
+            if wal_path.exists() {
+                Self::replay_wal(&mut schema, wal_path)?;
             }
+            std::fs::copy(&backup_path, db_path).map_err(|e| KcmError::Io(e.to_string()))?;
+            return Ok(schema);
         }
         Err(KcmError::Corrupted(
             "Database and backup both corrupted".to_string(),

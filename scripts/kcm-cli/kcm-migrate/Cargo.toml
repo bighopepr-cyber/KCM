@@ -10,12 +10,12 @@ name = "kcm-migrate"
 path = "src/main.rs"
 
 [dependencies]
-kcm-core = { path = "../../crates/kcm-core" }
-kcm-storage = { path = "../../crates/kcm-storage" }
+kcm-core = { path = "../../../crates/kcm-core" }
+kcm-storage = { path = "../../../crates/kcm-storage" }
 clap.workspace = true
 anyhow.workspace = true
 colored.workspace = true
-kcm-runtime = { path = "../../crates/kcm-runtime" }
+kcm-runtime = { path = "../../../crates/kcm-runtime" }
 
 [lints]
 workspace = true

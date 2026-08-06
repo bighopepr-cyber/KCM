@@ -244,12 +244,12 @@ impl<'a> Operator for JoinOp<'a> {
         }
         let mut result = Vec::new();
         for &idx in &self.left_rowids {
-            if let Some(key) = self.get_join_value(idx) {
-                if let Some(matches) = hash_table.get(&key) {
-                    for &right_idx in matches {
-                        result.push(idx);
-                        result.push(right_idx);
-                    }
+            if let Some(key) = self.get_join_value(idx)
+                && let Some(matches) = hash_table.get(&key)
+            {
+                for &right_idx in matches {
+                    result.push(idx);
+                    result.push(right_idx);
                 }
             }
         }

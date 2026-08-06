@@ -163,32 +163,36 @@ impl InferenceEngine {
                     if schema.is_deleted(idx) {
                         continue;
                     }
-                    if let Some(s) = schema.subject_col.get(idx) {
-                        if let Some(p) = schema.predicate_col.get(idx) {
-                            if let Some(o) = schema.object_col.get(idx) {
-                                if let Some(c) = schema.confidence_col.get(idx) {
-                                    let s_id = SubjectID(s);
-                                    let p_id = PredicateID(p);
-                                    let o_id = ObjectID(o);
+                    let Some(s) = schema.subject_col.get(idx) else {
+                        continue;
+                    };
+                    let Some(p) = schema.predicate_col.get(idx) else {
+                        continue;
+                    };
+                    let Some(o) = schema.object_col.get(idx) else {
+                        continue;
+                    };
+                    let Some(c) = schema.confidence_col.get(idx) else {
+                        continue;
+                    };
+                    let s_id = SubjectID(s);
+                    let p_id = PredicateID(p);
+                    let o_id = ObjectID(o);
 
-                                    if let Some(subject_filter) = subj {
-                                        if *subject_filter != s_id {
-                                            continue;
-                                        }
-                                    }
-                                    if *pred != p_id {
-                                        continue;
-                                    }
-                                    if let Some(object_filter) = obj {
-                                        if *object_filter != o_id {
-                                            continue;
-                                        }
-                                    }
-                                    matches.push((s_id, o_id, vec![c]));
-                                }
-                            }
-                        }
+                    if let Some(subject_filter) = subj
+                        && *subject_filter != s_id
+                    {
+                        continue;
                     }
+                    if *pred != p_id {
+                        continue;
+                    }
+                    if let Some(object_filter) = obj
+                        && *object_filter != o_id
+                    {
+                        continue;
+                    }
+                    matches.push((s_id, o_id, vec![c]));
                 }
 
                 Ok(matches)
@@ -222,10 +226,10 @@ impl InferenceEngine {
 
                 let mut seen: HashSet<(u32, u32)> = HashSet::new();
                 for m in &left_matches {
-                    seen.insert((m.0 .0, m.1 .0));
+                    seen.insert((m.0.0, m.1.0));
                 }
                 for m in right_matches {
-                    let key = (m.0 .0, m.1 .0);
+                    let key = (m.0.0, m.1.0);
                     if seen.insert(key) {
                         left_matches.push(m);
                     }
@@ -254,18 +258,22 @@ impl InferenceEngine {
                     if schema.is_deleted(idx) {
                         continue;
                     }
-                    if let Some(s) = schema.subject_col.get(idx) {
-                        if let Some(p) = schema.predicate_col.get(idx) {
-                            if let Some(o) = schema.object_col.get(idx) {
-                                if let Some(c) = schema.confidence_col.get(idx) {
-                                    if !exclude_set.contains(&(s, p, o)) {
-                                        let s_id = SubjectID(s);
-                                        let o_id = ObjectID(o);
-                                        result.push((s_id, o_id, vec![c]));
-                                    }
-                                }
-                            }
-                        }
+                    let Some(s) = schema.subject_col.get(idx) else {
+                        continue;
+                    };
+                    let Some(p) = schema.predicate_col.get(idx) else {
+                        continue;
+                    };
+                    let Some(o) = schema.object_col.get(idx) else {
+                        continue;
+                    };
+                    let Some(c) = schema.confidence_col.get(idx) else {
+                        continue;
+                    };
+                    if !exclude_set.contains(&(s, p, o)) {
+                        let s_id = SubjectID(s);
+                        let o_id = ObjectID(o);
+                        result.push((s_id, o_id, vec![c]));
                     }
                 }
 

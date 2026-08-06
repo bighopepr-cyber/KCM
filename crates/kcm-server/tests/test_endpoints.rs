@@ -1,4 +1,4 @@
-use actix_web::{test, web, App, HttpResponse};
+use actix_web::{App, HttpResponse, test, web};
 use kcm_core::types::*;
 use kcm_interface::rest_api::*;
 use kcm_runtime::database::KnowledgeDatabase;

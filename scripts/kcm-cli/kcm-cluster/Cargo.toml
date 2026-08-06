@@ -10,13 +10,13 @@ name = "kcm-cluster"
 path = "src/main.rs"
 
 [dependencies]
-kcm-core = { path = "../../crates/kcm-core" }
-kcm-runtime = { path = "../../crates/kcm-runtime" }
+kcm-core = { path = "../../../crates/kcm-core" }
+kcm-runtime = { path = "../../../crates/kcm-runtime" }
 clap.workspace = true
 anyhow.workspace = true
 colored.workspace = true
 serde_json.workspace = true
-kcm-distributed = { path = "../../crates/kcm-distributed" }
+kcm-distributed = { path = "../../../crates/kcm-distributed" }
 
 [lints]
 workspace = true

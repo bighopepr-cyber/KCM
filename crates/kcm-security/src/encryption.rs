@@ -45,8 +45,8 @@ impl EncryptedStorage {
     pub fn encrypt(plaintext: &[u8], key: &EncryptionKey) -> Result<Vec<u8>, KcmError> {
         use aes_gcm::aead::rand_core::RngCore;
         use aes_gcm::{
-            aead::{Aead, KeyInit, OsRng},
             Aes256Gcm, Nonce,
+            aead::{Aead, KeyInit, OsRng},
         };
 
         let cipher = Aes256Gcm::new_from_slice(&key.key)
@@ -68,8 +68,8 @@ impl EncryptedStorage {
 
     pub fn decrypt(encrypted: &[u8], key: &EncryptionKey) -> Result<Vec<u8>, KcmError> {
         use aes_gcm::{
-            aead::{Aead, KeyInit},
             Aes256Gcm, Nonce,
+            aead::{Aead, KeyInit},
         };
 
         if encrypted.len() < 12 {

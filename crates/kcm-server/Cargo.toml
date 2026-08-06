@@ -20,6 +20,7 @@ tokio.workspace = true
 
 [build-dependencies]
 tonic-build.workspace = true
+protoc-bin-vendored.workspace = true
 
 [[bin]]
 name = "kcm-server"

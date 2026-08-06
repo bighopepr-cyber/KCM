@@ -1,9 +1,9 @@
-use actix_web::{middleware as actix_mw, web, App, HttpResponse, HttpServer};
+use actix_web::{App, HttpResponse, HttpServer, middleware as actix_mw, web};
 use kcm_interface::middleware::rate_limit::RateLimiter;
 use kcm_interface::openapi::openapi_spec;
 use kcm_interface::rest_api::{
-    handle_batch_insert, handle_delete, handle_get_fact, handle_health, handle_insert,
-    handle_query, handle_stats, handle_update, ApiState,
+    ApiState, handle_batch_insert, handle_delete, handle_get_fact, handle_health, handle_insert,
+    handle_query, handle_stats, handle_update,
 };
 use kcm_runtime::database::KnowledgeDatabase;
 use kcm_runtime::health::HealthCheck;

@@ -63,11 +63,11 @@ impl Bitmap {
         // Mask off excess bits in the last word to maintain the invariant
         // that only bits [0, len) are meaningful.
         let bits_in_last = self.len % Self::WORD_SIZE;
-        if bits_in_last > 0 {
-            if let Some(last) = self.words.last_mut() {
-                let mask = (1u64 << bits_in_last) - 1;
-                *last &= mask;
-            }
+        if bits_in_last > 0
+            && let Some(last) = self.words.last_mut()
+        {
+            let mask = (1u64 << bits_in_last) - 1;
+            *last &= mask;
         }
     }
 
@@ -114,11 +114,11 @@ impl Bitmap {
         }
         // Mask off excess bits in the last word.
         let bits_in_last = self.len % Self::WORD_SIZE;
-        if bits_in_last > 0 {
-            if let Some(last) = self.words.last_mut() {
-                let mask = (1u64 << bits_in_last) - 1;
-                *last &= mask;
-            }
+        if bits_in_last > 0
+            && let Some(last) = self.words.last_mut()
+        {
+            let mask = (1u64 << bits_in_last) - 1;
+            *last &= mask;
         }
     }
 

@@ -288,10 +288,10 @@ impl QueryBuilder {
         if filters.is_empty() {
             let mut result = Vec::new();
             for idx in 0..schema.len() {
-                if !schema.is_deleted(idx) {
-                    if let Some(fact) = schema.get_fact(idx) {
-                        result.push(fact);
-                    }
+                if !schema.is_deleted(idx)
+                    && let Some(fact) = schema.get_fact(idx)
+                {
+                    result.push(fact);
                 }
             }
             return Ok(result);
