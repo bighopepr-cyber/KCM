@@ -7,6 +7,7 @@ description = "Distributed architecture for KCM"
 [dependencies]
 kcm-core = { path = "../kcm-core" }
 kcm-security = { path = "../kcm-security" }
+log.workspace = true
 parking_lot.workspace = true
 rayon.workspace = true
 

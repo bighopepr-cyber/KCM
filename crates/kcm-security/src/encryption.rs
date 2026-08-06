@@ -364,10 +364,9 @@ impl EncryptedStorage {
         let dst_path = dst.as_ref();
 
         if !src_path.exists() {
-            return Err(KcmError::NotFound(format!(
-                "Source file not found: {}",
-                src_path.display()
-            )));
+            return Err(KcmError::NotFound(
+                "Source file not found".to_string(),
+            ));
         }
 
         let mut data = Vec::new();
@@ -395,10 +394,9 @@ impl EncryptedStorage {
         let dst_path = dst.as_ref();
 
         if !src_path.exists() {
-            return Err(KcmError::NotFound(format!(
-                "Source file not found: {}",
-                src_path.display()
-            )));
+            return Err(KcmError::NotFound(
+                "Source file not found".to_string(),
+            ));
         }
 
         let mut data = Vec::new();

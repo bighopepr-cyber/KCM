@@ -50,6 +50,9 @@ impl<T: Copy> DenseVec<T> {
         let layout = Layout::from_size_align(byte_size, alignment.max(std::mem::align_of::<T>()))
             .map_err(|e| KcmError::InvalidArgument(format!("Layout error: {}", e)))?;
 
+        // SAFETY: Layout has been validated above: alignment is a power of two,
+        // byte_size is non-zero and does not overflow. alloc returns a pointer
+        // that is either valid or null; null is handled by NonNull::new below.
         let ptr = unsafe { alloc(layout) } as *mut T;
         let ptr = NonNull::new(ptr).ok_or(KcmError::OutOfMemory)?;
 
@@ -89,10 +92,16 @@ impl<T: Copy> DenseVec<T> {
     }
 
     pub fn as_slice(&self) -> &[T] {
+        // SAFETY: ptr is non-null and valid for self.len elements of type T.
+        // All [0..len) are initialized by push(). No mutable references exist
+        // while an immutable reference is held (exclusive borrow via &self).
         unsafe { std::slice::from_raw_parts(self.ptr.as_ptr(), self.len) }
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [T] {
+        // SAFETY: ptr is non-null and valid for self.len elements of type T.
+        // All [0..len) are initialized by push(). &mut self guarantees exclusive
+        // access — no concurrent readers or writers.
         unsafe { std::slice::from_raw_parts_mut(self.ptr.as_ptr(), self.len) }
     }
 

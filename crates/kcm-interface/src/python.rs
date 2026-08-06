@@ -15,7 +15,7 @@ pub mod bindings {
         #[new]
         pub fn new() -> PyResult<Self> {
             let kb = KnowledgeDatabase::new()
-                .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))?;
+                .map_err(|_| pyo3::exceptions::PyException::new_err("Failed to create database"))?;
             Ok(PyKnowledgeBase {
                 kb: Arc::new(Mutex::new(kb)),
             })
@@ -34,13 +34,21 @@ pub mod bindings {
                 ObjectID(object),
                 confidence,
             )
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            .map_err(|_| pyo3::exceptions::PyValueError::new_err("Invalid fact parameters"))?;
 
             self.kb
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .insert(&fact)
-                .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))?;
+                .map_err(|e| match e {
+                    KcmError::InvalidArgument(msg) => {
+                        pyo3::exceptions::PyValueError::new_err(msg)
+                    }
+                    KcmError::NotFound(msg) => {
+                        pyo3::exceptions::PyKeyError::new_err(msg)
+                    }
+                    _ => pyo3::exceptions::PyException::new_err("Internal error"),
+                })?;
             Ok(())
         }
 
@@ -49,7 +57,7 @@ pub mod bindings {
             let facts = kb
                 .query()
                 .execute()
-                .map_err(|e| pyo3::exceptions::PyException::new_err(e.to_string()))?;
+                .map_err(|_| pyo3::exceptions::PyException::new_err("Query execution failed"))?;
             Ok(facts
                 .iter()
                 .map(|f| (f.subject.0, f.predicate.0, f.object.0, f.confidence))

@@ -8,6 +8,7 @@ description = "Runtime and transaction layer for KCM"
 kcm-core = { path = "../kcm-core" }
 kcm-storage = { path = "../kcm-storage" }
 kcm-optimizer = { path = "../kcm-optimizer" }
+log.workspace = true
 parking_lot.workspace = true
 rayon.workspace = true
 tokio.workspace = true

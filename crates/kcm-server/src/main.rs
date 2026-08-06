@@ -55,6 +55,30 @@ async fn health_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
     build_response(handle_health(&state))
 }
 
+async fn livez_handler() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .body(r#"{"status":"alive"}"#)
+}
+
+async fn readyz_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
+    let snap = state.metrics.snapshot();
+    let error_rate = if snap.inserts_total > 0 {
+        snap.inserts_failed as f64 / snap.inserts_total as f64
+    } else {
+        0.0
+    };
+    if error_rate > 0.5 {
+        HttpResponse::ServiceUnavailable()
+            .content_type("application/json")
+            .body(r#"{"status":"not_ready","reason":"high error rate"}"#)
+    } else {
+        HttpResponse::Ok()
+            .content_type("application/json")
+            .body(r#"{"status":"ready"}"#)
+    }
+}
+
 async fn insert_handler(
     state: web::Data<Arc<ApiState>>,
     body: web::Json<InsertRequest>,
@@ -150,7 +174,22 @@ async fn metrics_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
          kcm_cache_hit_ratio {:.4}\n\
          # HELP kcm_estimated_memory_bytes Estimated memory usage in bytes\n\
          # TYPE kcm_estimated_memory_bytes gauge\n\
-         kcm_estimated_memory_bytes {}\n",
+         kcm_estimated_memory_bytes {}\n\
+         # HELP kcm_inferences_total Total number of inference operations\n\
+         # TYPE kcm_inferences_total counter\n\
+         kcm_inferences_total {}\n\
+         # HELP kcm_facts_inferred Total number of inferred facts\n\
+         # TYPE kcm_facts_inferred counter\n\
+         kcm_facts_inferred {}\n\
+         # HELP kcm_total_facts Total fact count\n\
+         # TYPE kcm_total_facts gauge\n\
+         kcm_total_facts {}\n\
+         # HELP kcm_active_facts Active (non-deleted) fact count\n\
+         # TYPE kcm_active_facts gauge\n\
+         kcm_active_facts {}\n\
+         # HELP kcm_tombstone_count Deleted (tombstoned) fact count\n\
+         # TYPE kcm_tombstone_count gauge\n\
+         kcm_tombstone_count {}\n",
         snap.queries_total,
         snap.queries_failed,
         snap.avg_query_latency_ms,
@@ -158,6 +197,11 @@ async fn metrics_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
         snap.inserts_failed,
         snap.cache_hit_ratio,
         snap.estimated_memory_bytes,
+        snap.inferences_total,
+        snap.facts_inferred,
+        snap.total_facts,
+        snap.active_facts,
+        snap.tombstone_count,
     );
     HttpResponse::Ok()
         .content_type("text/plain; version=0.0.4; charset=utf-8")
@@ -198,6 +242,8 @@ async fn main() -> std::io::Result<()> {
             ))
             .wrap(actix_mw::Compress::default())
             .route("/health", web::get().to(health_handler))
+            .route("/livez", web::get().to(livez_handler))
+            .route("/readyz", web::get().to(readyz_handler))
             .route("/metrics", web::get().to(metrics_handler))
             .route("/openapi.json", web::get().to(openapi_handler))
             .route("/api/v1/facts", web::post().to(insert_handler))

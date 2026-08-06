@@ -128,8 +128,9 @@ impl TransactionCoordinator {
             .next_id
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let txn_id = format!("txn-{}", id);
-        let txn = DistributedTransaction::new(txn_id.clone(), participants);
+        let txn = DistributedTransaction::new(txn_id.clone(), participants.clone());
         self.transactions.lock().insert(txn_id.clone(), txn);
+        log::debug!("Began transaction {} with {} participants", txn_id, participants.len());
         txn_id
     }
 
@@ -141,14 +142,26 @@ impl TransactionCoordinator {
 
         if txn.participants.is_empty() {
             txn.status = TransactionStatus::Committed;
+            log::debug!("Transaction {} committed (empty participant list)", txn_id);
             return Ok(());
         }
+
+        log::debug!(
+            "2PC preparing {} participants for transaction {}",
+            txn.participants.len(),
+            txn_id
+        );
 
         // Phase 1: PREPARE
         for participant in &txn.participants {
             let vote = self.transport.prepare(*participant, &txn.transaction_id);
             if !vote {
                 txn.status = TransactionStatus::Aborted;
+                log::warn!(
+                    "2PC: participant {} voted ABORT for transaction {}",
+                    participant,
+                    txn_id
+                );
                 self.transport.abort(*participant, &txn.transaction_id);
                 return Err(KcmError::Conflict(format!(
                     "Participant {} voted ABORT",
@@ -157,12 +170,19 @@ impl TransactionCoordinator {
             }
         }
 
+        log::debug!("2PC committing {} participants for transaction {}", txn.participants.len(), txn_id);
+
         // Phase 2: COMMIT
         for participant in &txn.participants {
             self.transport.commit(*participant, &txn.transaction_id);
         }
 
         txn.status = TransactionStatus::Committed;
+        log::info!(
+            "2PC committed transaction {} with {} participants",
+            txn_id,
+            txn.participants.len()
+        );
         self.log_audit(
             AuditEventType::AccessControlCheck,
             "system",
@@ -176,6 +196,7 @@ impl TransactionCoordinator {
         let mut txns = self.transactions.lock();
         if let Some(txn) = txns.get_mut(txn_id) {
             txn.status = TransactionStatus::Aborted;
+            log::info!("Transaction {} aborted", txn_id);
             Ok(())
         } else {
             Err(KcmError::NotFound(format!(

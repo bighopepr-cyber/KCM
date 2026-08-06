@@ -60,6 +60,7 @@ impl KnowledgeDatabase {
         let mut schema = self.schema.write();
         schema.append_fact(fact)?;
         let row_id = RowID(schema.len() as u64 - 1);
+        log::debug!("Inserted fact at row_id={}", row_id.0);
         Ok(row_id)
     }
 
@@ -70,6 +71,7 @@ impl KnowledgeDatabase {
             schema.append_fact(fact)?;
             row_ids.push(RowID(schema.len() as u64 - 1));
         }
+        log::debug!("Batch inserted {} facts", facts.len());
         Ok(row_ids)
     }
 
@@ -80,7 +82,9 @@ impl KnowledgeDatabase {
 
     pub fn delete(&self, row_id: RowID) -> Result<(), KcmError> {
         let mut schema = self.schema.write();
-        schema.delete_fact(row_id.as_usize())
+        schema.delete_fact(row_id.as_usize())?;
+        log::debug!("Deleted fact at row_id={}", row_id.0);
+        Ok(())
     }
 
     pub fn query(&self) -> QueryBuilder {
@@ -116,6 +120,11 @@ impl KnowledgeDatabase {
     /// Compact the schema by removing tombstoned rows.
     /// Returns a new KnowledgeDatabase with only active facts.
     pub fn compact(&self) -> Result<Self, KcmError> {
+        let (total_before, active_before) = {
+            let schema = self.schema.read();
+            (schema.len(), schema.active_count())
+        };
+        log::info!("Compacting database: {} total, {} active", total_before, active_before);
         let compacted = {
             let schema = self.schema.read();
             schema.compact()?
@@ -124,6 +133,8 @@ impl KnowledgeDatabase {
             schema: Arc::new(RwLock::new(compacted)),
             dictionaries: Arc::clone(&self.dictionaries),
         };
+        let total_after = new_kb.fact_count();
+        log::info!("Compaction complete: {} -> {} facts", total_before, total_after);
         Ok(new_kb)
     }
 }

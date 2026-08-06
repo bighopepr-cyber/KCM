@@ -367,13 +367,15 @@ impl Parser {
             Token::Equals => {
                 let right = match self.peek() {
                     Token::Number(_) => self.parse_number()?.to_string(),
-                    Token::StringLit(_) => {
-                        if let Token::StringLit(s) = self.next() {
-                            s
-                        } else {
-                            unreachable!()
+                    Token::StringLit(_) => match self.next() {
+                        Token::StringLit(s) => s,
+                        other => {
+                            return Err(KqlError::UnexpectedToken(format!(
+                                "Expected string literal, got {:?}",
+                                other
+                            )))
                         }
-                    }
+                    },
                     _ => self.parse_identifier()?,
                 };
                 Ok(Condition::Equal(left, right))

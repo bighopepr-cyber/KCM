@@ -287,7 +287,11 @@ where
     }
 }
 
+// SAFETY: RobinHoodMap stores Vec<Option<Bucket<K, V>>> which is Send when K: Send, V: Send.
+// Internal HashMap and Vec do not hold raw pointers or references — they manage their own memory.
 unsafe impl<K: Send, V: Send> Send for RobinHoodMap<K, V> {}
+// SAFETY: RobinHoodMap's internal data (Vec<Option<Bucket>>) is Sync when K: Sync, V: Sync.
+// No interior mutability without explicit synchronization (all mutations require &mut self).
 unsafe impl<K: Sync, V: Sync> Sync for RobinHoodMap<K, V> {}
 
 #[cfg(test)]

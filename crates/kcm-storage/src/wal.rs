@@ -186,10 +186,8 @@ impl WriteAheadLog {
                     let actual_hash = blake3_hash(&all_data[data_start..offset - 32]);
                     if expected_hash != actual_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "WAL insert checksum mismatch at offset {}: expected {:?}, got {:?}",
-                            data_start - 1,
-                            expected_hash,
-                            actual_hash
+                            "WAL insert checksum mismatch at entry {}",
+                            offset - 1
                         )));
                     }
 
@@ -225,10 +223,8 @@ impl WriteAheadLog {
                     let actual_hash = blake3_hash(&all_data[data_start..offset - 32]);
                     if expected_hash != actual_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "WAL delete checksum mismatch at offset {}: expected {:?}, got {:?}",
-                            data_start - 1,
-                            expected_hash,
-                            actual_hash
+                            "WAL delete checksum mismatch at entry {}",
+                            offset - 1
                         )));
                     }
 
@@ -274,8 +270,8 @@ impl WriteAheadLog {
                     let computed_hash = blake3_hash(&data[data_start..data_start + 33]);
                     if stored_hash != computed_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "BLAKE3 mismatch at INSERT entry {}: stored={:?}, computed={:?}",
-                            entry_count, stored_hash, computed_hash
+                            "BLAKE3 mismatch at INSERT entry {}",
+                            entry_count
                         )));
                     }
                     entry_count += 1;
@@ -295,8 +291,8 @@ impl WriteAheadLog {
                     let computed_hash = blake3_hash(&data[data_start..data_start + 8]);
                     if stored_hash != computed_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "BLAKE3 mismatch at DELETE entry {}: stored={:?}, computed={:?}",
-                            entry_count, stored_hash, computed_hash
+                            "BLAKE3 mismatch at DELETE entry {}",
+                            entry_count
                         )));
                     }
                     entry_count += 1;

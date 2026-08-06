@@ -76,8 +76,8 @@ impl ApiResponse {
                 body: r#"{"error":"Transaction aborted","status":409}"#.to_string(),
             },
             KcmError::InvalidArgument(msg) => ApiResponse::bad_request(msg),
-            KcmError::Corrupted(msg) => ApiResponse::internal_error(msg),
-            KcmError::Io(msg) => ApiResponse::internal_error(msg),
+            KcmError::Corrupted(_) => ApiResponse::internal_error("Data corruption detected"),
+            KcmError::Io(_) => ApiResponse::internal_error("An I/O error occurred"),
         }
     }
 }

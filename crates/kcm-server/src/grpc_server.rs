@@ -39,7 +39,11 @@ impl KnowledgeService for KcmGrpcService {
                 row_id: row_id.0,
                 status: "OK".to_string(),
             })),
-            Err(e) => Err(tonic::Status::internal(e.to_string())),
+            Err(e) => Err(tonic::Status::internal(format!(
+                "{}: {}",
+                e.error_code().name(),
+                e.error_code().description()
+            ))),
         }
     }
 
@@ -91,7 +95,11 @@ impl KnowledgeService for KcmGrpcService {
                     total_count: total,
                 }))
             }
-            Err(e) => Err(tonic::Status::internal(e.to_string())),
+            Err(e) => Err(tonic::Status::internal(format!(
+                "{}: {}",
+                e.error_code().name(),
+                e.error_code().description()
+            ))),
         }
     }
 
@@ -110,7 +118,11 @@ impl KnowledgeService for KcmGrpcService {
                 context: fact.context.0 as u32,
             })),
             Ok(None) => Err(tonic::Status::not_found("Fact not found")),
-            Err(e) => Err(tonic::Status::internal(e.to_string())),
+            Err(e) => Err(tonic::Status::internal(format!(
+                "{}: {}",
+                e.error_code().name(),
+                e.error_code().description()
+            ))),
         }
     }
 

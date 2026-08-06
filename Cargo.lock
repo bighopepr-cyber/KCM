@@ -1659,7 +1659,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-backup"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1673,7 +1673,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-bench"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1684,7 +1684,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1698,7 +1698,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-cluster"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1711,7 +1711,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-compact"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1723,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-compliance"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "parking_lot",
@@ -1731,7 +1731,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-compute"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "kcm-storage",
@@ -1739,7 +1739,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "ahash",
  "criterion",
@@ -1751,7 +1751,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-diagnose"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1763,17 +1763,18 @@ dependencies = [
 
 [[package]]
 name = "kcm-distributed"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "kcm-security",
+ "log",
  "parking_lot",
  "rayon",
 ]
 
 [[package]]
 name = "kcm-docs"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1785,7 +1786,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-doctor"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1797,7 +1798,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-export"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1809,7 +1810,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-import"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1822,7 +1823,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-inspect"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1834,7 +1835,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-interface"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "kcm-runtime",
@@ -1848,7 +1849,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-migrate"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1860,7 +1861,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-ml"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "kcm-reasoning",
@@ -1868,7 +1869,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-optimizer"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "kcm-storage",
@@ -1876,7 +1877,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-perf"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1888,7 +1889,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-profile"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1900,7 +1901,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-reasoning"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "kcm-core",
  "kcm-storage",
@@ -1908,7 +1909,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-restore"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1922,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-runtime"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "criterion",
  "kcm-compute",
@@ -1932,6 +1933,7 @@ dependencies = [
  "kcm-reasoning",
  "kcm-storage",
  "kcm-testing",
+ "log",
  "parking_lot",
  "rayon",
  "tempfile",
@@ -1940,7 +1942,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-schema"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1950,8 +1952,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "kcm-sdk"
+version = "1.0.0"
+dependencies = [
+ "kcm-core",
+ "kcm-runtime",
+ "kcm-storage",
+ "tempfile",
+]
+
+[[package]]
 name = "kcm-security"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aes-gcm",
  "blake3",
@@ -1966,7 +1978,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-server"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "actix-web",
  "env_logger",
@@ -1986,7 +1998,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-snapshot"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1999,7 +2011,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-storage"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "ahash",
  "blake3",
@@ -2017,7 +2029,7 @@ dependencies = [
 
 [[package]]
 name = "kcm-testing"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "getrandom 0.2.17",
  "kcm-compliance",

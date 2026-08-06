@@ -319,6 +319,10 @@ impl DatabaseFile {
             let mut buf = [0u8; 8];
             let copy_len = type_size.min(8);
             buf[..copy_len].copy_from_slice(&raw_data[offset..offset + copy_len]);
+            // SAFETY: T is Copy and smaller than or equal to 8 bytes. buf is zero-initialized,
+            // then copy_len bytes are written from raw_data. ptr::read interprets the first
+            // size_of::<T>() bytes as T; remaining zero bytes produce correct values for
+            // integer types (0) and floats (positive zero).
             values.push(unsafe { std::ptr::read(buf.as_ptr() as *const T) });
         }
 
@@ -397,6 +401,9 @@ impl DatabaseFile {
     }
 }
 
+// SAFETY: T is a plain data type (Copy + 'static) whose byte representation
+// is used only for serialization. The returned slice has the same lifetime
+// as the input and is valid for reading size_of_val(slice) bytes.
 fn as_bytes<T>(slice: &[T]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, std::mem::size_of_val(slice)) }
 }
