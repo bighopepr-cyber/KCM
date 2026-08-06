@@ -1140,7 +1140,9 @@ fn bench_index_bloom_filter(c: &mut Criterion) {
 
 fn bench_optimizer_pipeline(c: &mut Criterion) {
     use kcm_optimizer::planner::{PlanNode, PlannerFilterPredicate};
-    use kcm_optimizer::rewriting::{FilterPushdownOptimizer, JoinOrderingOptimizer, OptimizerPipeline};
+    use kcm_optimizer::rewriting::{
+        FilterPushdownOptimizer, JoinOrderingOptimizer, OptimizerPipeline,
+    };
     let mut group = c.benchmark_group("optimizer_pipeline");
     configure_standard(&mut group);
     for &size in &[10, 50, 100, 500] {
@@ -1179,8 +1181,8 @@ fn bench_recovery_wal_replay_large(c: &mut Criterion) {
             let tmp = tempfile::tempdir().expect("Failed to create temp dir");
             let db_path = tmp.path().join("test.kcmdb");
             {
-                let db = KnowledgeDatabase::new()
-                    .expect("Failed to create KB for recovery benchmark");
+                let db =
+                    KnowledgeDatabase::new().expect("Failed to create KB for recovery benchmark");
                 for i in 0..size {
                     let fact = Fact::new(
                         SubjectID((i % 1000) as u32),
@@ -1191,14 +1193,10 @@ fn bench_recovery_wal_replay_large(c: &mut Criterion) {
                     .expect("Failed to create fact");
                     db.insert(&fact).expect("Failed to insert fact");
                 }
-                DatabaseFile::save(&db.get_schema(), &db_path)
-                    .expect("Failed to save DB");
+                DatabaseFile::save(&db.get_schema(), &db_path).expect("Failed to save DB");
             }
             b.iter(|| {
-                black_box(
-                    DatabaseFile::load(&db_path)
-                        .expect("Recovery failed in benchmark"),
-                )
+                black_box(DatabaseFile::load(&db_path).expect("Recovery failed in benchmark"))
             });
         });
     }
