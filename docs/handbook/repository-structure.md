@@ -22,7 +22,7 @@
 
 ## Overview
 
-**KCM (Knowledge Columnar Model)** is a self-contained columnar knowledge representation, storage, query, and reasoning engine implemented in Rust. The repository is organized as a Cargo workspace containing **13 core crates**, **16 CLI tools**, **9 language SDKs**, and a complete deployment stack.
+**KCM (Knowledge Columnar Model)** is a self-contained columnar knowledge representation, storage, query, and reasoning engine implemented in Rust. The repository is organized as a Cargo workspace containing **13 core crates**, **17 CLI tools**, **9 language SDKs**, and a complete deployment stack.
 
 - **Language:** Rust (edition 2021, stable toolchain)
 - **License:** MIT
@@ -45,7 +45,7 @@ KCM/
 ├── ROADMAP.md                        # Release plan & milestones
 ├── SECURITY.md                       # Security policy
 ├── SSOT.md                           # Single Source of Truth index
-├── VERSION                           # Canonical version source (SemVer 2.0.0)
+├── VERSION                           # Canonical version source (SemVer 1.0.0)
 ├── CHANGELOG.md                      # Version history
 ├── Cargo.toml                        # Workspace root manifest
 ├── Cargo.lock                        # Dependency lockfile
