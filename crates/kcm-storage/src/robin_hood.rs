@@ -15,7 +15,6 @@ struct Bucket<K, V> {
 pub struct RobinHoodMap<K, V> {
     entries: Vec<Option<Bucket<K, V>>>,
     len: usize,
-    capacity: usize,
     mask: usize,
     hasher: ahash::AHasher,
 }
@@ -36,7 +35,6 @@ where
         RobinHoodMap {
             entries,
             len: 0,
-            capacity,
             mask: capacity - 1,
             hasher: ahash::RandomState::new().build_hasher(),
         }
@@ -55,17 +53,16 @@ where
     }
 
     fn should_grow(&self) -> bool {
-        self.len * 100 / self.capacity >= LOAD_FACTOR_PERCENT
+        self.len * 100 / (self.mask + 1) >= LOAD_FACTOR_PERCENT
     }
 
     fn grow(&mut self) {
         let old_entries = std::mem::replace(
             &mut self.entries,
-            Vec::with_capacity(self.capacity * 2),
+            Vec::with_capacity((self.mask + 1) * 2),
         );
-        self.capacity *= 2;
-        self.mask = self.capacity - 1;
-        self.entries.resize_with(self.capacity, || None);
+        self.mask = self.mask * 2 + 1;
+        self.entries.resize_with(self.mask + 1, || None);
         self.len = 0;
 
         for bucket_opt in old_entries {
@@ -219,15 +216,19 @@ where
     }
 
     pub fn capacity(&self) -> usize {
-        self.capacity
+        self.mask + 1
     }
 
     pub fn keys(&self) -> impl Iterator<Item = &K> {
-        self.entries.iter().filter_map(|b| b.as_ref().map(|b| &b.key))
+        self.entries
+            .iter()
+            .filter_map(|b| b.as_ref().map(|b| &b.key))
     }
 
     pub fn values(&self) -> impl Iterator<Item = &V> {
-        self.entries.iter().filter_map(|b| b.as_ref().map(|b| &b.value))
+        self.entries
+            .iter()
+            .filter_map(|b| b.as_ref().map(|b| &b.value))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&K, &V)> {

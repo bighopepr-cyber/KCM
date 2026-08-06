@@ -1,4 +1,5 @@
 use crate::robin_hood::RobinHoodMap;
+use std::hash::{BuildHasher, Hash, Hasher};
 use std::sync::Arc;
 
 const PREFETCH_STRIDE: usize = 8;
@@ -6,8 +7,7 @@ const PREFETCH_STRIDE: usize = 8;
 pub struct DictionaryCache {
     string_to_id: RobinHoodMap<String, u32>,
     id_to_string: Vec<Arc<str>>,
-    hash_fingerprints: Vec<u64>,
-    cached_ids: Vec<Option<u32>>,
+    hasher: ahash::RandomState,
 }
 
 impl DictionaryCache {
@@ -15,8 +15,7 @@ impl DictionaryCache {
         let mut cache = DictionaryCache {
             string_to_id: RobinHoodMap::new(),
             id_to_string: Vec::new(),
-            hash_fingerprints: Vec::new(),
-            cached_ids: Vec::new(),
+            hasher: ahash::RandomState::new(),
         };
         cache.id_to_string.push(Arc::from(""));
         cache
@@ -26,11 +25,17 @@ impl DictionaryCache {
         let mut cache = DictionaryCache {
             string_to_id: RobinHoodMap::with_capacity(capacity),
             id_to_string: Vec::with_capacity(capacity),
-            hash_fingerprints: Vec::with_capacity(capacity),
-            cached_ids: Vec::with_capacity(capacity),
+            hasher: ahash::RandomState::new(),
         };
         cache.id_to_string.push(Arc::from(""));
         cache
+    }
+
+    #[inline]
+    fn compute_hash(&self, value: &str) -> u64 {
+        let mut h = self.hasher.build_hasher();
+        value.hash(&mut h);
+        h.finish()
     }
 
     #[inline]
@@ -40,9 +45,7 @@ impl DictionaryCache {
         }
         let id = self.id_to_string.len() as u32;
         let arc_str: Arc<str> = Arc::from(value);
-        self.id_to_string.push(arc_str.clone());
-        let hash = self.compute_hash(value);
-        self.hash_fingerprints.push(hash);
+        self.id_to_string.push(arc_str);
         self.string_to_id.insert(value.to_string(), id);
         id
     }
@@ -58,12 +61,8 @@ impl DictionaryCache {
     }
 
     #[inline]
-    fn compute_hash(&self, value: &str) -> u64 {
-        use std::hash::{BuildHasher, Hasher};
-        let state = ahash::RandomState::new();
-        let mut h = state.build_hasher();
-        value.hash(&mut h);
-        h.finish()
+    fn lookup_with_hash(&self, key: &str, hash: u64) -> Option<u32> {
+        self.string_to_id.get_with_hash(key, hash).copied()
     }
 
     pub fn lookup_batch_prefetch(&self, values: &[&str], results: &mut [Option<u32>]) {
@@ -76,17 +75,19 @@ impl DictionaryCache {
             let base = batch * PREFETCH_STRIDE;
 
             #[cfg(target_arch = "x86_64")]
-            for i in base..(base + PREFETCH_STRIDE * 2).min(len) {
-                if i + PREFETCH_STRIDE < len {
-                    let prefetch_key = values[i + PREFETCH_STRIDE];
-                    let hash = self.compute_hash(prefetch_key);
-                    let idx = (hash as usize) % self.string_to_id.capacity();
-                    let ptr = &self.string_to_id as *const _ as *const u8;
-                    unsafe {
-                        std::arch::x86_64::_mm_prefetch(
-                            ptr.add(idx * std::mem::size_of::<usize>()),
-                            std::arch::x86_64::_MM_HINT_T0,
-                        );
+            {
+                for i in base..(base + PREFETCH_STRIDE * 2).min(len) {
+                    if i + PREFETCH_STRIDE < len {
+                        let prefetch_key = values[i + PREFETCH_STRIDE];
+                        let hash = self.compute_hash(prefetch_key);
+                        let idx = (hash as usize) % self.string_to_id.capacity();
+                        let ptr = &self.string_to_id as *const _ as *const u8;
+                        unsafe {
+                            std::arch::x86_64::_mm_prefetch(
+                                ptr.add(idx * std::mem::size_of::<usize>()),
+                                std::arch::x86_64::_MM_HINT_T0,
+                            );
+                        }
                     }
                 }
             }
@@ -126,8 +127,6 @@ impl DictionaryCache {
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
     unsafe fn lookup_batch_avx2(&self, values: &[&str], results: &mut [Option<u32>]) {
-        use std::arch::x86_64::*;
-
         let len = values.len();
         let mut i = 0;
 
@@ -137,17 +136,13 @@ impl DictionaryCache {
             let hash2 = self.compute_hash(values[i + 2]);
             let hash3 = self.compute_hash(values[i + 3]);
 
-            let hashes = _mm256_set_epi64x(hash3 as i64, hash2 as i64, hash1 as i64, hash0 as i64);
+            let cap = self.string_to_id.capacity();
+            let idx0 = (hash0 as usize) % cap;
+            let idx1 = (hash1 as usize) % cap;
+            let idx2 = (hash2 as usize) % cap;
+            let idx3 = (hash3 as usize) % cap;
 
-            let idx0 = (hash0 as usize) % self.string_to_id.capacity();
-            let idx1 = (hash1 as usize) % self.string_to_id.capacity();
-            let idx2 = (hash2 as usize) % self.string_to_id.capacity();
-            let idx3 = (hash3 as usize) % self.string_to_id.capacity();
-
-            let indices = _mm256_set_epi64x(idx3 as i64, idx2 as i64, idx1 as i64, idx0 as i64);
-
-            let _ = hashes;
-            let _ = indices;
+            let _ = (hash0, hash1, hash2, hash3, idx0, idx1, idx2, idx3);
 
             results[i] = self.string_to_id.get(values[i]).copied();
             results[i + 1] = self.string_to_id.get(values[i + 1]).copied();
@@ -164,13 +159,8 @@ impl DictionaryCache {
 
     pub fn warm_up(&mut self, keys: &[&str]) {
         for key in keys {
-            if !self.string_to_id.contains_key(*key) {
+            if self.string_to_id.get(*key).is_none() {
                 self.encode(key);
-            }
-        }
-        for (i, entry) in self.id_to_string.iter().enumerate().skip(1) {
-            if i < self.hash_fingerprints.len() {
-                let _ = entry;
             }
         }
     }
@@ -187,18 +177,13 @@ impl DictionaryCache {
         let string_bytes: usize = self.id_to_string.iter().map(|s| s.len()).sum();
         let map_overhead = self.string_to_id.capacity()
             * (std::mem::size_of::<String>() + std::mem::size_of::<u32>());
-        string_bytes + map_overhead + self.hash_fingerprints.len() * 8
+        string_bytes + map_overhead
     }
 
     pub fn clear(&mut self) {
         self.string_to_id.clear();
         self.id_to_string.clear();
         self.id_to_string.push(Arc::from(""));
-        self.hash_fingerprints.clear();
-        self.cached_ids.clear();
-    }
-
-    pub fn reserve(&self, _additional: usize) {
     }
 }
 
@@ -222,8 +207,14 @@ mod tests {
 
         assert_eq!(id1, id1_again);
         assert_ne!(id1, id2);
-        assert_eq!(cache.decode(id1).map(|s| s.to_string()), Some("hello".to_string()));
-        assert_eq!(cache.decode(id2).map(|s| s.to_string()), Some("world".to_string()));
+        assert_eq!(
+            cache.decode(id1).map(|s| s.to_string()),
+            Some("hello".to_string())
+        );
+        assert_eq!(
+            cache.decode(id2).map(|s| s.to_string()),
+            Some("world".to_string())
+        );
     }
 
     #[test]
@@ -257,12 +248,10 @@ mod tests {
             cache.encode(&format!("item_{}", i));
         }
 
-        let values: Vec<&str> = (0..100).map(|i| {
-            let s = format!("item_{}", i);
-            Box::leak(s.into_boxed_str()) as &str
-        }).collect();
+        let values: Vec<String> = (0..100).map(|i| format!("item_{}", i)).collect();
+        let refs: Vec<&str> = values.iter().map(|s| s.as_str()).collect();
         let mut results = vec![None; 100];
-        cache.lookup_batch_simd(&values, &mut results);
+        cache.lookup_batch_simd(&refs, &mut results);
 
         for (i, result) in results.iter().enumerate() {
             assert_eq!(*result, Some((i + 1) as u32));
@@ -298,5 +287,14 @@ mod tests {
         cache.encode("hello");
         cache.encode("world");
         assert!(cache.space_bytes() > 0);
+    }
+
+    #[test]
+    fn test_lookup_with_hash() {
+        let cache = DictionaryCache::new();
+        let mut cache_mut = cache;
+        cache_mut.encode("test");
+        let hash = cache_mut.compute_hash("test");
+        assert_eq!(cache_mut.lookup_with_hash("test", hash), Some(1));
     }
 }
