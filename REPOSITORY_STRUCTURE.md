@@ -12,10 +12,11 @@
 8. [Testing Infrastructure (`tests/`)](#testing-infrastructure)
 9. [CI/CD Pipelines (`.github/workflows/`)](#cicd-pipelines)
 10. [Engineering Skills (`skills/`)](#engineering-skills)
-11. [Examples (`examples/`)](#examples)
-12. [Build & Tool Configuration](#build--tool-configuration)
-13. [Dependency Flow](#dependency-flow)
-14. [Quality Gates](#quality-gates)
+11. [Documentation Tools (`tools/`)](#documentation-tools)
+12. [Examples (`examples/`)](#examples)
+13. [Build & Tool Configuration](#build--tool-configuration)
+14. [Dependency Flow](#dependency-flow)
+15. [Quality Gates](#quality-gates)
 
 ---
 
@@ -43,6 +44,7 @@ KCM/
 ├── KCM_SPECIFICATION.md              # Technical specification
 ├── LICENSE                           # MIT License
 ├── README.md                         # Project overview & quick start
+├── REPOSITORY_STRUCTURE.md           # This document
 ├── ROADMAP.md                        # Release plan & milestones
 ├── SECURITY.md                       # Security policy
 ├── SSOT.md                           # Single Source of Truth index
@@ -51,21 +53,24 @@ KCM/
 ├── Cargo.lock                        # Dependency lockfile
 ├── deny.toml                         # cargo-deny configuration
 ├── kilo.json                         # AI agent configuration
+├── repository-health.md              # Repository health report
 ├── rust-toolchain.toml               # Rust toolchain pinning
 ├── .gitignore                        # Git ignore rules
 ├── .dockerignore                     # Docker ignore rules
+├── .markdownlint.json                # Markdown linting config
 │
 ├── crates/                           # 13 core Rust crates
 ├── sdk/                              # 9 language SDK bindings
-├── scripts/                          # Build automation & CLI tools
+├── scripts/                          # Build automation, CLI tools, validation scripts
 ├── docs/                             # Documentation (SSOT v2.0)
 ├── deployment/                       # Docker, K8s, Helm, Terraform
 ├── tests/                            # Cross-language test infrastructure
 ├── examples/                         # Working code examples
+├── tools/                            # Documentation tooling (5 tools)
 ├── assets/                           # Logo & static assets
 ├── benchmark-results/                # Benchmark baselines & reports
 ├── skills/                           # 16 AI engineering skills
-├── .agents/                          # AI agent skill definitions
+├── .agents/                          # AI agent skill definitions (mirrors skills/)
 ├── .cargo/                           # Cargo configuration
 ├── .github/                          # CI/CD workflows & templates
 ├── .kilo/                            # Kilo AI configuration
@@ -584,6 +589,7 @@ Each SDK has a dedicated specification document in `docs/sdk/`:
 | `docs/sdk/java.md` | Java SDK spec |
 | `docs/sdk/dotnet.md` | .NET SDK spec |
 | `docs/sdk/compatibility.md` | Cross-SDK compatibility matrix |
+| `docs/sdk/spesifikasi.md` | SDK spesifikasi document |
 
 ---
 
@@ -636,6 +642,10 @@ Each SDK has a dedicated specification document in `docs/sdk/`:
 
 ```
 docs/
+├── INDEX.md                        # Documentation index
+├── README.md                       # Documentation root readme
+├── search-index.json               # Search index for documentation
+│
 ├── specs/                          # PRDs and technical specifications (19 files)
 │   ├── PRD.md                      # P4 — Core types, storage, compute, reasoning
 │   ├── PRD2.md                     # P3 — Storage, runtime, interfaces
@@ -656,17 +666,122 @@ docs/
 │   ├── KCM_SPECIFICATION.md        # Master specification
 │   ├── KCM_TESTING_SPEC.md         # Testing specification
 │   └── KCM_VERSIONING_SPEC.md      # Versioning specification
+│
 ├── adr/                            # Architecture Decision Records (10 files)
-│   ├── ADR-001.md through ADR-010.md
+│   └── ADR-001.md through ADR-010.md
+│
+├── sdk/                            # SDK documentation (11 files)
+│   ├── c.md, cpp.md, dotnet.md, go.md, java.md
+│   ├── javascript.md, python.md, rust.md, typescript.md
+│   ├── compatibility.md
+│   └── spesifikasi.md
+│
 ├── handbook/
 │   └── handbook.md                 # Engineering handbook
+│
 ├── runbook/
 │   ├── OPERATIONAL_RUNBOOK.md      # Operational procedures
 │   └── DISASTER_RECOVERY.md        # Disaster recovery procedures
-└── sdk/                            # SDK documentation (10 files)
-    ├── c.md, cpp.md, dotnet.md, go.md, java.md
-    ├── javascript.md, python.md, rust.md, typescript.md
-    └── compatibility.md
+│
+├── governance/
+│   └── documentation-governance.md # Documentation governance rules
+│
+├── templates/                      # Document templates (8 files)
+│   ├── ADR-template.md
+│   ├── benchmark-report-template.md
+│   ├── CODE_OF_CONDUCT-template.md
+│   ├── CONTRIBUTING-template.md
+│   ├── README-template.md
+│   ├── runbook-template.md
+│   ├── SECURITY-template.md
+│   └── spesifikasi-template.md
+│
+├── metrics/                        # Documentation metrics
+│   ├── README.md
+│   ├── coverage.md
+│   ├── coverage.html
+│   └── coverage.json
+│
+├── validation/                     # Documentation validation
+│   └── README.md
+│
+├── automation/                     # Documentation automation
+│   └── README.md
+│
+├── index/
+│   └── README.md                   # Index documentation
+│
+├── agents/
+│   └── spesifikasi.md              # Agent spesifikasi
+│
+├── assets/
+│   └── spesifikasi.md              # Asset spesifikasi
+│
+├── benchmark-results/
+│   └── spesifikasi.md              # Benchmark results spesifikasi
+│
+├── cargo/
+│   └── spesifikasi.md              # Cargo spesifikasi
+│
+├── deployment/
+│   └── spesifikasi.md              # Deployment spesifikasi
+│
+├── docs/
+│   └── spesifikasi.md              # Docs spesifikasi
+│
+├── examples/
+│   └── spesifikasi.md              # Examples spesifikasi
+│
+├── github/
+│   └── spesifikasi.md              # GitHub spesifikasi
+│
+├── scripts/
+│   └── spesifikasi.md              # Scripts spesifikasi
+│
+├── skills/
+│   └── spesifikasi.md              # Skills spesifikasi
+│
+├── tests/
+│   └── spesifikasi.md              # Tests spesifikasi
+│
+├── kcm-core/
+│   └── spesifikasi.md              # kcm-core spesifikasi
+│
+├── kcm-storage/
+│   └── spesifikasi.md              # kcm-storage spesifikasi
+│
+├── kcm-compute/
+│   └── spesifikasi.md              # kcm-compute spesifikasi
+│
+├── kcm-reasoning/
+│   └── spesifikasi.md              # kcm-reasoning spesifikasi
+│
+├── kcm-optimizer/
+│   └── spesifikasi.md              # kcm-optimizer spesifikasi
+│
+├── kcm-runtime/
+│   └── spesifikasi.md              # kcm-runtime spesifikasi
+│
+├── kcm-interface/
+│   └── spesifikasi.md              # kcm-interface spesifikasi
+│
+├── kcm-distributed/
+│   └── spesifikasi.md              # kcm-distributed spesifikasi
+│
+├── kcm-ml/
+│   └── spesifikasi.md              # kcm-ml spesifikasi
+│
+├── kcm-security/
+│   └── spesifikasi.md              # kcm-security spesifikasi
+│
+├── kcm-compliance/
+│   └── spesifikasi.md              # kcm-compliance spesifikasi
+│
+├── kcm-testing/
+│   └── spesifikasi.md              # kcm-testing spesifikasi
+│
+└── kcm-server/
+    └── spesifikasi.md              # kcm-server spesifikasi
 ```
 
 ### Document Hierarchy (SSOT Authority)
@@ -809,6 +924,7 @@ deployment/
 | `benchmark.yml` | Weekly (Mon 6AM) + manual | Dedicated benchmark runs (90-day retention) |
 | `sdk-ci.yml` | Changes to sdk/ or kcm-interface/ | All 9 SDKs: lint, type-check, test |
 | `sdk-publish.yml` | Version tags (v*) | Multi-registry publishing |
+| `docs.yml` | Changes to docs/ | Documentation validation & deployment |
 
 ### `ci.yml` Jobs (13 jobs → quality gate)
 
@@ -868,6 +984,62 @@ Each skill is a directory under `skills/` containing a `SKILL.md` file with deta
 
 ---
 
+## Documentation Tools
+
+**Path:** `tools/`
+
+5 documentation tooling scripts for coverage, drift detection, generation, link checking, and validation.
+
+```
+tools/
+├── doc-coverage/
+│   ├── calculate-coverage.sh       # Documentation coverage calculator
+│   └── README.md
+│
+├── doc-drift/
+│   ├── detect-drift.sh             # Documentation drift detector
+│   ├── ssot-check.sh               # SSOT alignment checker
+│   └── README.md
+│
+├── doc-generator/
+│   ├── generate-index.sh           # Documentation index generator
+│   ├── generate-search-index.sh    # Search index generator
+│   └── README.md
+│
+├── doc-link-checker/
+│   ├── check-links.sh              # Broken link checker
+│   └── README.md
+│
+└── doc-validator/
+    └── (empty)
+```
+
+---
+
+## Benchmark Results
+
+**Path:** `benchmark-results/`
+
+```
+benchmark-results/
+├── baseline.json                   # Current performance baseline
+├── README.md                       # Benchmark documentation
+│
+├── metadata/
+│   ├── benchmark-version.json      # Benchmark tooling version
+│   ├── environment.json            # Test environment details
+│   └── git.json                    # Git commit reference
+│
+├── raw/                            # Raw benchmark output (empty)
+│
+└── reports/
+    ├── KCM_BENCHMARK_REPORT.json   # Machine-readable report
+    ├── KCM_BENCHMARK_REPORT.md     # Human-readable report
+    └── KCM_PERFORMANCE_MATRIX.csv  # Performance matrix (CSV)
+```
+
+---
+
 ## Examples
 
 **Path:** `examples/`
@@ -896,7 +1068,7 @@ Each skill is a directory under `skills/` containing a `SKILL.md` file with deta
 - **Edition:** 2021
 - **Workspace members:** 13 crates + 16 CLI tools + SDK rust binding
 - **Workspace dependencies:** 20+ shared dependencies
-- **Lints:** `unwrap_used = "warn"`, `panic = "warn"`, `todo = "warn"`, `unimplemented = "warn"`
+- **Lints:** `unwrap_used = "warn"`, `panic = "warn"`, `todo = "warn"`, `unimplemented = "warn"`, `dbg_macro = "warn"`
 - **Release profile:** `opt-level = 3`, LTO enabled, single codegen unit, stripped
 
 ### `rust-toolchain.toml`
@@ -922,6 +1094,10 @@ targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "aarch64-apple-dar
   "instructions": ["AGENTS.md"]
 }
 ```
+
+### `.markdownlint.json`
+
+Markdown linting configuration for documentation consistency.
 
 ---
 
