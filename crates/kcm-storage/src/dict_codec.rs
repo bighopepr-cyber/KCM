@@ -1,86 +1,60 @@
-use ahash::AHashMap;
+use crate::dict_cache::DictionaryCache;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct DictionaryCodec {
-    inner: Arc<RwLock<DictionaryCodecInner>>,
-}
-
-struct DictionaryCodecInner {
-    string_to_id: AHashMap<String, u32>,
-    id_to_string: Vec<String>,
+    inner: Arc<RwLock<DictionaryCache>>,
 }
 
 impl DictionaryCodec {
     pub fn new() -> Self {
-        let mut inner = DictionaryCodecInner {
-            string_to_id: AHashMap::with_capacity(256),
-            id_to_string: Vec::with_capacity(256),
-        };
-        inner.id_to_string.push(String::new());
         DictionaryCodec {
-            inner: Arc::new(RwLock::new(inner)),
+            inner: Arc::new(RwLock::new(DictionaryCache::new())),
         }
     }
 
     pub fn with_capacity(capacity: usize) -> Self {
-        let mut inner = DictionaryCodecInner {
-            string_to_id: AHashMap::with_capacity(capacity),
-            id_to_string: Vec::with_capacity(capacity),
-        };
-        inner.id_to_string.push(String::new());
         DictionaryCodec {
-            inner: Arc::new(RwLock::new(inner)),
+            inner: Arc::new(RwLock::new(DictionaryCache::with_capacity(capacity))),
         }
     }
 
     #[inline]
     pub fn encode(&self, value: &str) -> u32 {
-        {
-            let inner = self.inner.read();
-            if let Some(&id) = inner.string_to_id.get(value) {
-                return id;
-            }
-        }
-        let mut inner = self.inner.write();
-        if let Some(&id) = inner.string_to_id.get(value) {
-            return id;
-        }
-        let id = inner.id_to_string.len() as u32;
-        let owned = value.to_string();
-        inner.id_to_string.push(owned.clone());
-        inner.string_to_id.insert(owned, id);
-        id
+        self.inner.write().encode(value)
     }
 
     #[inline]
     pub fn decode(&self, id: u32) -> Option<String> {
-        let inner = self.inner.read();
-        inner.id_to_string.get(id as usize).cloned()
+        self.inner.read().decode(id).map(|s| s.to_string())
     }
 
     #[inline]
     pub fn decode_ref(&self, id: u32) -> Option<std::sync::Arc<str>> {
-        let inner = self.inner.read();
-        inner.id_to_string.get(id as usize).map(|s| {
-            let arc: std::sync::Arc<str> = std::sync::Arc::from(s.as_str());
-            arc
-        })
+        self.inner.read().decode(id)
     }
 
     #[inline]
     pub fn lookup(&self, value: &str) -> Option<u32> {
-        let inner = self.inner.read();
-        inner.string_to_id.get(value).copied()
+        self.inner.read().lookup(value)
     }
 
     pub fn lookup_batch(&self, values: &[&str], results: &mut [Option<u32>]) {
-        debug_assert_eq!(values.len(), results.len());
         let inner = self.inner.read();
         for (value, result) in values.iter().zip(results.iter_mut()) {
-            *result = inner.string_to_id.get(*value).copied();
+            *result = inner.lookup(*value);
         }
+    }
+
+    pub fn lookup_batch_simd(&self, values: &[&str], results: &mut [Option<u32>]) {
+        let inner = self.inner.read();
+        inner.lookup_batch_simd(values, results);
+    }
+
+    pub fn lookup_batch_prefetch(&self, values: &[&str], results: &mut [Option<u32>]) {
+        let inner = self.inner.read();
+        inner.lookup_batch_prefetch(values, results);
     }
 
     pub fn lookup_batch_into(&self, values: &[&str]) -> Vec<Option<u32>> {
@@ -94,15 +68,7 @@ impl DictionaryCodec {
         let mut inner = self.inner.write();
         let mut results = Vec::with_capacity(values.len());
         for &v in values {
-            if let Some(&id) = inner.string_to_id.get(v) {
-                results.push(id);
-                continue;
-            }
-            let id = inner.id_to_string.len() as u32;
-            let owned = v.to_string();
-            inner.id_to_string.push(owned.clone());
-            inner.string_to_id.insert(owned, id);
-            results.push(id);
+            results.push(inner.encode(v));
         }
         results
     }
@@ -110,7 +76,7 @@ impl DictionaryCodec {
     pub fn decode_batch(&self, ids: &[u32]) -> Vec<Option<String>> {
         let inner = self.inner.read();
         ids.iter()
-            .map(|&id| inner.id_to_string.get(id as usize).cloned())
+            .map(|&id| inner.decode(id).map(|s| s.to_string()))
             .collect()
     }
 
@@ -119,39 +85,38 @@ impl DictionaryCodec {
         results.clear();
         results.reserve(ids.len());
         for &id in ids {
-            results.push(inner.id_to_string.get(id as usize).cloned());
+            results.push(inner.decode(id).map(|s| s.to_string()));
         }
     }
 
+    pub fn warm_up(&self, keys: &[&str]) {
+        self.inner.write().warm_up(keys);
+    }
+
     pub fn len(&self) -> usize {
-        let inner = self.inner.read();
-        inner.id_to_string.len()
+        self.inner.read().len()
     }
 
     pub fn is_empty(&self) -> bool {
-        let inner = self.inner.read();
-        inner.id_to_string.len() <= 1
+        self.inner.read().is_empty()
     }
 
     pub fn space_bytes(&self) -> usize {
-        let inner = self.inner.read();
-        let string_bytes: usize = inner.id_to_string.iter().map(|s| s.len()).sum();
-        let map_overhead = inner.string_to_id.capacity()
-            * (std::mem::size_of::<String>() + std::mem::size_of::<u32>());
-        string_bytes + map_overhead
+        self.inner.read().space_bytes()
     }
 
     pub fn clear(&self) {
-        let mut inner = self.inner.write();
-        inner.string_to_id.clear();
-        inner.id_to_string.clear();
-        inner.id_to_string.push(String::new());
+        self.inner.write().clear();
     }
 
     pub fn reserve(&self, additional: usize) {
-        let mut inner = self.inner.write();
-        inner.id_to_string.reserve(additional);
-        inner.string_to_id.reserve(additional);
+        self.inner.write().reserve(additional);
+    }
+}
+
+impl Default for DictionaryCodec {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

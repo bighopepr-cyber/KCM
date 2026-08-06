@@ -3,6 +3,7 @@ use kcm_core::types::*;
 use kcm_core::vec::DenseVec;
 
 use crate::compress::{Compressor, Lz4Compressor, NoopCompressor, ZstdCompressor};
+use crate::dict_codec::DictionaryCodec;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum ColumnEncoding {
@@ -661,5 +662,100 @@ impl Schema {
         self.priority_col.decompress_data()?;
         self.owner_col.decompress_data()?;
         Ok(())
+    }
+}
+
+pub struct DictionaryEncodedColumn {
+    column: Column<u32>,
+    dictionary: DictionaryCodec,
+}
+
+impl DictionaryEncodedColumn {
+    pub fn new(capacity: usize, compression: CompressionCodec) -> Result<Self, KcmError> {
+        Ok(DictionaryEncodedColumn {
+            column: Column::new(capacity, ColumnEncoding::Dictionary, compression)?,
+            dictionary: DictionaryCodec::with_capacity(capacity),
+        })
+    }
+
+    pub fn encode_and_append(&mut self, value: &str) -> Result<u32, KcmError> {
+        let id = self.dictionary.encode(value);
+        self.column.append(id)?;
+        Ok(id)
+    }
+
+    pub fn decode(&self, idx: usize) -> Option<String> {
+        let id = self.column.get(idx)?;
+        self.dictionary.decode(id)
+    }
+
+    pub fn decode_id(&self, id: u32) -> Option<String> {
+        self.dictionary.decode(id)
+    }
+
+    pub fn lookup(&self, value: &str) -> Option<u32> {
+        self.dictionary.lookup(value)
+    }
+
+    pub fn lookup_batch_simd(&self, values: &[&str], results: &mut [Option<u32>]) {
+        self.dictionary.lookup_batch_simd(values, results);
+    }
+
+    pub fn lookup_batch_prefetch(&self, values: &[&str], results: &mut [Option<u32>]) {
+        self.dictionary.lookup_batch_prefetch(values, results);
+    }
+
+    pub fn encode_batch(&mut self, values: &[&str]) -> Result<Vec<u32>, KcmError> {
+        let mut ids = Vec::with_capacity(values.len());
+        for &v in values {
+            let id = self.dictionary.encode(v);
+            self.column.append(id)?;
+            ids.push(id);
+        }
+        Ok(ids)
+    }
+
+    pub fn decode_batch(&self, indices: &[usize]) -> Vec<Option<String>> {
+        let mut results = Vec::with_capacity(indices.len());
+        for &idx in indices {
+            results.push(self.decode(idx));
+        }
+        results
+    }
+
+    pub fn warm_up(&mut self, keys: &[&str]) {
+        self.dictionary.warm_up(keys);
+    }
+
+    pub fn len(&self) -> usize {
+        self.column.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.column.is_empty()
+    }
+
+    pub fn dictionary_len(&self) -> usize {
+        self.dictionary.len()
+    }
+
+    pub fn dictionary_space_bytes(&self) -> usize {
+        self.dictionary.space_bytes()
+    }
+
+    pub fn column(&self) -> &Column<u32> {
+        &self.column
+    }
+
+    pub fn dictionary(&self) -> &DictionaryCodec {
+        &self.dictionary
+    }
+
+    pub fn compress(&mut self) -> Result<(), KcmError> {
+        self.column.compress_data()
+    }
+
+    pub fn decompress(&mut self) -> Result<(), KcmError> {
+        self.column.decompress_data()
     }
 }

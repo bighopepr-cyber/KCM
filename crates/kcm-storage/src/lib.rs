@@ -1,11 +1,13 @@
 pub mod backup;
 pub mod column;
 pub mod compress;
+pub mod dict_cache;
 pub mod dict_codec;
 pub mod errors;
 pub mod file_format;
 pub mod index;
 pub mod recovery;
+pub mod robin_hood;
 pub mod wal;
 pub mod wal_state;
 
@@ -13,11 +15,14 @@ pub use backup::RestoreManager;
 pub use column::{Column, ColumnEncoding, CompressionCodec, Schema};
 pub use column::{ConfidenceColumn, OwnerColumn, PriorityColumn, TimestampColumn, VersionColumn};
 pub use column::{ContextColumn, EvidenceColumn, ObjectColumn, PredicateColumn, SubjectColumn};
+pub use column::DictionaryEncodedColumn;
 pub use compress::{Compressor, Lz4Compressor, NoopCompressor, RleCompressor, ZstdCompressor};
 pub use compress::{hash_blake3, hash_blake3_hex};
+pub use dict_cache::DictionaryCache;
 pub use dict_codec::DictionaryCodec;
 pub use errors::StorageError;
 pub use file_format::DatabaseFile;
 pub use index::{BitmapIndex, BloomFilter, CompositeIndex, ZoneMap};
 pub use recovery::RecoveryManager;
+pub use robin_hood::RobinHoodMap;
 pub use wal::{WAL_DELETE_SIZE, WAL_INSERT_SIZE, WALEntry, WriteAheadLog};

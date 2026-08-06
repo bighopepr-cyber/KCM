@@ -16,6 +16,12 @@ ahash.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+criterion.workspace = true
+rayon.workspace = true
+
+[[bench]]
+name = "dictionary"
+harness = false
 
 [lints]
 workspace = true
