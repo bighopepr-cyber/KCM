@@ -948,8 +948,8 @@ Each SDK declares the compatible engine version range:
 ```toml
 [package]
 name = "kcm-sdk"
-version = "0.2.0"
-# Requires engine 0.1.x
+version = "1.0.0"
+# Requires engine 1.0.x
 ```
 
 ---

@@ -1,158 +1,131 @@
 # KCM Documentation
 
+> Central documentation hub for the KCM project.
+
 ## Overview
 
-The `docs/` directory is the central documentation hub for the KCM project. It houses all Single Source of Truth (SSOT) specifications, Architecture Decision Records (ADRs), operational handbooks, runbooks, and SDK documentation.
+The `docs/` directory houses all SSOT specifications, Architecture Decision Records, operational handbooks, runbooks, SDK documentation, and governance documents.
 
-## Purpose
+## Quick Start
 
-The documentation directory exists to:
+- **New to KCM?** Start with [`../README.md`](../README.md)
+- **Looking for specs?** See [`docs/specs/`](specs/)
+- **Need SDK help?** See [`docs/sdk/`](sdk/)
+- **Contributing?** See [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
 
-- House all SSOT specifications that define the KCM system
-- Maintain ADRs capturing key architectural decisions
-- Provide operational handbooks and runbooks for day-to-day use
-- Deliver SDK documentation for all supported language bindings
-- Serve as the authoritative reference for all KCM components
+## Documentation Structure
 
-## Responsibilities
+```
+docs/
+├── INDEX.md                    ← Master navigation entry point
+├── repository-map.md           ← Complete repository structure
+├── README.md                   ← This file
+│
+├── specs/                      ← SSOT specifications (19 files)
+│   ├── PRD.md                  ← Core types, storage, compute
+│   ├── PRD2.md                 ← Storage, runtime, interfaces
+│   ├── PRD3.md                 ← Distributed, ML, security
+│   ├── PRD-TESTING-AND-BENCHMARK.md ← Testing strategy
+│   └── KCM_*_SPEC.md           ← Component specs (15 files)
+│
+├── adr/                        ← Architecture Decision Records (10)
+│   ├── ADR-001 through ADR-010
+│   └── templates/ADR-template.md
+│
+├── handbook/                   ← Developer guides
+│   ├── repository-structure.md ← Complete repo reference
+│   └── handbook.md             ← Onboarding guide
+│
+├── governance/                 ← Governance documents
+│   ├── engineering-rules.md    ← Development rules
+│   ├── architecture-matrix.md  ← Component registry
+│   ├── ssot-certification.md   ← SSOT compliance
+│   └── documentation-governance.md
+│
+├── runbook/                    ← Operational procedures
+│   ├── OPERATIONAL_RUNBOOK.md
+│   └── DISASTER_RECOVERY.md
+│
+├── sdk/                        ← SDK documentation (11 files)
+│   ├── rust.md, c.md, cpp.md
+│   ├── python.md, javascript.md
+│   ├── typescript.md, go.md
+│   ├── java.md, dotnet.md
+│   ├── compatibility.md
+│   └── spesifikasi.md
+│
+├── metrics/                    ← Reports and metrics
+│   └── repository-health.md
+│
+├── templates/                  ← Documentation templates (8)
+│   ├── ADR-template.md
+│   ├── README-template.md
+│   ├── spesifikasi-template.md
+│   └── ...
+│
+├── <crate>/                    ← Per-crate specifications (13)
+│   └── spesifikasi.md
+│
+├── agents/                     ← AI agent docs (redirect to skills/)
+├── assets/                     ← Asset documentation
+├── benchmark-results/          ← Benchmark documentation
+├── cargo/                      ← Cargo configuration docs
+├── deployment/                 ← Deployment documentation
+├── docs/                       ← Meta-documentation
+├── examples/                   ← Example documentation
+├── github/                     ← GitHub configuration docs
+├── index/                      ← Index documentation
+├── scripts/                    ← Script documentation
+├── skills/                     ← Skills specification
+├── tests/                      ← Test documentation
+└── validation/                 ← Validation documentation
+```
 
-| Responsibility | Owner | Description |
-|---------------|-------|-------------|
-| Specification Ownership | Documentation Guardian | SSOT documents are authoritative sources for implementation |
-| ADR Management | Engineering Orchestrator | New architectural decisions require ADRs before implementation |
-| Documentation Maintenance | All Contributors | Docs must stay current with implementation changes |
-| Version Control | Specification Lock | Frozen contracts must not change without approval |
+## Document Hierarchy
 
-## Folder Structure
+```
+P1: SSOT.md (root)              ← Absolute authority
+P2: AGENTS.md (root)            ← Engineering constitution
+P3: PRD-TESTING-AND-BENCHMARK   ← Testing strategy
+P4: PRD3.md                     ← Distributed, ML, security
+P5: PRD2.md                     ← Storage, runtime, interfaces
+P6: PRD.md                      ← Core types, compute
+P7: KCM_*_SPEC.md               ← Component specs
+```
 
-| Folder | Contents | Purpose |
-|--------|----------|---------|
-| `adr/` | ADR-001 through ADR-010 | Architecture Decision Records |
-| `handbook/` | `handbook.md` | Developer and contributor handbooks |
-| `runbook/` | `DISASTER_RECOVERY.md`, `OPERATIONAL_RUNBOOK.md` | Operational procedures |
-| `sdk/` | 11 language-specific docs | SDK usage guides for C, C++, C#, Go, Java, JavaScript, Python, Rust, TypeScript, plus compatibility and specification |
-| `specs/` | PRD.md, PRD2.md, PRD3.md, PRD-TESTING-AND-BENCHMARK.md, 15 KCM_*_SPEC.md files | SSOT specifications and technical specs |
+## Canonical Locations
 
-## Public API
+| Document Type | Location | Example |
+|---------------|----------|---------|
+| Specifications | `docs/specs/` | PRD.md, KCM_*_SPEC.md |
+| ADRs | `docs/adr/` | ADR-001.md |
+| Runbooks | `docs/runbook/` | OPERATIONAL_RUNBOOK.md |
+| SDK Docs | `docs/sdk/` | rust.md, python.md |
+| Crate Specs | `docs/<crate>/` | kcm-core/spesifikasi.md |
+| Templates | `docs/templates/` | ADR-template.md |
+| Governance | `docs/governance/` | engineering-rules.md |
+| Handbook | `docs/handbook/` | repository-structure.md |
+| Metrics | `docs/metrics/` | repository-health.md |
 
-The documentation structure is consumed by:
-
-- **Engineers**: Reference specs during implementation
-- **Reviewers**: Validate changes against SSOT
-- **CI/CD**: Automated SSOT validation via `scripts/validate-ssot.sh`
-- **SDK Users**: Language-specific integration guides
-
-## Internal Components
-
-### adr/
-
-Architecture Decision Records capture significant technical decisions with context, options considered, and rationale. Each ADR follows a standard format:
-
-- **Status**: Proposed | Accepted | Deprecated | Superseded
-- **Context**: Problem being addressed
-- **Decision**: What was decided
-- **Consequences**: Impact of the decision
-
-### handbook/
-
-The handbook provides developer onboarding material, coding standards, and workflow guides for contributors.
-
-### runbook/
-
-Operational runbooks document procedures for disaster recovery, system operations, and incident response. These contain operational credentials references and should be treated as sensitive.
-
-### sdk/
-
-Language-specific SDK documentation covers:
-
-| Language | File | Binding Type |
-|----------|------|-------------|
-| C | `c.md` | FFI |
-| C++ | `cpp.md` | FFI wrapper |
-| C# / .NET | `dotnet.md` | P/Invoke |
-| Go | `go.md` | cgo |
-| Java | `java.md` | JNI |
-| JavaScript | `javascript.md` | N-API |
-| Python | `python.md` | PyO3 |
-| Rust | `rust.md` | Native |
-| TypeScript | `typescript.md` | N-API |
-| Compatibility | `compatibility.md` | Cross-platform matrix |
-| Specification | `spesifikasi.md` | Technical spec |
-
-### specs/
-
-SSOT specifications organized by priority:
-
-| Priority | Document | Scope |
-|----------|----------|-------|
-| P1 | `PRD-TESTING-AND-BENCHMARK.md` | Testing strategy, benchmarks, quality gates |
-| P2 | `PRD3.md` | Distributed, ML, security, compliance |
-| P3 | `PRD2.md` | Storage, runtime, interfaces |
-| P4 | `PRD.md` | Core types, storage, compute, reasoning |
-| P5 | `KCM_*_SPEC.md` (15 files) | Component-level specifications |
-
-## Dependencies
-
-All documentation references the root SSOT documents:
-
-- `AGENTS.md` (repository root) — Engineering constitution
-- `docs/specs/PRD.md` — Core specification
-- `docs/specs/PRD2.md` — Persistence specification
-- `docs/specs/PRD3.md` — Distributed specification
-- `docs/specs/PRD-TESTING-AND-BENCHMARK.md` — Testing specification
-
-When documents conflict, the higher-priority document wins per the SSOT hierarchy.
-
-## Integration
-
-Documentation is referenced by all crates in the workspace:
-
-- `kcm-core` references type definitions in `PRD.md`
-- `kcm-storage` references format specs in `PRD2.md`
-- `kcm-compute` references query specs in `PRD.md`
-- `kcm-reasoning` references inference specs in `PRD.md`
-- `kcm-optimizer` references planner specs in `PRD2.md`
-- `kcm-runtime` references database specs in `PRD2.md`
-- `kcm-interface` references FFI and API specs
-- `kcm-distributed` references sharding specs in `PRD3.md`
-- `kcm-security` references security specs in `PRD3.md`
-- `kcm-compliance` references compliance specs in `PRD3.md`
-
-## Build
-
-Documentation is static Markdown. No build step is required.
+## Validation
 
 ```bash
 # Validate documentation structure
 ls -la docs/
-ls -la docs/adr/ docs/handbook/ docs/runbook/ docs/sdk/ docs/specs/
-```
 
-## Run
+# Check for broken links
+bash tools/doc-link-checker/check-links.sh
 
-Documentation is read directly. No runtime process is needed.
+# Generate documentation index
+bash tools/doc-generator/generate-index.sh
 
-## Test
-
-Documentation validity is verified through:
-
-```bash
-# Automated SSOT validation
+# Validate SSOT compliance
 bash scripts/validate-ssot.sh
-
-# Check for broken internal links
-grep -r '\[.*\](.*\.md)' docs/ --include="*.md"
 ```
-
-## Examples
-
-Refer to `docs/sdk/` for language-specific integration examples and `docs/handbook/` for developer workflow examples.
 
 ## References
 
-- `AGENTS.md` — Engineering constitution
-- `docs/specs/PRD.md` — Core specification
-- `docs/specs/PRD2.md` — Persistence specification
-- `docs/specs/PRD3.md` — Distributed specification
-- `docs/specs/PRD-TESTING-AND-BENCHMARK.md` — Testing specification
-- `scripts/validate-ssot.sh` — Automated SSOT validation
+- [`../SSOT.md`](../SSOT.md) — Single Source of Truth
+- [`../AGENTS.md`](../AGENTS.md) — Engineering constitution
+- [`INDEX.md`](INDEX.md) — Master documentation index
+- [`repository-map.md`](repository-map.md) — Complete repository map

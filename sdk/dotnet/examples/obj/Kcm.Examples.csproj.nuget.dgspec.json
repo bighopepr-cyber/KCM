@@ -5,7 +5,7 @@
   },
   "projects": {
     "/workspaces/KCM/sdk/dotnet/Kcm.Sdk.csproj": {
-      "version": "0.1.0",
+      "version": "1.0.0",
       "restore": {
         "projectUniqueName": "/workspaces/KCM/sdk/dotnet/Kcm.Sdk.csproj",
         "projectName": "Kcm.Sdk",

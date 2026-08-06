@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kcm"
-version = "0.1.0"
+version = "1.0.0"
 description = "KCM Knowledge Columnar Model - Python SDK (reference implementation)"
 readme = "README.md"
 license = {text = "MIT"}

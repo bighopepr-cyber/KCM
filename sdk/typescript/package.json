@@ -1,6 +1,6 @@
 {
   "name": "@kcm/ts",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "KCM Knowledge Columnar Model - TypeScript SDK (standalone)",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

@@ -308,12 +308,15 @@ KCM/
 | [SSOT.md](SSOT.md) | Single Source of Truth | Root |
 | [KCM_SPECIFICATION.md](KCM_SPECIFICATION.md) | Technical constitution | Root |
 | [ROADMAP.md](ROADMAP.md) | Release plan | Root |
-| [ARCHITECTURE_CONSISTENCY_MATRIX.md](ARCHITECTURE_CONSISTENCY_MATRIX.md) | Component registry | Root |
+| [AGENTS.md](AGENTS.md) | Engineering constitution | Root |
 | [PRD.md](docs/specs/PRD.md) | Core types, storage, compute, reasoning | P4 |
 | [PRD2.md](docs/specs/PRD2.md) | Storage, runtime, interfaces | P3 |
 | [PRD3.md](docs/specs/PRD3.md) | Distributed, ML, security, compliance | P2 |
 | [PRD-TESTING](docs/specs/PRD-TESTING-AND-BENCHMARK.md) | Testing, benchmarks | P1 |
-| [handbook.md](docs/handbook/handbook.md) | Development guide | — |
+| [Repository Structure](docs/handbook/repository-structure.md) | Complete repo reference | Handbook |
+| [Architecture Matrix](docs/governance/architecture-matrix.md) | Component registry | Governance |
+| [Engineering Rules](docs/governance/engineering-rules.md) | Development rules | Governance |
+| [Documentation Index](docs/INDEX.md) | Master doc index | Navigation |
 
 ---
 

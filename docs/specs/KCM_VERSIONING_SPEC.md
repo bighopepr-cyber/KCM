@@ -16,6 +16,18 @@ Defines KCM's versioning strategy: semantic versioning, compatibility guarantees
 
 KCM follows [Semantic Versioning 2.0.0](https://semver.org/).
 
+### 2.0 Canonical Version Source
+
+The single source of truth for the KCM version is the `VERSION` file at the repository root. All components (workspace Cargo.toml, SDKs, deployment manifests, documentation badges) must derive their version from this file.
+
+```bash
+cat VERSION
+# Output: 1.0.0
+```
+
+To synchronize versions: `bash scripts/release/sync-version.sh`
+To verify versions: `bash scripts/release/verify-version.sh`
+
 ### 2.1 Version Format
 
 ```
@@ -96,7 +108,7 @@ A change is breaking if:
 ### 4.2 Deprecation Annotations
 
 ```rust
-#[deprecated(since = "0.2.0", note = "Use new_function() instead")]
+#[deprecated(since = "1.1.0", note = "Use new_function() instead")]
 pub fn old_function() { ... }
 ```
 

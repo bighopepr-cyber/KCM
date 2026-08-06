@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.kcm</groupId>
     <artifactId>kcm-sdk</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>KCM Java SDK</name>
     <description>Java bindings for KCM Knowledge Columnar Model</description>

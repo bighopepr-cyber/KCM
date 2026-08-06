@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# KCM Version Validator
+# Standalone validator that checks all version references match the canonical VERSION file.
+# Returns structured output suitable for CI/CD consumption.
+#
+# Usage: bash tools/version/version-validator [--json]
+#
+# Document ID: KCM-REL-VALIDATOR-001
+# Version: 1.0.0
+# Status: Active
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+VERSION_FILE="${REPO_ROOT}/VERSION"
+JSON_OUTPUT=false
+
+if [ "${1:-}" = "--json" ]; then
+    JSON_OUTPUT=true
+fi
+
+if [ ! -f "$VERSION_FILE" ]; then
+    echo '{"status":"error","message":"VERSION file not found"}'
+    exit 1
+fi
+
+EXPECTED_VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
+
+PASS=0
+FAIL=0
+RESULTS=""
+
+check() {
+    local name="$1"
+    local file="$2"
+    local pattern="$3"
+    local status="pass"
+    if [ ! -f "$file" ] || ! grep -q "$pattern" "$file" 2>/dev/null; then
+        status="fail"
+        FAIL=$((FAIL + 1))
+    else
+        PASS=$((PASS + 1))
+    fi
+    if [ "$JSON_OUTPUT" = true ]; then
+        RESULTS="${RESULTS}{\"name\":\"${name}\",\"file\":\"${file}\",\"status\":\"${status}\"},"
+    else
+        if [ "$status" = "pass" ]; then
+            echo "  PASS: ${name}"
+        else
+            echo "  FAIL: ${name}"
+        fi
+    fi
+}
+
+if [ "$JSON_OUTPUT" = false ]; then
+    echo "KCM Version Validator"
+    echo "Expected: ${EXPECTED_VERSION}"
+    echo ""
+fi
+
+check "workspace-cargo" "${REPO_ROOT}/Cargo.toml" "version = \"${EXPECTED_VERSION}\""
+check "sdk-rust" "${REPO_ROOT}/sdk/rust/Cargo.toml" "version = \"${EXPECTED_VERSION}\""
+check "sdk-python" "${REPO_ROOT}/sdk/python/pyproject.toml" "version = \"${EXPECTED_VERSION}\""
+check "sdk-javascript" "${REPO_ROOT}/sdk/javascript/package.json" "\"version\": \"${EXPECTED_VERSION}\""
+check "sdk-typescript" "${REPO_ROOT}/sdk/typescript/package.json" "\"version\": \"${EXPECTED_VERSION}\""
+check "sdk-java" "${REPO_ROOT}/sdk/java/pom.xml" "<version>${EXPECTED_VERSION}</version>"
+check "sdk-dotnet" "${REPO_ROOT}/sdk/dotnet/Kcm.Sdk.csproj" "<Version>${EXPECTED_VERSION}</Version>"
+check "sdk-cpp" "${REPO_ROOT}/sdk/cpp/CMakeLists.txt" "VERSION ${EXPECTED_VERSION}"
+check "helm-chart" "${REPO_ROOT}/deployment/helm/kcm/Chart.yaml" "version: ${EXPECTED_VERSION}"
+check "helm-app" "${REPO_ROOT}/deployment/helm/kcm/Chart.yaml" "appVersion: \"${EXPECTED_VERSION}\""
+check "examples" "${REPO_ROOT}/examples/rust/Cargo.toml" "version = \"${EXPECTED_VERSION}\""
+check "changelog" "${REPO_ROOT}/CHANGELOG.md" "## \[${EXPECTED_VERSION}\]"
+
+if [ "$JSON_OUTPUT" = true ]; then
+    RESULTS="${RESULTS%,}"
+    echo "{\"status\":\"$([ $FAIL -eq 0 ] && echo pass || echo fail)\",\"version\":\"${EXPECTED_VERSION}\",\"pass\":${PASS},\"fail\":${FAIL},\"checks\":[${RESULTS}]}"
+else
+    echo ""
+    echo "Results: ${PASS} passed, ${FAIL} failed"
+fi
+
+exit "$FAIL"

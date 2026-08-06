@@ -1,6 +1,6 @@
 # Release Validation Example
 
-## Release: v0.1.0
+## Release: v1.0.0
 
 ### Release Check
 1. **Build:** All 13 crates build ✓

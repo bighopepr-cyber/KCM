@@ -1,0 +1,217 @@
+name: KCM Version Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'VERSION'
+      - '**/Cargo.toml'
+      - '**/package.json'
+      - '**/pyproject.toml'
+      - '**/pom.xml'
+      - '**/Chart.yaml'
+      - '**/*.csproj'
+      - '**/CMakeLists.txt'
+      - 'docs/**/*.md'
+      - 'sdk/**/README.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'VERSION'
+      - '**/Cargo.toml'
+      - '**/package.json'
+      - '**/pyproject.toml'
+      - '**/pom.xml'
+      - '**/Chart.yaml'
+      - '**/*.csproj'
+      - '**/CMakeLists.txt'
+      - 'docs/**/*.md'
+      - 'sdk/**/README.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  version-validation:
+    name: Version Consistency Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read VERSION
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "KCM Version: ${VERSION}"
+
+      - name: Validate Workspace Cargo.toml
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::Workspace Cargo.toml version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "Workspace Cargo.toml: OK (${ACTUAL})"
+
+      - name: Validate Rust SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '^version = ' sdk/rust/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::Rust SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "Rust SDK: OK (${ACTUAL})"
+
+      - name: Validate Python SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '^version = ' sdk/python/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::Python SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "Python SDK: OK (${ACTUAL})"
+
+      - name: Validate JavaScript SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '"version"' sdk/javascript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::JavaScript SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "JavaScript SDK: OK (${ACTUAL})"
+
+      - name: Validate TypeScript SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '"version"' sdk/typescript/package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::TypeScript SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "TypeScript SDK: OK (${ACTUAL})"
+
+      - name: Validate Java SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '<version>' sdk/java/pom.xml | head -1 | sed 's/.*<version>\(.*\)<\/version>.*/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::Java SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "Java SDK: OK (${ACTUAL})"
+
+      - name: Validate .NET SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '<Version>' sdk/dotnet/Kcm.Sdk.csproj | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::.NET SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo ".NET SDK: OK (${ACTUAL})"
+
+      - name: Validate C++ SDK
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep 'project(kcm-cpp-sdk VERSION' sdk/cpp/CMakeLists.txt | sed 's/.*VERSION \([^ ]*\).*/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::C++ SDK version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          echo "C++ SDK: OK (${ACTUAL})"
+
+      - name: Validate Helm Chart
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          ACTUAL=$(grep '^version:' deployment/helm/kcm/Chart.yaml | sed 's/version: \(.*\)/\1/')
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "::error::Helm chart version mismatch: expected ${EXPECTED}, got ${ACTUAL}"
+            exit 1
+          fi
+          APP_VERSION=$(grep 'appVersion:' deployment/helm/kcm/Chart.yaml | sed 's/appVersion: "\(.*\)"/\1/')
+          if [ "${APP_VERSION}" != "${EXPECTED}" ]; then
+            echo "::error::Helm appVersion mismatch: expected ${EXPECTED}, got ${APP_VERSION}"
+            exit 1
+          fi
+          echo "Helm Chart: OK (${ACTUAL}, appVersion: ${APP_VERSION})"
+
+      - name: Validate CHANGELOG
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          if ! grep -q "## \[${EXPECTED}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md missing entry for version ${EXPECTED}"
+            exit 1
+          fi
+          echo "CHANGELOG: OK (entry found for ${EXPECTED})"
+
+      - name: Validate No Stale Versions
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          STALE=0
+
+          # Check Cargo workspace
+          if grep -q 'version = "0.1.0"' Cargo.toml; then
+            echo "::error::Stale version 0.1.0 in Cargo.toml"
+            STALE=$((STALE + 1))
+          fi
+
+          # Check SDKs
+          for f in sdk/rust/Cargo.toml sdk/python/pyproject.toml; do
+            if grep -q 'version = "0.1.0"' "$f" 2>/dev/null; then
+              echo "::error::Stale version 0.1.0 in ${f}"
+              STALE=$((STALE + 1))
+            fi
+          done
+
+          # Check deployment
+          if grep -q 'version: 0.1.0' deployment/helm/kcm/Chart.yaml; then
+            echo "::error::Stale version 0.1.0 in Helm Chart"
+            STALE=$((STALE + 1))
+          fi
+
+          if [ "${STALE}" -gt 0 ]; then
+            echo "::error::Found ${STALE} stale version reference(s)"
+            exit 1
+          fi
+          echo "No stale versions: OK"
+
+      - name: Validate Documentation Consistency
+        run: |
+          EXPECTED="${{ steps.version.outputs.version }}"
+          MISMATCH=0
+
+          # Check SDK README badges
+          for readme in sdk/*/README.md sdk/README.md; do
+            if [ -f "$readme" ]; then
+              if grep -q "version-0.1.0-blue" "$readme" 2>/dev/null; then
+                echo "::error::Stale badge version in ${readme}"
+                MISMATCH=$((MISMATCH + 1))
+              fi
+            fi
+          done
+
+          if [ "${MISMATCH}" -gt 0 ]; then
+            echo "::error::Found ${MISMATCH} documentation version mismatch(es)"
+            exit 1
+          fi
+          echo "Documentation consistency: OK"
+
+      - name: Version Summary
+        run: |
+          echo ""
+          echo "============================================"
+          echo "KCM Version Validation: PASSED"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Git Tag: v${{ steps.version.outputs.version }}"
+          echo "============================================"

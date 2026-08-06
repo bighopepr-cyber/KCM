@@ -29,7 +29,7 @@ This specification covers:
 
 ```json
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "timestamp": "2026-08-06T18:41:51Z",
   "benchmarks": {
     "<benchmark_name>": {
@@ -50,7 +50,7 @@ This specification covers:
 {
   "framework": "criterion",
   "version": "0.5.1",
-  "kcm_version": "0.1.0",
+  "kcm_version": "1.0.0",
   "generated_at": "2026-08-06T18:41:51Z"
 }
 ```
@@ -75,7 +75,7 @@ This specification covers:
   "commit_hash": "abc123def456",
   "branch": "main",
   "dirty": false,
-  "tag": "v0.1.0"
+  "tag": "v1.0.0"
 }
 ```
 
@@ -102,7 +102,7 @@ Version: 0.1.0
 ```json
 {
   "generated_at": "2026-08-06T18:41:51Z",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "summary": {
     "total_benchmarks": 15,
     "regressions": 0,

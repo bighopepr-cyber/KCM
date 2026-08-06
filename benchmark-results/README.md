@@ -116,7 +116,7 @@ The `baseline.json` file contains structured benchmark results:
 
 ```json
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "timestamp": "2026-08-06T18:41:51Z",
   "benchmarks": {
     "storage_insert": {

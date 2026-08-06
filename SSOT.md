@@ -46,12 +46,19 @@ KCM/
 │   └── kcm-server/                  # HTTP (actix-web) + gRPC (tonic)
 ├── scripts/                         # Build, test, release, CLI tools
 │   ├── kcm-cli/                     # All 17 CLI tool crates
+│   ├── release/                     # Version sync/verify scripts
 │   ├── validate-ssot.sh             # SSOT validation script
 │   └── bench-regression.py          # Benchmark regression detection
 ├── docs/                            # Documentation — 3 subfolders ONLY
 │   ├── adr/                         # Architecture Decision Records (max 10)
 │   ├── specs/                       # PRD.md, PRD2.md, PRD3.md, PRD-TESTING, KCM_SPECIFICATION
-│   └── handbook/                    # handbook.md (single consolidated guide)
+│   ├── handbook/                    # repository-structure.md, handbook.md
+│   ├── governance/                  # engineering-rules, architecture-matrix, certification
+│   ├── metrics/                     # repository-health, coverage reports
+│   ├── runbook/                     # OPERATIONAL_RUNBOOK, DISASTER_RECOVERY
+│   ├── sdk/                         # SDK documentation per language
+│   ├── templates/                   # Documentation templates
+│   └── <crate>/                     # Per-crate spesifikasi.md files
 ├── deployment/                      # Docker, K8s, Helm, Terraform, Grafana, Prometheus
 ├── tests/                           # Integration & security tests
 ├── sdk/                             # SDK: C, C++, Python, Rust, JS, TS, Go, Java, .NET
@@ -80,6 +87,7 @@ KCM/
 ├── CODE_OF_CONDUCT.md               # Code of conduct (Microsoft style)
 ├── SECURITY.md                      # Security policy (Microsoft style)
 ├── LICENSE                          # MIT
+├── VERSION                          # Canonical version source (SemVer 2.0.0)
 ├── Cargo.toml                       # Workspace manifest (edition 2024)
 ├── Cargo.lock                       # Dependency lockfile
 └── rust-toolchain.toml              # Rust toolchain pinning
