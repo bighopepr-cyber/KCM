@@ -1,4 +1,11 @@
+mod auth_middleware;
+mod cors_middleware;
+mod rate_limit_middleware;
+
 use actix_web::{middleware as actix_mw, web, App, HttpResponse, HttpServer};
+use auth_middleware::{AuthConfig, AuthGuard};
+use cors_middleware::CorsMiddleware;
+use rate_limit_middleware::RateLimitGuard;
 use kcm_interface::middleware::rate_limit::RateLimiter;
 use kcm_interface::openapi::openapi_spec;
 use kcm_interface::rest_api::{
@@ -225,13 +232,18 @@ async fn main() -> std::io::Result<()> {
         audit_log: Some(audit_log),
     });
 
+    let auth_config = Arc::new(AuthConfig::from_env());
+    let auth_enabled = auth_config.enabled;
+
     let bind_addr = std::env::var("KCM_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
     log::info!("Starting KCM HTTP server on {}", bind_addr);
+    log::info!("Auth middleware: {}", if auth_enabled { "ENABLED" } else { "DISABLED" });
     log::info!("OpenAPI spec: http://{}/openapi.json", bind_addr);
     log::info!("Prometheus:   http://{}/metrics", bind_addr);
 
     let state_clone = state.clone();
     let rl_clone = rate_limiter.clone();
+    let auth_clone = auth_config.clone();
 
     let server = HttpServer::new(move || {
         App::new()
@@ -241,6 +253,9 @@ async fn main() -> std::io::Result<()> {
                 "%a %r %s %Dms \"%{Referer}i\" \"%{User-Agent}i\" req_id:%{X-Request-ID}o",
             ))
             .wrap(actix_mw::Compress::default())
+            .wrap(CorsMiddleware::new())
+            .wrap(AuthGuard::new(auth_clone.clone()))
+            .wrap(RateLimitGuard::new())
             .route("/health", web::get().to(health_handler))
             .route("/livez", web::get().to(livez_handler))
             .route("/readyz", web::get().to(readyz_handler))

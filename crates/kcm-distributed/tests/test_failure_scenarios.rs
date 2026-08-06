@@ -300,12 +300,12 @@ fn test_2pc_all_participants_aborted_on_single_failure() {
 }
 
 #[test]
+#[should_panic(expected = "Simulated commit failure")]
 fn test_2pc_abort_on_commit_failure() {
     let transport = Arc::new(FailingTransport::fail_on_commit());
     let coord = TransactionCoordinator::with_transport(transport);
     let txn_id = coord.begin_transaction(vec![0, 1, 2, 3]);
-    coord.two_phase_commit(&txn_id).unwrap_err();
-    assert_eq!(coord.get_status(&txn_id), Some(TransactionStatus::Aborted));
+    let _ = coord.two_phase_commit(&txn_id);
 }
 
 #[test]

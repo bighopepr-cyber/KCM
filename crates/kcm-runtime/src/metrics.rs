@@ -3,13 +3,14 @@ use std::sync::Arc;
 use std::time::Instant;
 
 /// Internal metrics counters. Allocated once behind a single Arc.
-/// All 13 counters occupy 104 bytes contiguous.
+/// All 14 counters occupy 112 bytes contiguous.
 pub struct MetricsInner {
     pub queries_total: AtomicU64,
     pub queries_failed: AtomicU64,
     pub query_duration_sum_ms: AtomicU64,
     pub inserts_total: AtomicU64,
     pub inserts_failed: AtomicU64,
+    pub deletes_total: AtomicU64,
     pub cache_hits: AtomicU64,
     pub cache_misses: AtomicU64,
     pub inferences_total: AtomicU64,
@@ -33,6 +34,7 @@ impl Metrics {
                 query_duration_sum_ms: AtomicU64::new(0),
                 inserts_total: AtomicU64::new(0),
                 inserts_failed: AtomicU64::new(0),
+                deletes_total: AtomicU64::new(0),
                 cache_hits: AtomicU64::new(0),
                 cache_misses: AtomicU64::new(0),
                 inferences_total: AtomicU64::new(0),
@@ -60,6 +62,10 @@ impl Metrics {
         if !success {
             self.inner.inserts_failed.fetch_add(1, Ordering::Relaxed);
         }
+    }
+
+    pub fn record_delete(&self) {
+        self.inner.deletes_total.fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn record_cache_hit(&self) {

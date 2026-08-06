@@ -1841,6 +1841,7 @@ dependencies = [
  "kcm-runtime",
  "kcm-security",
  "kcm-storage",
+ "log",
  "parking_lot",
  "pyo3",
  "serde",

@@ -12,6 +12,7 @@ kcm-security = { path = "../kcm-security" }
 parking_lot.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+log.workspace = true
 pyo3 = { workspace = true, optional = true }
 
 [lib]

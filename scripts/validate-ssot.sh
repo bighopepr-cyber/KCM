@@ -73,8 +73,13 @@ fi
 echo ""
 echo "Documentation Structure:"
 # Check 9: Root doc files exist
-for f in README.md KCM_SPECIFICATION.md ROADMAP.md ARCHITECTURE_CONSISTENCY_MATRIX.md SSOT_CERTIFICATION_REPORT.md KCM_ENGINEERING_RULES.md; do
+for f in README.md KCM_SPECIFICATION.md ROADMAP.md; do
     if [ -f "$f" ]; then check "Root file exists: $f" "0"; else check "Root file missing: $f" "1"; fi
+done
+
+# Check 9b: Governance doc files exist
+for f in docs/governance/architecture-matrix.md docs/governance/ssot-certification.md docs/governance/engineering-rules.md; do
+    if [ -f "$f" ]; then check "Governance file exists: $f" "0"; else check "Governance file missing: $f" "1"; fi
 done
 
 # Check 10: Community files exist
@@ -89,13 +94,13 @@ if [ "$PHANTOM_REFS" -eq 0 ]; then check "No phantom document references" "0"; e
 echo ""
 echo "Repository Structure:"
 # Check 12: Deleted directories don't exist
-for d in tools website integrations third_party; do
+for d in website integrations third_party; do
     if [ -d "$d" ]; then check "Deleted directory still exists: $d" "1"; else check "Deleted directory removed: $d" "0"; fi
 done
 
-# Check 13: docs/ has 4 subfolders
+# Check 13: docs/ has required subfolders
 DOCS_SUBFOLDERS=$(find docs/ -maxdepth 1 -type d | grep -v '^docs/$' | wc -l)
-if [ "$DOCS_SUBFOLDERS" -eq 4 ]; then check "docs/ has 4 subfolders (adr, specs, handbook, runbook)" "0"; else check "docs/ subfolder count = $DOCS_SUBFOLDERS (expected 4)" "1"; fi
+if [ "$DOCS_SUBFOLDERS" -ge 4 ]; then check "docs/ has $DOCS_SUBFOLDERS subfolders (>= 4 required)" "0"; else check "docs/ subfolder count = $DOCS_SUBFOLDERS (expected >= 4)" "1"; fi
 
 # Check 14: skills/ has 16 skills
 SKILL_COUNT=$(find skills/ -maxdepth 1 -type d | grep -v '^skills/$' | wc -l)

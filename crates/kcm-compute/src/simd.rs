@@ -131,6 +131,8 @@ impl SimdOps<u8> for [u8] {
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx2") {
+                // SAFETY: is_x86_feature_detected!("avx2") guard guarantees AVX2 availability.
+                // The called function has #[target_feature(enable = "avx2")] and validates all inputs.
                 return unsafe { x86_impl::avx2_filter_eq_u8(self, value) };
             }
         }
@@ -141,6 +143,8 @@ impl SimdOps<u8> for [u8] {
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx2") {
+                // SAFETY: is_x86_feature_detected!("avx2") guard guarantees AVX2 availability.
+                // The called function has #[target_feature(enable = "avx2")] and validates all inputs.
                 return unsafe { x86_impl::avx2_filter_ge_u8(self, value) };
             }
         }
@@ -151,6 +155,8 @@ impl SimdOps<u8> for [u8] {
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx2") {
+                // SAFETY: is_x86_feature_detected!("avx2") guard guarantees AVX2 availability.
+                // The called function has #[target_feature(enable = "avx2")] and validates all inputs.
                 return unsafe { x86_impl::avx2_count_nonzero_u8(self) };
             }
         }
@@ -163,6 +169,8 @@ impl SimdOps<u32> for [u32] {
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx2") {
+                // SAFETY: is_x86_feature_detected!("avx2") guard guarantees AVX2 availability.
+                // The called function has #[target_feature(enable = "avx2")] and validates all inputs.
                 return unsafe { x86_impl::avx2_filter_eq_u32(self, value) };
             }
         }
@@ -173,6 +181,8 @@ impl SimdOps<u32> for [u32] {
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx2") {
+                // SAFETY: is_x86_feature_detected!("avx2") guard guarantees AVX2 availability.
+                // The called function has #[target_feature(enable = "avx2")] and validates all inputs.
                 return unsafe { x86_impl::avx2_filter_ge_u32(self, value) };
             }
         }
