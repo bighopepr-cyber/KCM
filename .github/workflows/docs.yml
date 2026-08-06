@@ -1,0 +1,119 @@
+name: Documentation CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - 'crates/**/README.md'
+      - 'sdk/**/README.md'
+      - 'scripts/**'
+      - 'tools/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - 'crates/**/README.md'
+      - 'sdk/**/README.md'
+  workflow_dispatch:
+
+env:
+  RUST_VERSION: "1.85"
+
+jobs:
+  lint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+      - name: Lint markdown files
+        run: |
+          find . -name "*.md" \
+            -not -path "./target/*" \
+            -not -path "./.git/*" \
+            -not -path "./.kilo/*" \
+            -not -path "./node_modules/*" | \
+            xargs markdownlint --config .markdownlint.json --ignore node_modules
+
+  validate:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run documentation validator
+        run: bash scripts/documentation/validate-docs.sh
+
+  link-check:
+    name: Link Check
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check broken links
+        run: bash tools/doc-link-checker/check-links.sh
+
+  ssot-check:
+    name: SSOT Validation
+    runs-on: ubuntu-latest
+    needs: link-check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate SSOT alignment
+        run: bash tools/doc-drift/ssot-check.sh
+
+  markdown-check:
+    name: Markdown Structure Check
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate markdown structure
+        run: bash scripts/documentation/validate-structure.sh
+
+  coverage-check:
+    name: Documentation Coverage
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calculate coverage
+        run: bash tools/doc-coverage/calculate-coverage.sh
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(cat docs/metrics/coverage.json | python3 -c "import sys,json; print(json.load(sys.stdin)['overall_percentage'])")
+          echo "Documentation coverage: ${COVERAGE}%"
+          if [ $(echo "$COVERAGE < 100" | bc -l) -eq 1 ]; then
+            echo "ERROR: Documentation coverage is below 100%"
+            exit 1
+          fi
+
+  generate-report:
+    name: Generate Report
+    runs-on: ubuntu-latest
+    needs: [lint, validate, link-check, ssot-check, markdown-check, coverage-check]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate health report
+        run: bash scripts/documentation/generate-health-report.sh
+      - name: Generate metrics
+        run: bash tools/doc-coverage/calculate-coverage.sh
+
+  upload-artifact:
+    name: Upload Reports
+    runs-on: ubuntu-latest
+    needs: generate-report
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload documentation reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-reports
+          path: |
+            docs/metrics/
+            repository-health.md
+          retention-days: 30

@@ -66,3 +66,11 @@ This document covers community guidelines specific to KCM SDK contributions. For
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 1.4, available at https://www.contributor-covenant.org/version/1/4/.
+
+## References
+
+- [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) — Project-wide community guidelines
+- [CONTRIBUTING.md](CONTRIBUTING.md) — SDK contribution guidelines
+- [SECURITY.md](SECURITY.md) — SDK security policy
+- [SSOT.md](../SSOT.md) — Single Source of Truth
+- [AGENTS.md](../AGENTS.md) — Engineering constitution

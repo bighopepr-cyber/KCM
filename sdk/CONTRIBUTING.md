@@ -325,3 +325,12 @@ Before submitting an SDK PR:
 - [ ] No placeholder implementations
 - [ ] Error handling is complete
 - [ ] SSOT traceability is documented
+
+## References
+
+- [CONTRIBUTING.md](../CONTRIBUTING.md) — Repository-wide contribution guidelines
+- [SECURITY.md](SECURITY.md) — SDK security policy
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — SDK community guidelines
+- [docs/sdk/compatibility.md](../docs/sdk/compatibility.md) — Compatibility matrix
+- [SSOT.md](../SSOT.md) — Single Source of Truth
+- [AGENTS.md](../AGENTS.md) — Engineering constitution

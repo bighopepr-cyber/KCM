@@ -1039,7 +1039,7 @@ A compliance test suite validates that every SDK implements all 16 operations wi
 
 ---
 
-## SSOT Compliance
+## SSOT Alignment
 
 | SSOT Document | SDK Relevance |
 |---------------|---------------|

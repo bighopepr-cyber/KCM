@@ -1,0 +1,21 @@
+{
+  "default": true,
+  "MD001": false,
+  "MD003": { "style": "atx" },
+  "MD009": { "br_spaces": 2 },
+  "MD010": false,
+  "MD012": { "maximum": 2 },
+  "MD013": false,
+  "MD024": { "siblings_only": true },
+  "MD025": true,
+  "MD026": false,
+  "MD031": true,
+  "MD032": true,
+  "MD033": false,
+  "MD034": false,
+  "MD036": false,
+  "MD040": false,
+  "MD041": true,
+  "MD046": { "style": "fenced" },
+  "MD048": { "style": "backtick" }
+}

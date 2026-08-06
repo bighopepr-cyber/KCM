@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-08-06T18:54:20Z",
+  "overall_percentage": 100,
+  "overall_present": 286,
+  "overall_total": 286,
+  "categories": {
+    "folder_coverage": {
+      "percentage": 100,
+      "present": 104,
+      "total": 104,
+      "description": "Required files per folder"
+    },
+    "crate_coverage": {
+      "percentage": 100,
+      "present": 13,
+      "total": 13,
+      "description": "Spesifikasi files per crate"
+    },
+    "ssot_coverage": {
+      "percentage": 100,
+      "present": 13,
+      "total": 13,
+      "description": "SSOT Alignment in spesifikasi"
+    },
+    "heading_coverage": {
+      "percentage": 100,
+      "present": 78,
+      "total": 78,
+      "description": "Required headings in docs"
+    },
+    "reference_coverage": {
+      "percentage": 100,
+      "present": 78,
+      "total": 78,
+      "description": "References sections in docs"
+    }
+  }
+}

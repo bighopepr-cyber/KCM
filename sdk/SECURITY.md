@@ -137,3 +137,12 @@ KCM SDKs follow Microsoft security engineering practices:
 - Security review for all changes
 - Automated security testing in CI
 - Supply chain security via dependency auditing
+
+## References
+
+- [SECURITY.md](../SECURITY.md) — Project-wide security policy
+- [sdk/README.md](README.md) — SDK overview
+- [sdk/CONTRIBUTING.md](CONTRIBUTING.md) — SDK contribution guidelines
+- [docs/sdk/compatibility.md](../docs/sdk/compatibility.md) — Compatibility matrix
+- [SSOT.md](../SSOT.md) — Single Source of Truth
+- [AGENTS.md](../AGENTS.md) — Engineering constitution
