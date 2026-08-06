@@ -177,11 +177,11 @@ pub unsafe extern "C" fn KCM_DatabaseInsert(
     unsafe {
         let db = &*db;
         let fact_ref = &*fact;
-        
+
         if !fact_ref.is_valid() {
             return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
         }
-        
+
         match Fact::try_from(fact_ref) {
             Ok(kcm_fact) => match db.inner.lock().insert(&kcm_fact) {
                 Ok(_) => KCM_Error::KCM_OK,
@@ -210,11 +210,11 @@ pub unsafe extern "C" fn KCM_DatabaseUpdate(
     unsafe {
         let db = &*db;
         let fact_ref = &*fact;
-        
+
         if !fact_ref.is_valid() {
             return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
         }
-        
+
         match Fact::try_from(fact_ref) {
             Ok(kcm_fact) => match db.inner.lock().update(RowID(row_id), &kcm_fact) {
                 Ok(_) => KCM_Error::KCM_OK,
@@ -287,7 +287,8 @@ pub unsafe extern "C" fn KCM_DatabaseQuery(
         let kb = db.inner.lock();
         match kb.query().execute() {
             Ok(facts) => {
-                let limited_facts: Vec<Fact> = facts.into_iter().take(MAX_FACTS_PER_QUERY).collect();
+                let limited_facts: Vec<Fact> =
+                    facts.into_iter().take(MAX_FACTS_PER_QUERY).collect();
                 *query_out = Box::into_raw(Box::new(KCM_Query {
                     inner: limited_facts,
                     position: 0,
@@ -403,11 +404,11 @@ pub unsafe extern "C" fn KCM_DatabaseSave(
             Ok(s) => s,
             Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
         };
-        
+
         if path_str.len() > MAX_PATH_LENGTH {
             return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
         }
-        
+
         let db_guard = db_ref.inner.lock();
         let schema = db_guard.get_schema();
         match kcm_storage::file_format::DatabaseFile::save(&schema, path_str) {
@@ -438,11 +439,11 @@ pub unsafe extern "C" fn KCM_DatabaseLoad(
             Ok(s) => s,
             Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
         };
-        
+
         if path_str.len() > MAX_PATH_LENGTH {
             return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
         }
-        
+
         match kcm_storage::file_format::DatabaseFile::load(path_str) {
             Ok(schema) => {
                 let new_db = match KnowledgeDatabase::new() {
@@ -453,10 +454,10 @@ pub unsafe extern "C" fn KCM_DatabaseLoad(
                 *db_guard = new_db;
                 let mut insert_errors = 0usize;
                 for idx in 0..schema.len() {
-                    if let Some(fact) = schema.get_fact(idx)
-                        && db_guard.insert(&fact).is_err()
-                    {
-                        insert_errors += 1;
+                    if let Some(fact) = schema.get_fact(idx) {
+                        if db_guard.insert(&fact).is_err() {
+                            insert_errors += 1;
+                        }
                     }
                 }
                 if insert_errors > 0 {
@@ -487,11 +488,11 @@ pub unsafe extern "C" fn KCM_DatabaseVerify(path: *const std::os::raw::c_char) -
             Ok(s) => s,
             Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
         };
-        
+
         if path_str.len() > MAX_PATH_LENGTH {
             return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
         }
-        
+
         match kcm_storage::file_format::DatabaseFile::verify(path_str) {
             Ok(true) => KCM_Error::KCM_OK,
             Ok(false) => KCM_Error::KCM_ERR_CORRUPTED,
@@ -517,11 +518,11 @@ pub unsafe extern "C" fn KCM_TransactionCommit(
     }
     unsafe {
         let txn_ref = &mut *txn;
-        
+
         if txn_ref.committed {
             return KCM_Error::KCM_ERR_TRANSACTION_ABORTED;
         }
-        
+
         if let Some(inner_txn) = txn_ref.inner.take() {
             let db_guard = (*db).inner.lock();
             let mut schema = db_guard.get_schema_mut();
@@ -556,11 +557,11 @@ pub unsafe extern "C" fn KCM_TransactionRollback(txn: *mut KCM_Transaction) -> K
     }
     unsafe {
         let txn_ref = &mut *txn;
-        
+
         if txn_ref.committed {
             return KCM_Error::KCM_ERR_TRANSACTION_ABORTED;
         }
-        
+
         if let Some(inner_txn) = txn_ref.inner.take() {
             match inner_txn.rollback() {
                 Ok(()) => KCM_Error::KCM_OK,

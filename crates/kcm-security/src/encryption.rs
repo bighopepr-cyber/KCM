@@ -1,10 +1,10 @@
 use kcm_core::types::*;
+use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 pub const KEY_SIZE: usize = 32;
 pub const NONCE_SIZE: usize = 12;
@@ -47,7 +47,7 @@ impl EncryptionKey {
         let mut material = Vec::with_capacity(password.len() + KEY_SIZE);
         material.extend_from_slice(password.as_bytes());
         material.extend_from_slice(salt);
-        
+
         let derived = blake3::derive_key("kcm-encryption-v1", &material);
         Ok(EncryptionKey { key: derived })
     }
@@ -59,6 +59,13 @@ impl EncryptionKey {
         Ok(EncryptionKey { key })
     }
 
+    /// Returns a reference to the raw key bytes.
+    ///
+    /// # Security Note
+    ///
+    /// This method exposes the raw encryption key material. Callers must
+    /// ensure the returned bytes are not logged, persisted, or leaked.
+    /// Prefer using `encrypt`/`decrypt` methods for all operations.
     pub fn as_bytes(&self) -> &[u8; KEY_SIZE] {
         &self.key
     }
@@ -208,7 +215,10 @@ impl EncryptedKeyStore {
                 return Err(KcmError::Corrupted("Truncated keystore entry".to_string()));
             }
             let name_len = u32::from_le_bytes([
-                data[offset], data[offset + 1], data[offset + 2], data[offset + 3],
+                data[offset],
+                data[offset + 1],
+                data[offset + 2],
+                data[offset + 3],
             ]) as usize;
             offset += 4;
             if offset + name_len > data.len() {
@@ -221,7 +231,10 @@ impl EncryptedKeyStore {
                 return Err(KcmError::Corrupted("Truncated key data length".to_string()));
             }
             let key_len = u32::from_le_bytes([
-                data[offset], data[offset + 1], data[offset + 2], data[offset + 3],
+                data[offset],
+                data[offset + 1],
+                data[offset + 2],
+                data[offset + 3],
             ]) as usize;
             offset += 4;
             if offset + key_len > data.len() {
@@ -233,27 +246,49 @@ impl EncryptedKeyStore {
                 return Err(KcmError::Corrupted("Truncated key metadata".to_string()));
             }
             let created_at = i64::from_le_bytes([
-                data[offset], data[offset+1], data[offset+2], data[offset+3],
-                data[offset+4], data[offset+5], data[offset+6], data[offset+7],
+                data[offset],
+                data[offset + 1],
+                data[offset + 2],
+                data[offset + 3],
+                data[offset + 4],
+                data[offset + 5],
+                data[offset + 6],
+                data[offset + 7],
             ]);
             offset += 8;
             let rotated_raw = i64::from_le_bytes([
-                data[offset], data[offset+1], data[offset+2], data[offset+3],
-                data[offset+4], data[offset+5], data[offset+6], data[offset+7],
+                data[offset],
+                data[offset + 1],
+                data[offset + 2],
+                data[offset + 3],
+                data[offset + 4],
+                data[offset + 5],
+                data[offset + 6],
+                data[offset + 7],
             ]);
-            let rotated_at = if rotated_raw == 0 { None } else { Some(rotated_raw) };
+            let rotated_at = if rotated_raw == 0 {
+                None
+            } else {
+                Some(rotated_raw)
+            };
             offset += 8;
             let version = u32::from_le_bytes([
-                data[offset], data[offset+1], data[offset+2], data[offset+3],
+                data[offset],
+                data[offset + 1],
+                data[offset + 2],
+                data[offset + 3],
             ]);
             offset += 4;
-            keys.insert(name, KeyEntry {
-                name: name.clone(),
-                encrypted_key,
-                created_at,
-                rotated_at,
-                version,
-            });
+            keys.insert(
+                name.clone(),
+                KeyEntry {
+                    name,
+                    encrypted_key,
+                    created_at,
+                    rotated_at,
+                    version,
+                },
+            );
         }
         Ok(EncryptedKeyStore {
             keys: Arc::new(RwLock::new(keys)),
@@ -268,8 +303,8 @@ impl EncryptedStorage {
     pub fn encrypt(plaintext: &[u8], key: &EncryptionKey) -> Result<Vec<u8>, KcmError> {
         use aes_gcm::aead::rand_core::RngCore;
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, OsRng},
+            Aes256Gcm, Nonce,
         };
 
         if plaintext.is_empty() {
@@ -297,8 +332,8 @@ impl EncryptedStorage {
 
     pub fn decrypt(encrypted: &[u8], key: &EncryptionKey) -> Result<Vec<u8>, KcmError> {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit},
+            Aes256Gcm, Nonce,
         };
 
         if encrypted.len() < NONCE_SIZE {
@@ -339,15 +374,15 @@ impl EncryptedStorage {
         File::open(src_path)
             .and_then(|mut f| f.read_to_end(&mut data))
             .map_err(|e| KcmError::Io(format!("Failed to read source file: {}", e)))?;
-        
+
         let encrypted = Self::encrypt(&data, key)?;
-        
+
         let mut dst_file = File::create(dst_path)
             .map_err(|e| KcmError::Io(format!("Failed to create destination file: {}", e)))?;
         dst_file
             .write_all(&encrypted)
             .map_err(|e| KcmError::Io(format!("Failed to write encrypted data: {}", e)))?;
-        
+
         Ok(())
     }
 
@@ -370,15 +405,15 @@ impl EncryptedStorage {
         File::open(src_path)
             .and_then(|mut f| f.read_to_end(&mut data))
             .map_err(|e| KcmError::Io(format!("Failed to read encrypted file: {}", e)))?;
-        
+
         let decrypted = Self::decrypt(&data, key)?;
-        
+
         let mut dst_file = File::create(dst_path)
             .map_err(|e| KcmError::Io(format!("Failed to create destination file: {}", e)))?;
         dst_file
             .write_all(&decrypted)
             .map_err(|e| KcmError::Io(format!("Failed to write decrypted data: {}", e)))?;
-        
+
         Ok(())
     }
 

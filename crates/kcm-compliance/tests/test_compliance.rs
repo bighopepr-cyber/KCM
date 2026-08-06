@@ -58,14 +58,13 @@ fn test_gdpr_errors() {
         consent: ConsentStatus::NotProvided,
     };
     mgr.register_subject(subject).unwrap();
-    assert!(
-        mgr.register_subject(DataSubject {
+    assert!(mgr
+        .register_subject(DataSubject {
             subject_id: "u1".to_string(),
             email: "c@d.com".to_string(),
             consent: ConsentStatus::NotProvided,
         })
-        .is_err()
-    );
+        .is_err());
 }
 
 #[test]

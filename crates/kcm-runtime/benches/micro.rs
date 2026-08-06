@@ -1,5 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::panic)]
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use kcm_core::bitmap::Bitmap;
 use kcm_core::dictionary::Dictionary;
 use kcm_core::types::*;

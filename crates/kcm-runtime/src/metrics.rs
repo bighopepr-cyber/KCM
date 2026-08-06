@@ -1,9 +1,9 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 /// Internal metrics counters. Allocated once behind a single Arc.
-/// All 14 counters occupy 112 bytes contiguous.
+/// All 13 counters occupy 104 bytes contiguous.
 pub struct MetricsInner {
     pub queries_total: AtomicU64,
     pub queries_failed: AtomicU64,
@@ -12,7 +12,6 @@ pub struct MetricsInner {
     pub inserts_failed: AtomicU64,
     pub cache_hits: AtomicU64,
     pub cache_misses: AtomicU64,
-    pub memory_bytes: AtomicU64,
     pub inferences_total: AtomicU64,
     pub facts_inferred: AtomicU64,
     pub estimated_memory_bytes: AtomicU64,
@@ -36,7 +35,6 @@ impl Metrics {
                 inserts_failed: AtomicU64::new(0),
                 cache_hits: AtomicU64::new(0),
                 cache_misses: AtomicU64::new(0),
-                memory_bytes: AtomicU64::new(0),
                 inferences_total: AtomicU64::new(0),
                 facts_inferred: AtomicU64::new(0),
                 estimated_memory_bytes: AtomicU64::new(0),
@@ -107,6 +105,15 @@ impl Metrics {
         }
     }
 
+    pub fn get_query_error_rate(&self) -> f64 {
+        let total = self.inner.queries_total.load(Ordering::Relaxed);
+        if total == 0 {
+            0.0
+        } else {
+            self.inner.queries_failed.load(Ordering::Relaxed) as f64 / total as f64
+        }
+    }
+
     pub fn update_memory_estimate(&self, bytes: u64) {
         self.inner
             .estimated_memory_bytes
@@ -133,7 +140,6 @@ impl Metrics {
             inserts_total: self.inner.inserts_total.load(Ordering::Relaxed),
             inserts_failed: self.inner.inserts_failed.load(Ordering::Relaxed),
             cache_hit_ratio: self.get_cache_hit_ratio(),
-            memory_bytes: self.inner.memory_bytes.load(Ordering::Relaxed),
             inferences_total: self.inner.inferences_total.load(Ordering::Relaxed),
             facts_inferred: self.inner.facts_inferred.load(Ordering::Relaxed),
             estimated_memory_bytes: self.inner.estimated_memory_bytes.load(Ordering::Relaxed),
@@ -158,7 +164,6 @@ pub struct MetricsSnapshot {
     pub inserts_total: u64,
     pub inserts_failed: u64,
     pub cache_hit_ratio: f64,
-    pub memory_bytes: u64,
     pub inferences_total: u64,
     pub facts_inferred: u64,
     pub estimated_memory_bytes: u64,
@@ -170,14 +175,13 @@ pub struct MetricsSnapshot {
 impl MetricsSnapshot {
     pub fn to_json(&self) -> String {
         format!(
-            r#"{{"queries_total":{},"queries_failed":{},"avg_query_latency_ms":{:.2},"inserts_total":{},"inserts_failed":{},"cache_hit_ratio":{:.4},"memory_bytes":{},"inferences_total":{},"facts_inferred":{},"estimated_memory_bytes":{},"total_facts":{},"active_facts":{},"tombstone_count":{}}}"#,
+            r#"{{"queries_total":{},"queries_failed":{},"avg_query_latency_ms":{:.2},"inserts_total":{},"inserts_failed":{},"cache_hit_ratio":{:.4},"inferences_total":{},"facts_inferred":{},"estimated_memory_bytes":{},"total_facts":{},"active_facts":{},"tombstone_count":{}}}"#,
             self.queries_total,
             self.queries_failed,
             self.avg_query_latency_ms,
             self.inserts_total,
             self.inserts_failed,
             self.cache_hit_ratio,
-            self.memory_bytes,
             self.inferences_total,
             self.facts_inferred,
             self.estimated_memory_bytes,

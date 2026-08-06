@@ -46,8 +46,7 @@ impl Compressor for ZstdCompressor {
         if expected_size > MAX_DECOMPRESSED_SIZE {
             return Err(KcmError::InvalidArgument(format!(
                 "Expected decompressed size {} exceeds maximum {}",
-                expected_size,
-                MAX_DECOMPRESSED_SIZE
+                expected_size, MAX_DECOMPRESSED_SIZE
             )));
         }
         zstd::decode_all(data).map_err(|e| KcmError::Io(e.to_string()))
@@ -79,8 +78,7 @@ impl Compressor for Lz4Compressor {
         if expected_size > MAX_DECOMPRESSED_SIZE {
             return Err(KcmError::InvalidArgument(format!(
                 "Expected decompressed size {} exceeds maximum {}",
-                expected_size,
-                MAX_DECOMPRESSED_SIZE
+                expected_size, MAX_DECOMPRESSED_SIZE
             )));
         }
         if expected_size > i32::MAX as usize {
@@ -145,8 +143,7 @@ impl Compressor for RleCompressor {
         if expected_size > MAX_DECOMPRESSED_SIZE {
             return Err(KcmError::InvalidArgument(format!(
                 "Expected decompressed size {} exceeds maximum {}",
-                expected_size,
-                MAX_DECOMPRESSED_SIZE
+                expected_size, MAX_DECOMPRESSED_SIZE
             )));
         }
 

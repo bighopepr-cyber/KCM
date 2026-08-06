@@ -10,9 +10,12 @@ fn test_rbac_create_user_and_role() {
     let acl = ACLManager::new();
     acl.create_user("alice").unwrap();
     acl.create_role("admin").unwrap();
-    acl.add_permission_to_role("admin", Permission::Read).unwrap();
-    acl.add_permission_to_role("admin", Permission::Write).unwrap();
-    acl.add_permission_to_role("admin", Permission::Admin).unwrap();
+    acl.add_permission_to_role("admin", Permission::Read)
+        .unwrap();
+    acl.add_permission_to_role("admin", Permission::Write)
+        .unwrap();
+    acl.add_permission_to_role("admin", Permission::Admin)
+        .unwrap();
     acl.assign_role("alice", "admin").unwrap();
     assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(acl.check_permission("alice", ContextID(1), Permission::Write));
@@ -23,7 +26,8 @@ fn test_rbac_create_user_and_role() {
 fn test_rbac_context_permission() {
     let acl = ACLManager::new();
     acl.create_user("bob").unwrap();
-    acl.grant_context_permission("bob", ContextID(5), Permission::Read).unwrap();
+    acl.grant_context_permission("bob", ContextID(5), Permission::Read)
+        .unwrap();
     assert!(acl.check_permission("bob", ContextID(5), Permission::Read));
     assert!(!acl.check_permission("bob", ContextID(3), Permission::Read));
     assert!(!acl.check_permission("bob", ContextID(5), Permission::Write));
@@ -160,7 +164,8 @@ fn test_random_keys_unique() {
 fn test_audit_log_capacity_overflow() {
     let log = AuditLog::new();
     for i in 0..150_000 {
-        log.log_query("stress_user", &format!("query_{}", i)).unwrap();
+        log.log_query("stress_user", &format!("query_{}", i))
+            .unwrap();
     }
     assert!(log.event_count() <= 100_000);
     let events = log.get_events();
@@ -174,8 +179,10 @@ fn test_rbac_multi_role() {
     acl.create_user("manager").unwrap();
     acl.create_role("reader").unwrap();
     acl.create_role("writer").unwrap();
-    acl.add_permission_to_role("reader", Permission::Read).unwrap();
-    acl.add_permission_to_role("writer", Permission::Write).unwrap();
+    acl.add_permission_to_role("reader", Permission::Read)
+        .unwrap();
+    acl.add_permission_to_role("writer", Permission::Write)
+        .unwrap();
     acl.assign_role("manager", "reader").unwrap();
     acl.assign_role("manager", "writer").unwrap();
 
@@ -225,8 +232,10 @@ fn test_rbac_role_revocation() {
     let acl = ACLManager::new();
     acl.create_user("alice").unwrap();
     acl.create_role("admin").unwrap();
-    acl.add_permission_to_role("admin", Permission::Read).unwrap();
-    acl.add_permission_to_role("admin", Permission::Write).unwrap();
+    acl.add_permission_to_role("admin", Permission::Read)
+        .unwrap();
+    acl.add_permission_to_role("admin", Permission::Write)
+        .unwrap();
     acl.assign_role("alice", "admin").unwrap();
 
     assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
@@ -258,7 +267,8 @@ fn test_audit_verify_integrity_sequential() {
 fn test_audit_verify_integrity_overflow() {
     let log = AuditLog::new();
     for i in 0..100_000 {
-        log.log_query(&format!("user_{}", i % 10), &format!("query_{}", i)).unwrap();
+        log.log_query(&format!("user_{}", i % 10), &format!("query_{}", i))
+            .unwrap();
     }
     assert_eq!(log.event_count(), 100_000);
     assert!(log.verify_integrity().unwrap());

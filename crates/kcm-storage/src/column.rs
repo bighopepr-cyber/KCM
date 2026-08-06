@@ -219,14 +219,14 @@ fn decode_to_slice<T: Copy>(data: &[u8], count: usize) -> Result<Vec<T>, KcmErro
             data.len()
         )));
     }
-    
+
     if count > MAX_COLUMN_SIZE {
         return Err(KcmError::InvalidArgument(format!(
             "Column size {} exceeds maximum {}",
             count, MAX_COLUMN_SIZE
         )));
     }
-    
+
     let mut values = Vec::with_capacity(count);
     let type_size = std::mem::size_of::<T>();
     for i in 0..count {

@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 mod grpc_server;
 
-use grpc_server::KcmGrpcService;
 use grpc_server::knowledge_service::knowledge_service_server::KnowledgeServiceServer;
+use grpc_server::KcmGrpcService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

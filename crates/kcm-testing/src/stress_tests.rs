@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 pub struct StressTestScenario {

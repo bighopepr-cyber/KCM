@@ -179,18 +179,18 @@ impl InferenceEngine {
                     let p_id = PredicateID(p);
                     let o_id = ObjectID(o);
 
-                    if let Some(subject_filter) = subj
-                        && *subject_filter != s_id
-                    {
-                        continue;
+                    if let Some(subject_filter) = subj {
+                        if *subject_filter != s_id {
+                            continue;
+                        }
                     }
                     if *pred != p_id {
                         continue;
                     }
-                    if let Some(object_filter) = obj
-                        && *object_filter != o_id
-                    {
-                        continue;
+                    if let Some(object_filter) = obj {
+                        if *object_filter != o_id {
+                            continue;
+                        }
                     }
                     matches.push((s_id, o_id, vec![c]));
                 }
@@ -226,10 +226,10 @@ impl InferenceEngine {
 
                 let mut seen: HashSet<(u32, u32)> = HashSet::new();
                 for m in &left_matches {
-                    seen.insert((m.0.0, m.1.0));
+                    seen.insert((m.0 .0, m.1 .0));
                 }
                 for m in right_matches {
-                    let key = (m.0.0, m.1.0);
+                    let key = (m.0 .0, m.1 .0);
                     if seen.insert(key) {
                         left_matches.push(m);
                     }

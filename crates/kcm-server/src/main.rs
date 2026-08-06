@@ -1,9 +1,9 @@
-use actix_web::{App, HttpResponse, HttpServer, middleware as actix_mw, web};
+use actix_web::{middleware as actix_mw, web, App, HttpResponse, HttpServer};
 use kcm_interface::middleware::rate_limit::RateLimiter;
 use kcm_interface::openapi::openapi_spec;
 use kcm_interface::rest_api::{
-    ApiState, handle_batch_insert, handle_delete, handle_get_fact, handle_health, handle_insert,
-    handle_query, handle_stats, handle_update,
+    handle_batch_insert, handle_delete, handle_get_fact, handle_health, handle_insert,
+    handle_query, handle_stats, handle_update, ApiState,
 };
 use kcm_runtime::database::KnowledgeDatabase;
 use kcm_runtime::health::HealthCheck;
@@ -148,16 +148,16 @@ async fn metrics_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
          # HELP kcm_cache_hit_ratio Cache hit ratio\n\
          # TYPE kcm_cache_hit_ratio gauge\n\
          kcm_cache_hit_ratio {:.4}\n\
-         # HELP kcm_memory_bytes Memory usage estimate\n\
-         # TYPE kcm_memory_bytes gauge\n\
-         kcm_memory_bytes {}\n",
+         # HELP kcm_estimated_memory_bytes Estimated memory usage in bytes\n\
+         # TYPE kcm_estimated_memory_bytes gauge\n\
+         kcm_estimated_memory_bytes {}\n",
         snap.queries_total,
         snap.queries_failed,
         snap.avg_query_latency_ms,
         snap.inserts_total,
         snap.inserts_failed,
         snap.cache_hit_ratio,
-        snap.memory_bytes,
+        snap.estimated_memory_bytes,
     );
     HttpResponse::Ok()
         .content_type("text/plain; version=0.0.4; charset=utf-8")

@@ -1,7 +1,7 @@
 use kcm_core::types::*;
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 pub trait SecretProvider: Send + Sync {
     fn get_secret(&self, key: &str) -> Result<String, KcmError>;
@@ -95,7 +95,11 @@ impl SecretProvider for HashiCorpVaultProvider {
             .map_err(|e| KcmError::Io(format!("Vault list parse error: {}", e)))?;
         let keys = body["data"]["keys"]
             .as_array()
-            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
             .unwrap_or_default();
         Ok(keys)
     }
@@ -108,6 +112,9 @@ impl SecretProvider for EnvSecretProvider {
         std::env::var(key).map_err(|_| KcmError::NotFound(format!("Env secret not found: {}", key)))
     }
 
+    /// WARNING: `std::env::set_var` is not thread-safe per Rust documentation.
+    /// This provider should only be used in single-threaded contexts or during
+    /// initialization before spawning threads.
     fn set_secret(&self, key: &str, value: &str) -> Result<(), KcmError> {
         std::env::set_var(key, value);
         Ok(())
@@ -126,6 +133,7 @@ impl SecretProvider for EnvSecretProvider {
 pub struct SecretsManager {
     provider: Arc<dyn SecretProvider>,
     cache: RwLock<HashMap<String, String>>,
+    #[allow(dead_code)]
     cache_ttl_secs: u64,
 }
 
@@ -160,7 +168,9 @@ impl SecretsManager {
 
     pub fn set_secret(&self, key: &str, value: &str) -> Result<(), KcmError> {
         self.provider.set_secret(key, value)?;
-        self.cache.write().insert(key.to_string(), value.to_string());
+        self.cache
+            .write()
+            .insert(key.to_string(), value.to_string());
         Ok(())
     }
 
@@ -196,7 +206,9 @@ mod tests {
         }
 
         fn set_secret(&self, key: &str, value: &str) -> Result<(), KcmError> {
-            self.secrets.write().insert(key.to_string(), value.to_string());
+            self.secrets
+                .write()
+                .insert(key.to_string(), value.to_string());
             Ok(())
         }
 

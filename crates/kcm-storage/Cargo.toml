@@ -18,6 +18,7 @@ ahash.workspace = true
 tempfile.workspace = true
 criterion.workspace = true
 rayon.workspace = true
+proptest.workspace = true
 
 [[bench]]
 name = "dictionary"

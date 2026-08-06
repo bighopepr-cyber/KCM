@@ -1,5 +1,5 @@
 use kcm_core::types::KcmError;
-use kcm_security::audit::{AuditLog, AuditEventType};
+use kcm_security::audit::{AuditEventType, AuditLog};
 use parking_lot::Mutex;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
@@ -101,7 +101,10 @@ impl TransactionCoordinator {
         }
     }
 
-    pub fn with_audit_log(transport: Arc<dyn ParticipantTransport>, audit_log: Arc<AuditLog>) -> Self {
+    pub fn with_audit_log(
+        transport: Arc<dyn ParticipantTransport>,
+        audit_log: Arc<AuditLog>,
+    ) -> Self {
         TransactionCoordinator {
             transactions: Arc::new(Mutex::new(HashMap::new())),
             next_id: std::sync::atomic::AtomicU64::new(1),

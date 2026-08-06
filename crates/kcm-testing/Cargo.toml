@@ -12,6 +12,7 @@ kcm-reasoning = { path = "../kcm-reasoning" }
 kcm-security = { path = "../kcm-security" }
 parking_lot.workspace = true
 tempfile.workspace = true
+getrandom.workspace = true
 
 [dev-dependencies]
 kcm-distributed = { path = "../kcm-distributed" }

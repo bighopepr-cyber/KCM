@@ -172,14 +172,14 @@ impl Planner {
 
     /// Estimate selectivity for an equality predicate.
     fn estimate_equality_selectivity(&self, column: ColumnID) -> f64 {
-        if let Some(ref stats) = self.statistics
-            && let Some(col_stats) = stats.column_stats.get(&column)
-        {
-            if col_stats.row_count == 0 {
-                return 0.0;
+        if let Some(ref stats) = self.statistics {
+            if let Some(col_stats) = stats.column_stats.get(&column) {
+                if col_stats.row_count == 0 {
+                    return 0.0;
+                }
+                let cardinality = col_stats.cardinality.max(1) as f64;
+                return (1.0 / cardinality).clamp(0.0001, 1.0);
             }
-            let cardinality = col_stats.cardinality.max(1) as f64;
-            return (1.0 / cardinality).clamp(0.0001, 1.0);
         }
         0.01
     }

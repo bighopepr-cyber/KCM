@@ -112,6 +112,7 @@ impl AuditEvent {
 
     pub fn compute_hash(&self) -> [u8; 32] {
         blake3::Hasher::new()
+            .update(&self.prev_hash)
             .update(
                 format!(
                     "{:?}|{}|{}|{}|{}",
@@ -139,27 +140,32 @@ impl AuditLog {
 
     pub fn with_capacity(max_events: usize) -> Self {
         AuditLog {
-            events: Arc::new(Mutex::new(VecDeque::with_capacity(
-                max_events.min(1024),
-            ))),
+            events: Arc::new(Mutex::new(VecDeque::with_capacity(max_events.min(1024)))),
             max_events,
         }
     }
 
     pub fn log(&self, mut event: AuditEvent) {
         let mut events = self.events.lock();
-        
+
         if let Some(prev) = events.back() {
             event.prev_hash = prev.event_hash;
         } else {
             event.prev_hash = [0u8; 32];
         }
-        
+
         event.event_hash = event.compute_hash();
         events.push_back(event);
-        
+
         while events.len() > self.max_events {
             events.pop_front();
+        }
+
+        if let Some(first) = events.front_mut() {
+            if first.prev_hash != [0u8; 32] {
+                first.prev_hash = [0u8; 32];
+                first.event_hash = first.compute_hash();
+            }
         }
     }
 
@@ -229,7 +235,12 @@ impl AuditLog {
         Ok(())
     }
 
-    pub fn log_access_check(&self, user_id: &str, resource: &str, granted: bool) -> Result<(), KcmError> {
+    pub fn log_access_check(
+        &self,
+        user_id: &str,
+        resource: &str,
+        granted: bool,
+    ) -> Result<(), KcmError> {
         let details = if granted {
             "Access granted"
         } else {
@@ -383,8 +394,20 @@ mod tests {
     #[test]
     fn test_audit_event_validation() {
         assert!(AuditEvent::new(AuditEventType::QueryExecuted, "", "ctx", "det").is_err());
-        assert!(AuditEvent::new(AuditEventType::QueryExecuted, "user", &"c".repeat(4097), "det").is_err());
-        assert!(AuditEvent::new(AuditEventType::QueryExecuted, "user", "ctx", &"d".repeat(8193)).is_err());
+        assert!(AuditEvent::new(
+            AuditEventType::QueryExecuted,
+            "user",
+            &"c".repeat(4097),
+            "det"
+        )
+        .is_err());
+        assert!(AuditEvent::new(
+            AuditEventType::QueryExecuted,
+            "user",
+            "ctx",
+            &"d".repeat(8193)
+        )
+        .is_err());
     }
 
     #[test]

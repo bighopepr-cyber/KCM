@@ -43,7 +43,7 @@ impl DictionaryCodec {
     pub fn lookup_batch(&self, values: &[&str], results: &mut [Option<u32>]) {
         let inner = self.inner.read();
         for (value, result) in values.iter().zip(results.iter_mut()) {
-            *result = inner.lookup(*value);
+            *result = inner.lookup(value);
         }
     }
 
@@ -111,12 +111,6 @@ impl DictionaryCodec {
 
     pub fn reserve(&self, additional: usize) {
         self.inner.write().reserve(additional);
-    }
-}
-
-impl Default for DictionaryCodec {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

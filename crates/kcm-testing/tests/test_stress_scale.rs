@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 #[test]

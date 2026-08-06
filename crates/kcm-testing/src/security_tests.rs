@@ -242,13 +242,12 @@ fn test_error_handling_consistency() {
     let kb = KnowledgeDatabase::new().unwrap();
     assert!(kb.get_fact(RowID(u64::MAX)).unwrap().is_none());
     assert!(kb.delete(RowID(u64::MAX)).is_err());
-    assert!(
-        kb.update(
+    assert!(kb
+        .update(
             RowID(0),
             &Fact::new(SubjectID(0), PredicateID(0), ObjectID(0), 0.5).unwrap()
         )
-        .is_err()
-    );
+        .is_err());
 }
 
 #[test]

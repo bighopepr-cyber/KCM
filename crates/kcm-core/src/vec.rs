@@ -1,4 +1,4 @@
-use std::alloc::{Layout, alloc, dealloc};
+use std::alloc::{alloc, dealloc, Layout};
 use std::marker::PhantomData;
 use std::ops::{Index, IndexMut};
 use std::ptr::NonNull;

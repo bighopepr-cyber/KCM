@@ -1,7 +1,7 @@
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+use std::sync::Arc;
 use std::time::Instant;
 
 pub struct LoadTestScenario {

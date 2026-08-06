@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::panic)]
 
-use actix_web::{App, HttpResponse, test, web};
+use actix_web::{test, web, App, HttpResponse};
 use kcm_core::types::*;
 use kcm_interface::rest_api::*;
 use kcm_runtime::database::KnowledgeDatabase;
@@ -493,8 +493,8 @@ async fn openapi_handler() -> HttpResponse {
 async fn metrics_handler(state: web::Data<Arc<ApiState>>) -> HttpResponse {
     let snap = state.metrics.snapshot();
     let body = format!(
-        "kcm_queries_total {}\nkcm_inserts_total {}\nkcm_memory_bytes {}",
-        snap.queries_total, snap.inserts_total, snap.memory_bytes
+        "kcm_queries_total {}\nkcm_inserts_total {}\nkcm_estimated_memory_bytes {}",
+        snap.queries_total, snap.inserts_total, snap.estimated_memory_bytes
     );
     HttpResponse::Ok().content_type("text/plain").body(body)
 }
@@ -599,7 +599,7 @@ async fn test_metrics_endpoint() {
     };
     assert!(body.contains("kcm_queries_total"));
     assert!(body.contains("kcm_inserts_total"));
-    assert!(body.contains("kcm_memory_bytes"));
+    assert!(body.contains("kcm_estimated_memory_bytes"));
 }
 
 #[actix_web::test]

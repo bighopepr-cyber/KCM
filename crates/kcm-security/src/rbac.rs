@@ -101,7 +101,10 @@ impl Role {
                 MAX_ROLE_NAME_LENGTH
             )));
         }
-        if !name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        if !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        {
             return Err(KcmError::InvalidArgument(
                 "Role name can only contain alphanumeric characters, underscores, and hyphens"
                     .to_string(),
@@ -212,14 +215,14 @@ impl ACLManager {
         let role = roles
             .get_mut(role_name)
             .ok_or_else(|| KcmError::NotFound(format!("Role not found: {}", role_name)))?;
-        
+
         if role.permissions.len() >= MAX_PERMISSIONS_PER_ROLE {
             return Err(KcmError::InvalidArgument(format!(
                 "Role cannot have more than {} permissions",
                 MAX_PERMISSIONS_PER_ROLE
             )));
         }
-        
+
         role.permissions.insert(perm);
         Ok(())
     }
@@ -240,26 +243,26 @@ impl ACLManager {
     pub fn assign_role(&self, user_id: &str, role_name: &str) -> Result<(), KcmError> {
         User::validate_user_id(user_id)?;
         Role::validate_name(role_name)?;
-        
+
         {
             let roles = self.roles.read();
             if !roles.contains_key(role_name) {
                 return Err(KcmError::NotFound(format!("Role not found: {}", role_name)));
             }
         }
-        
+
         let mut users = self.users.write();
         let user = users
             .get_mut(user_id)
             .ok_or_else(|| KcmError::NotFound(format!("User not found: {}", user_id)))?;
-        
+
         if user.roles.len() >= MAX_ROLES_PER_USER {
             return Err(KcmError::InvalidArgument(format!(
                 "User cannot have more than {} roles",
                 MAX_ROLES_PER_USER
             )));
         }
-        
+
         user.roles.insert(role_name.to_string());
         Ok(())
     }
@@ -280,17 +283,17 @@ impl ACLManager {
         perm: Permission,
     ) -> Result<(), KcmError> {
         User::validate_user_id(user_id)?;
-        
+
         let mut acl = self.context_acl.write();
         let entries = acl.entry(context).or_default();
-        
+
         if entries.len() >= MAX_ACL_ENTRIES {
             return Err(KcmError::InvalidArgument(format!(
                 "ACL for context cannot have more than {} entries",
                 MAX_ACL_ENTRIES
             )));
         }
-        
+
         entries.insert((user_id.to_string(), perm));
         Ok(())
     }
@@ -317,10 +320,10 @@ impl ACLManager {
         if let Some(user) = self.users.read().get(user_id) {
             let roles = self.roles.read();
             for role_name in &user.roles {
-                if let Some(role) = roles.get(role_name)
-                    && role.has_permission(perm)
-                {
-                    return true;
+                if let Some(role) = roles.get(role_name) {
+                    if role.has_permission(perm) {
+                        return true;
+                    }
                 }
             }
         }
@@ -343,10 +346,10 @@ impl ACLManager {
         if let Some(user) = self.users.read().get(user_id) {
             let roles = self.roles.read();
             for role_name in &user.roles {
-                if let Some(role) = roles.get(role_name)
-                    && role.has_permission_level(perm)
-                {
-                    return true;
+                if let Some(role) = roles.get(role_name) {
+                    if role.has_permission_level(perm) {
+                        return true;
+                    }
                 }
             }
         }
@@ -382,6 +385,12 @@ impl ACLManager {
         users
             .remove(user_id)
             .ok_or_else(|| KcmError::NotFound(format!("User not found: {}", user_id)))?;
+        drop(users);
+
+        let mut context_acl = self.context_acl.write();
+        for perms in context_acl.values_mut() {
+            perms.retain(|(uid, _)| uid != user_id);
+        }
         Ok(())
     }
 
@@ -390,6 +399,12 @@ impl ACLManager {
         roles
             .remove(role_name)
             .ok_or_else(|| KcmError::NotFound(format!("Role not found: {}", role_name)))?;
+        drop(roles);
+
+        let mut users = self.users.write();
+        for user in users.values_mut() {
+            user.roles.remove(role_name);
+        }
         Ok(())
     }
 }
@@ -409,7 +424,8 @@ mod tests {
         let acl = ACLManager::new();
         acl.create_user("alice").unwrap();
         acl.create_role("admin").unwrap();
-        acl.add_permission_to_role("admin", Permission::Admin).unwrap();
+        acl.add_permission_to_role("admin", Permission::Admin)
+            .unwrap();
         acl.assign_role("alice", "admin").unwrap();
         assert!(acl.check_permission("alice", ContextID(1), Permission::Admin));
     }
@@ -425,7 +441,8 @@ mod tests {
     fn test_context_permission() {
         let acl = ACLManager::new();
         acl.create_user("carol").unwrap();
-        acl.grant_context_permission("carol", ContextID(5), Permission::Read).unwrap();
+        acl.grant_context_permission("carol", ContextID(5), Permission::Read)
+            .unwrap();
         assert!(acl.check_permission("carol", ContextID(5), Permission::Read));
         assert!(!acl.check_permission("carol", ContextID(6), Permission::Read));
     }
@@ -473,11 +490,16 @@ mod tests {
     fn test_role_permission_limit() {
         let acl = ACLManager::new();
         acl.create_role("limited").unwrap();
-        acl.add_permission_to_role("limited", Permission::Read).unwrap();
-        acl.add_permission_to_role("limited", Permission::Write).unwrap();
-        acl.add_permission_to_role("limited", Permission::Delete).unwrap();
-        acl.add_permission_to_role("limited", Permission::Execute).unwrap();
-        acl.add_permission_to_role("limited", Permission::Admin).unwrap();
+        acl.add_permission_to_role("limited", Permission::Read)
+            .unwrap();
+        acl.add_permission_to_role("limited", Permission::Write)
+            .unwrap();
+        acl.add_permission_to_role("limited", Permission::Delete)
+            .unwrap();
+        acl.add_permission_to_role("limited", Permission::Execute)
+            .unwrap();
+        acl.add_permission_to_role("limited", Permission::Admin)
+            .unwrap();
         let perms = acl.get_role_permissions("limited").unwrap();
         assert_eq!(perms.len(), 5);
     }
@@ -486,9 +508,11 @@ mod tests {
     fn test_revoke_context_permission() {
         let acl = ACLManager::new();
         acl.create_user("dave").unwrap();
-        acl.grant_context_permission("dave", ContextID(1), Permission::Read).unwrap();
+        acl.grant_context_permission("dave", ContextID(1), Permission::Read)
+            .unwrap();
         assert!(acl.check_permission("dave", ContextID(1), Permission::Read));
-        acl.revoke_context_permission("dave", ContextID(1), Permission::Read).unwrap();
+        acl.revoke_context_permission("dave", ContextID(1), Permission::Read)
+            .unwrap();
         assert!(!acl.check_permission("dave", ContextID(1), Permission::Read));
     }
 

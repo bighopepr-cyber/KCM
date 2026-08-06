@@ -45,14 +45,27 @@ impl HealthCheck {
         self
     }
 
+    pub fn with_cache_hit_threshold(mut self, threshold: f64) -> Self {
+        self.cache_hit_threshold = threshold;
+        self
+    }
+
     pub fn check(&self) -> HealthStatus {
         let snap = self.metrics.snapshot();
 
-        if snap.inserts_total > 0 {
-            let error_rate = snap.inserts_failed as f64 / snap.inserts_total as f64;
-            if error_rate > self.error_threshold {
-                return HealthStatus::Unhealthy;
-            }
+        let insert_error_rate = if snap.inserts_total > 0 {
+            snap.inserts_failed as f64 / snap.inserts_total as f64
+        } else {
+            0.0
+        };
+        let query_error_rate = if snap.queries_total > 0 {
+            snap.queries_failed as f64 / snap.queries_total as f64
+        } else {
+            0.0
+        };
+
+        if insert_error_rate > self.error_threshold || query_error_rate > self.error_threshold {
+            return HealthStatus::Unhealthy;
         }
 
         if snap.avg_query_latency_ms > self.latency_threshold_ms {
@@ -79,6 +92,11 @@ impl HealthCheck {
             } else {
                 0.0
             },
+            query_error_rate: if snap.queries_total > 0 {
+                snap.queries_failed as f64 / snap.queries_total as f64
+            } else {
+                0.0
+            },
             total_queries: snap.queries_total,
             total_inserts: snap.inserts_total,
         }
@@ -91,6 +109,7 @@ pub struct HealthReport {
     pub avg_query_latency_ms: f64,
     pub cache_hit_ratio: f64,
     pub insert_error_rate: f64,
+    pub query_error_rate: f64,
     pub total_queries: u64,
     pub total_inserts: u64,
 }
@@ -98,7 +117,7 @@ pub struct HealthReport {
 impl HealthReport {
     pub fn to_json(&self) -> String {
         format!(
-            r#"{{"status":"{}","avg_query_latency_ms":{:.2},"cache_hit_ratio":{:.4},"insert_error_rate":{:.4},"total_queries":{},"total_inserts":{}}}"#,
+            r#"{{"status":"{}","avg_query_latency_ms":{:.2},"cache_hit_ratio":{:.4},"insert_error_rate":{:.4},"query_error_rate":{:.4},"total_queries":{},"total_inserts":{}}}"#,
             match self.status {
                 HealthStatus::Healthy => "healthy",
                 HealthStatus::Degraded => "degraded",
@@ -107,6 +126,7 @@ impl HealthReport {
             self.avg_query_latency_ms,
             self.cache_hit_ratio,
             self.insert_error_rate,
+            self.query_error_rate,
             self.total_queries,
             self.total_inserts,
         )

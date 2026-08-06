@@ -1,5 +1,4 @@
 use crate::robin_hood::RobinHoodMap;
-use std::hash::{BuildHasher, Hash, Hasher};
 use std::sync::Arc;
 
 const PREFETCH_STRIDE: usize = 8;
@@ -33,9 +32,7 @@ impl DictionaryCache {
 
     #[inline]
     fn compute_hash(&self, value: &str) -> u64 {
-        let mut h = self.hasher.build_hasher();
-        value.hash(&mut h);
-        h.finish()
+        self.hasher.hash_one(value)
     }
 
     #[inline]
@@ -60,11 +57,6 @@ impl DictionaryCache {
         self.string_to_id.get(value).copied()
     }
 
-    #[inline]
-    fn lookup_with_hash(&self, key: &str, hash: u64) -> Option<u32> {
-        self.string_to_id.get_with_hash(key, hash).copied()
-    }
-
     pub fn lookup_batch_prefetch(&self, values: &[&str], results: &mut [Option<u32>]) {
         debug_assert_eq!(values.len(), results.len());
 
@@ -81,7 +73,7 @@ impl DictionaryCache {
                         let prefetch_key = values[i + PREFETCH_STRIDE];
                         let hash = self.compute_hash(prefetch_key);
                         let idx = (hash as usize) % self.string_to_id.capacity();
-                        let ptr = &self.string_to_id as *const _ as *const u8;
+                        let ptr = &self.string_to_id as *const _ as *const i8;
                         // SAFETY: ptr points to valid memory within self.string_to_id.
                         // _mm_prefetch is a hint and does not modify memory.
                         unsafe {
@@ -106,8 +98,6 @@ impl DictionaryCache {
 
     #[cfg(target_arch = "x86_64")]
     pub fn lookup_batch_simd(&self, values: &[&str], results: &mut [Option<u32>]) {
-        use std::arch::x86_64::*;
-
         debug_assert_eq!(values.len(), results.len());
         let len = values.len();
 
@@ -175,6 +165,11 @@ impl DictionaryCache {
         self.string_to_id.clear();
         self.id_to_string.clear();
         self.id_to_string.push(Arc::from(""));
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.string_to_id.reserve(additional);
+        self.id_to_string.reserve(additional);
     }
 }
 
@@ -278,13 +273,5 @@ mod tests {
         cache.encode("hello");
         cache.encode("world");
         assert!(cache.space_bytes() > 0);
-    }
-
-    #[test]
-    fn test_lookup_with_hash() {
-        let mut cache = DictionaryCache::new();
-        cache.encode("test");
-        let hash = cache.compute_hash("test");
-        assert_eq!(cache.lookup_with_hash("test", hash), Some(1));
     }
 }

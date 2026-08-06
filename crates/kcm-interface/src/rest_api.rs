@@ -244,12 +244,12 @@ pub fn handle_delete(state: &ApiState, row_id: u64) -> ApiResponse {
 pub fn handle_stats(state: &ApiState) -> ApiResponse {
     let snapshot = state.metrics.snapshot();
     ApiResponse::ok(&format!(
-        r#"{{"fact_count":{},"active_count":{},"total_inserts":{},"total_queries":{},"avg_latency_ms":{:.2},"memory_bytes":{}}}"#,
+        r#"{{"fact_count":{},"active_count":{},"total_inserts":{},"total_queries":{},"avg_latency_ms":{:.2},"estimated_memory_bytes":{}}}"#,
         state.db.fact_count(),
         state.db.active_fact_count(),
         snapshot.inserts_total,
         snapshot.queries_total,
         snapshot.avg_query_latency_ms,
-        snapshot.memory_bytes
+        snapshot.estimated_memory_bytes
     ))
 }

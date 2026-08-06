@@ -47,10 +47,10 @@ impl WalStateMachine {
     }
 
     pub fn should_checkpoint(&self) -> bool {
-        if let Some(last) = self.last_checkpoint
-            && last.elapsed() > self.checkpoint_interval
-        {
-            return true;
+        if let Some(last) = self.last_checkpoint {
+            if last.elapsed() > self.checkpoint_interval {
+                return true;
+            }
         }
         self.entries_since_checkpoint >= self.max_entries_before_checkpoint
     }

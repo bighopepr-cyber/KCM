@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::hash::{BuildHasher, Hash, Hasher};
 
 const LOAD_FACTOR_PERCENT: usize = 90;
@@ -47,6 +48,17 @@ where
     }
 
     #[inline]
+    #[allow(clippy::multiple_bound_locations)]
+    fn hash_key_generic<Q: ?Sized>(&self, key: &Q) -> u64
+    where
+        Q: Hash,
+    {
+        let mut h = self.hasher.clone();
+        key.hash(&mut h);
+        h.finish()
+    }
+
+    #[inline]
     fn bucket_index(&self, hash: u64) -> usize {
         (hash as usize) & self.mask
     }
@@ -56,18 +68,14 @@ where
     }
 
     fn grow(&mut self) {
-        let old_entries = std::mem::replace(
-            &mut self.entries,
-            Vec::with_capacity((self.mask + 1) * 2),
-        );
+        let old_entries =
+            std::mem::replace(&mut self.entries, Vec::with_capacity((self.mask + 1) * 2));
         self.mask = self.mask * 2 + 1;
         self.entries.resize_with(self.mask + 1, || None);
         self.len = 0;
 
-        for bucket_opt in old_entries {
-            if let Some(bucket) = bucket_opt {
-                self.insert_inner(bucket.key, bucket.value, bucket.hash);
-            }
+        for bucket in old_entries.into_iter().flatten() {
+            self.insert_inner(bucket.key, bucket.value, bucket.hash);
         }
     }
 
@@ -159,35 +167,41 @@ where
     }
 
     #[inline]
-    pub fn get(&self, key: &K) -> Option<&V> {
-        let hash = self.hash_key(key);
+    #[allow(clippy::multiple_bound_locations)]
+    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
+        let hash = self.hash_key_generic(key);
         self.get_with_hash(key, hash)
     }
 
     #[inline]
-    pub fn get_with_hash(&self, key: &K, hash: u64) -> Option<&V> {
+    #[allow(clippy::multiple_bound_locations)]
+    pub fn get_with_hash<Q: ?Sized>(&self, key: &Q, hash: u64) -> Option<&V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
         let mut index = self.bucket_index(hash);
-        let mut probe_dist = 0u32;
 
         loop {
-            match &self.entries[index] {
-                None => return None,
-                Some(bucket) => {
-                    if probe_dist > bucket.probe_distance {
-                        return None;
-                    }
-                    if bucket.hash == hash && bucket.key == *key {
-                        return Some(&bucket.value);
-                    }
-                }
+            let bucket = self.entries.get(index)?.as_ref()?;
+            if bucket.hash == hash && bucket.key.borrow() == key {
+                return Some(&bucket.value);
             }
 
             index = (index + 1) & self.mask;
-            probe_dist += 1;
         }
     }
 
-    pub fn contains_key(&self, key: &K) -> bool {
+    #[allow(clippy::multiple_bound_locations)]
+    pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq,
+    {
         self.get(key).is_some()
     }
 
@@ -224,6 +238,20 @@ where
     pub fn clear(&mut self) {
         self.entries.iter_mut().for_each(|b| *b = None);
         self.len = 0;
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        let new_len = self.len + additional;
+        if new_len * 100 / (self.mask + 1) >= LOAD_FACTOR_PERCENT {
+            let new_capacity = (new_len * 2).max((self.mask + 1) * 2).next_power_of_two();
+            let old_entries = std::mem::take(&mut self.entries);
+            self.entries.resize_with(new_capacity, || None);
+            self.mask = new_capacity - 1;
+            self.len = 0;
+            for bucket in old_entries.into_iter().flatten() {
+                self.insert_inner(bucket.key, bucket.value, bucket.hash);
+            }
+        }
     }
 
     pub fn average_probe_distance(&self) -> f64 {
@@ -289,12 +317,28 @@ mod tests {
     #[test]
     fn test_robin_hood_growth() {
         let mut map = RobinHoodMap::with_capacity(4);
-        for i in 0..100 {
+        for i in 0..100u32 {
             map.insert(format!("key_{}", i), i);
         }
         assert_eq!(map.len(), 100);
+        for i in 0..100u32 {
+            let key = format!("key_{}", i);
+            let result = map.get(&key);
+            assert_eq!(result, Some(&i), "Failed to get key_{}", i);
+        }
+    }
+
+    #[test]
+    fn test_robin_hood_growth_str_keys() {
+        let mut map = RobinHoodMap::new();
         for i in 0..100 {
-            assert_eq!(map.get(&format!("key_{}", i)), Some(&i));
+            let key = format!("key_{}", i);
+            map.insert(key.clone(), i);
+        }
+        assert_eq!(map.len(), 100);
+        for i in 0..100 {
+            let key = format!("key_{}", i);
+            assert_eq!(map.get(&*key), Some(&i), "Failed to get key_{}", i);
         }
     }
 

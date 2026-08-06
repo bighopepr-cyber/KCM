@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::panic)]
 
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use kcm_storage::dict_cache::DictionaryCache;
 use kcm_storage::dict_codec::DictionaryCodec;
 use rayon::prelude::*;
@@ -196,10 +196,8 @@ fn bench_dictionary_parallel_lookup(c: &mut Criterion) {
             |b, strings| {
                 let codec_clone = codec.clone();
                 b.iter(|| {
-                    let results: Vec<Option<u32>> = strings
-                        .par_iter()
-                        .map(|s| codec_clone.lookup(s))
-                        .collect();
+                    let results: Vec<Option<u32>> =
+                        strings.par_iter().map(|s| codec_clone.lookup(s)).collect();
                     results
                 })
             },
@@ -215,20 +213,16 @@ fn bench_dictionary_warm_up(c: &mut Criterion) {
     for &size in &[1_000, 10_000, 100_000] {
         let strings = generate_strings(size, "entity");
 
-        group.bench_with_input(
-            BenchmarkId::new("warm_up", size),
-            &strings,
-            |b, strings| {
-                b.iter_batched(
-                    || DictionaryCache::new(),
-                    |mut cache| {
-                        let refs: Vec<&str> = strings.iter().map(|s| s.as_str()).collect();
-                        cache.warm_up(&refs);
-                    },
-                    criterion::BatchSize::SmallInput,
-                )
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("warm_up", size), &strings, |b, strings| {
+            b.iter_batched(
+                || DictionaryCache::new(),
+                |mut cache| {
+                    let refs: Vec<&str> = strings.iter().map(|s| s.as_str()).collect();
+                    cache.warm_up(&refs);
+                },
+                criterion::BatchSize::SmallInput,
+            )
+        });
     }
 
     group.finish();

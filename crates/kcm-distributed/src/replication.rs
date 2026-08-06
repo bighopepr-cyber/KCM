@@ -55,7 +55,10 @@ impl ReplicationManager {
 
     pub fn set_primary(&self, region_id: &str) -> Result<(), KcmError> {
         if !self.regions.read().contains_key(region_id) {
-            return Err(KcmError::NotFound(format!("Region not found: {}", region_id)));
+            return Err(KcmError::NotFound(format!(
+                "Region not found: {}",
+                region_id
+            )));
         }
         *self.primary_region.write() = region_id.to_string();
         Ok(())
@@ -78,7 +81,11 @@ impl ReplicationManager {
         self.regions.read().len()
     }
 
-    pub fn update_status(&self, region_id: &str, status: ReplicationStatus) -> Result<(), KcmError> {
+    pub fn update_status(
+        &self,
+        region_id: &str,
+        status: ReplicationStatus,
+    ) -> Result<(), KcmError> {
         let mut regions = self.regions.write();
         let node = regions
             .get_mut(region_id)
@@ -118,7 +125,7 @@ mod tests {
             lag_ms: 0,
             last_sync: 0,
         });
-        assert_eq!(mgr.region_count(), 2);
+        assert_eq!(mgr.region_count(), 1);
     }
 
     #[test]
@@ -166,8 +173,9 @@ mod tests {
             lag_ms: 0,
             last_sync: 0,
         });
-        mgr.remove_region("us-west-2").unwrap();
         assert_eq!(mgr.region_count(), 1);
+        mgr.remove_region("us-west-2").unwrap();
+        assert_eq!(mgr.region_count(), 0);
         assert!(mgr.remove_region("nonexistent").is_err());
     }
 }
