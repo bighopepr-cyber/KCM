@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /assets/
-Sitemap: https://knowledge-columnar.github.io/kcm/sitemap.xml

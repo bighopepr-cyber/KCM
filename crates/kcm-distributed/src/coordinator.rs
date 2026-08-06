@@ -333,9 +333,9 @@ mod tests {
     use super::*;
     use crate::sharding::{HashSharding, ShardInfo};
 
-    fn make_engine(
-        num_shards: usize,
-    ) -> (DistributedQueryEngine, Arc<Mutex<Vec<(usize, Vec<u8>)>>>) {
+    type QueryLog = Arc<Mutex<Vec<(usize, Vec<u8>)>>>;
+
+    fn make_engine(num_shards: usize) -> (DistributedQueryEngine, QueryLog) {
         let shard_map = ShardMap::new(num_shards, Box::new(HashSharding));
         for i in 0..num_shards {
             shard_map.register_shard(ShardInfo {
@@ -350,7 +350,7 @@ mod tests {
     }
 
     struct MockQueryTransport {
-        log: Arc<Mutex<Vec<(usize, Vec<u8>)>>>,
+        log: QueryLog,
     }
 
     impl ParticipantTransport for MockQueryTransport {

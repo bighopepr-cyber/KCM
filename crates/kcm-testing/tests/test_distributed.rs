@@ -44,7 +44,7 @@ fn test_consistent_hash_stability() {
 
 #[test]
 fn test_shard_map_routing() {
-    let mut map = ShardMap::new(3, Box::new(HashSharding));
+    let map = ShardMap::new(3, Box::new(HashSharding));
     map.register_shard(ShardInfo {
         shard_id: 0,
         host: "h1".to_string(),

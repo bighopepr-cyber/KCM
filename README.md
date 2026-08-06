@@ -23,19 +23,6 @@
 
 KCM is a self-contained columnar knowledge representation, storage, query, and reasoning engine implemented in Rust. It owns its core technology stack: storage, execution, query engine, compression, dictionary encoding, bitmap engine, optimizer, reasoning engine, transaction engine, recovery, benchmarking, testing, monitoring, and documentation.
 
-### Design Principles
-
-| Principle | Description |
-|-----------|-------------|
-| **Columnar Native** | All knowledge stored as independent typed columns |
-| **Dictionary-Encoded** | All string/reference data mapped to integer IDs |
-| **Deterministic** | Identical input always produces identical output |
-| **Zero-Copy Access** | DenseVec provides direct slice access without allocation |
-| **SIMD-Ready** | Data structures aligned for vector processing |
-| **Production-Grade** | Full ACID, crash recovery, validation |
-
----
-
 ## Features
 
 ### Core Engine
@@ -63,12 +50,6 @@ KCM is a self-contained columnar knowledge representation, storage, query, and r
 - **REST API** — HTTP endpoints with OpenAPI spec
 - **gRPC** — High-performance RPC interface
 - **KQL** — Knowledge Query Language parser
-
-### Infrastructure
-- **Docker** — Multi-stage production builds
-- **Kubernetes** — StatefulSet manifests
-- **Distributed** — Hash/Range/ConsistentHash sharding with 2PC
-- **ML Integration** — Learned indexes and confidence scoring
 
 ---
 
@@ -130,45 +111,29 @@ KCM is a self-contained columnar knowledge representation, storage, query, and r
 ### Build
 
 ```bash
-# Debug build
-cargo build --workspace
-
-# Release build (optimized)
-cargo build --release --workspace
+cargo build --workspace           # Debug build
+cargo build --release --workspace # Release build (optimized)
 ```
 
 ### Run Tests
 
 ```bash
-# Run all tests
 cargo test --workspace
-
-# Run with output
 cargo test --workspace -- --nocapture
 ```
 
 ### Start Server
 
 ```bash
-# Start HTTP/gRPC server
 ./target/release/kcm-server
-
-# With environment variables
 RUST_LOG=info KCM_DATA_PATH=/data/kcm.db ./target/release/kcm-server
 ```
 
 ### Docker
 
 ```bash
-# Build image
 docker build -t kcm:latest .
-
-# Run container
-docker run -d \
-  -p 8080:8080 \
-  -v kcm_data:/data \
-  -e RUST_LOG=info \
-  kcm:latest
+docker run -d -p 8080:8080 -v kcm_data:/data -e RUST_LOG=info kcm:latest
 ```
 
 ---
@@ -180,17 +145,15 @@ docker run -d \
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/health` | Health check |
-| `GET` | `/metrics` | Prometheus metrics |
-| `GET` | `/openapi.json` | OpenAPI specification |
-| `GET` | `/facts` | List facts |
-| `GET` | `/facts/{id}` | Get fact by ID |
-| `GET` | `/stats` | Database statistics |
-| `POST` | `/api/v1/facts` | Insert fact |
-| `POST` | `/api/v1/facts/batch` | Batch insert |
-| `PUT` | `/api/v1/facts/{id}` | Update fact |
-| `DELETE` | `/api/v1/facts/{id}` | Delete fact |
+| `GET` | `/api/stats` | Database statistics |
+| `POST` | `/api/facts` | Insert fact |
+| `GET` | `/api/facts` | List facts |
+| `GET` | `/api/facts/:id` | Get fact by ID |
+| `DELETE` | `/api/facts/:id` | Delete fact |
+| `POST` | `/api/query` | Query facts |
+| `POST` | `/api/transactions/begin` | Begin transaction |
 
-### C FFI
+### C FFI (18 functions)
 
 ```c
 #include <kcm_interface.h>
@@ -199,16 +162,10 @@ KCM_Database *db;
 KCM_DatabaseNew(&db);
 
 KCM_Fact fact = {
-    .subject = 1,
-    .predicate = 2,
-    .object = 3,
-    .confidence = 0.95,
-    .evidence = 1,
+    .subject = 1, .predicate = 2, .object = 3,
+    .confidence = 0.95, .evidence = 1,
     .timestamp = 1700000000000000000,
-    .context = 1,
-    .version = 1,
-    .priority = 0,
-    .owner = 1
+    .context = 1, .version = 1, .priority = 0, .owner = 1
 };
 
 KCM_DatabaseInsert(db, &fact);
@@ -239,7 +196,7 @@ row_id = db.insert(fact)
 
 ## Data Model
 
-### Fact Structure
+### Fact Structure (34 bytes uncompressed)
 
 ```rust
 pub struct Fact {
@@ -255,8 +212,6 @@ pub struct Fact {
     pub owner: u16,              // dictionary-encoded
 }
 ```
-
-**Size:** 34 bytes uncompressed per fact.
 
 ### Column Storage
 
@@ -299,132 +254,66 @@ volumes:
 
 ### Kubernetes
 
-```yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: kcm-server
-spec:
-  serviceName: kcm-service
-  replicas: 1
-  selector:
-    matchLabels:
-      app: kcm-server
-  template:
-    spec:
-      containers:
-      - name: kcm-server
-        image: kcm:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: RUST_LOG
-          value: "info"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
+```bash
+kubectl apply -f deployment/k8s/deployment.yaml
+```
+
+### Helm
+
+```bash
+helm install kcm deployment/helm/kcm
 ```
 
 ---
 
 ## Quality Gates
 
-Every change must pass 6 mandatory gates:
-
-| Gate | Validation |
-|------|------------|
-| **Build** | `cargo build --workspace` |
-| **Tests** | `cargo test --workspace` |
-| **Clippy** | `cargo clippy --workspace -- -D warnings` |
-| **Format** | `cargo fmt --all -- --check` |
-| **SSOT** | `bash scripts/validate-ssot.sh` |
-| **Security** | No unwrap in production code |
-
----
-
-## CI/CD Pipeline
-
-| Job | Trigger | What it validates |
-|-----|---------|-------------------|
-| Format Check | Every push | `cargo fmt --all -- --check` |
-| Build | Every push | `cargo build --workspace` |
-| Clippy | Every push | `cargo clippy --workspace -- -D warnings` |
-| Unit Tests | Every push | `cargo test --lib --all` |
-| Integration Tests | Every push | `cargo test --test '*' --all` |
-| Security Tests | After unit tests | `cargo test security_tests --all` |
-| Property Tests | Every push | `cargo test property_tests --all` |
-| Benchmarks | After unit tests | `cargo bench --workspace --no-run` |
-| Quality Gate | All above pass | Final merge decision |
-
----
-
-## Engineering Governance
-
-KCM uses a 16-skill engineering system enforced by AI agents:
-
-| Priority | Skill | Role |
-|----------|-------|------|
-| P1 | Engineering Orchestrator | Master coordinator |
-| P2 | Task Planner | Implementation planning |
-| P3 | Change Impact Analysis | Pre-change assessment |
-| P4 | Specification Lock | Frozen contract protection |
-| P5 | Architecture Guardian | Architecture integrity |
-| P6 | Database Engine Specialist | Storage/query correctness |
-| P7 | Security Engineer | Security and compliance |
-| P8 | Performance Engineer | Performance validation |
-| P9 | Testing Verification | Test coverage |
-| P10 | Code Quality Guardian | Rust code quality |
-| P11 | Documentation Guardian | Spec consistency |
-| P12 | Release Readiness | Production validation |
-| P13 | Code Review Auditor | Senior review |
-| P14 | Debugging Root Cause | Bug investigation |
-| P15 | Engineering Decision Record | Decision documentation |
-| P16 | Repository Intelligence | Codebase understanding |
+| Gate | Command | Blocks Merge |
+|------|---------|-------------|
+| Format | `cargo fmt --all -- --check` | Yes |
+| Clippy | `cargo clippy --workspace -- -D warnings` | Yes |
+| Build | `cargo build --workspace` | Yes |
+| Unit Tests | `cargo test --lib --all` | Yes |
+| Integration Tests | `cargo test --test '*' --all` | Yes |
+| SSOT Validation | `bash scripts/validate-ssot.sh` | Yes |
 
 ---
 
 ## Project Structure
 
 ```
-kcm/
-├── assets/              # Logo and static assets
-├── crates/              # Rust workspace crates
-│   ├── kcm-core/        # Core types and memory structures
-│   ├── kcm-storage/     # Storage formats, WAL, codecs
-│   ├── kcm-compute/     # Query operators and execution
-│   ├── kcm-reasoning/   # Inference and rule execution
-│   ├── kcm-optimizer/   # Cost model, query planner
-│   ├── kcm-runtime/     # Database lifecycle, transactions
-│   ├── kcm-interface/   # FFI, REST, gRPC, KQL parser
-│   ├── kcm-distributed/ # Sharding, 2PC
-│   ├── kcm-ml/          # Learned indexes, confidence
-│   ├── kcm-security/    # RBAC, encryption, audit
-│   ├── kcm-compliance/  # GDPR, classification
-│   ├── kcm-testing/     # Load, stress, security tests
-│   └── kcm-server/      # HTTP + gRPC server
-├── docs/                # Documentation (SSOT)
-├── scripts/             # Build and validation scripts
-├── tests/               # Integration tests
-└── benches/             # Benchmarks
+KCM/
+├── crates/                    # 13 core Rust crates
+├── scripts/                   # Build, test, CLI tools
+│   └── kcm-cli/              # CLI tool binaries
+├── docs/                      # Documentation (SSOT v2.0)
+│   ├── adr/                   # Architecture Decision Records
+│   ├── specs/                 # PRDs and specifications
+│   └── handbook/              # Engineering handbook
+├── deployment/                # Docker, K8s, Helm, Terraform
+├── tests/                     # Integration & security tests
+├── sdk/                       # Multi-language SDKs
+├── assets/                    # Logo and static assets
+├── benchmark-results/         # Benchmark baselines and reports
+├── skills/                    # AI engineering skills
+└── .github/workflows/         # CI/CD pipelines
 ```
 
 ---
 
 ## Documentation
 
-All specifications are maintained as Single Source of Truth (SSOT):
-
 | Document | Scope | Priority |
 |----------|-------|----------|
-| [PRD.md](docs/PRD.md) | Core types, storage, compute, reasoning | P4 |
-| [PRD2.md](docs/PRD2.md) | Storage, runtime, interfaces | P3 |
-| [PRD3.md](docs/PRD3.md) | Distributed, ML, security, compliance | P2 |
-| [PRD-TESTING](docs/PRD-TESTING&%20BRACHMARCK.md) | Testing, benchmarks, quality gates | P1 |
-| [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) | Repository navigation | — |
+| [SSOT.md](SSOT.md) | Single Source of Truth | Root |
+| [KCM_SPECIFICATION.md](KCM_SPECIFICATION.md) | Technical constitution | Root |
+| [ROADMAP.md](ROADMAP.md) | Release plan | Root |
+| [ARCHITECTURE_CONSISTENCY_MATRIX.md](ARCHITECTURE_CONSISTENCY_MATRIX.md) | Component registry | Root |
+| [PRD.md](docs/specs/PRD.md) | Core types, storage, compute, reasoning | P4 |
+| [PRD2.md](docs/specs/PRD2.md) | Storage, runtime, interfaces | P3 |
+| [PRD3.md](docs/specs/PRD3.md) | Distributed, ML, security, compliance | P2 |
+| [PRD-TESTING](docs/specs/PRD-TESTING-AND-BENCHMARK.md) | Testing, benchmarks | P1 |
+| [handbook.md](docs/handbook/handbook.md) | Development guide | — |
 
 ---
 
@@ -432,20 +321,11 @@ All specifications are maintained as Single Source of Truth (SSOT):
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Workflow
-
-```bash
-# Run quality gates
-cargo build --workspace
-cargo test --workspace
-cargo clippy --workspace -- -D warnings
-cargo fmt --all -- --check
-bash scripts/validate-ssot.sh
-```
+3. Find the SSOT requirement in PRD docs
+4. Implement matching specification
+5. Write tests validating implementation
+6. Run quality gates: `cargo build --workspace && cargo test --workspace && cargo clippy --workspace -- -D warnings && cargo fmt --all -- --check && bash scripts/validate-ssot.sh`
+7. Open a Pull Request with SSOT requirement reference
 
 ---
 

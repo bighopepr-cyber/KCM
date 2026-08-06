@@ -78,10 +78,11 @@ dist/
 # Kilo
 .kilo/
 
+# KCM snapshots
+.kcm_snapshots/
+
 # Benchmark / Coverage
 criterion/
-reports/
-benchmark-results/
 coverage/
 *.profraw
 *.profdata
@@ -95,4 +96,4 @@ deployment/**/*.tfstate.backup
 deployment/**/.terraform/
 
 # Tools build artifacts
-tools/**/target/
+scripts/**/target/

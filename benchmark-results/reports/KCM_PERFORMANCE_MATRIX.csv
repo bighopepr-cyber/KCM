@@ -1,0 +1,11 @@
+benchmark,median_ns,lower_ns,upper_ns,throughput_ops_sec
+bitmap_get/10000,830,725,944,1204921
+bitmap_get/100000,7610,6900,8428,131397
+bitmap_get/1000000,68698,58896,81242,14556
+column_sequential_scan/1000,90,79,100,11156979
+column_sequential_scan/10000,567,519,621,1764540
+column_sequential_scan/100000,7349,6343,8603,136078
+column_sequential_scan/1000000,94588,88676,101330,10572
+dictionary_lookup/1000,43663,38379,49176,22903
+dictionary_lookup/10000,541840,460500,631510,1846
+dictionary_lookup/100000,6868700,6239200,7581900,146

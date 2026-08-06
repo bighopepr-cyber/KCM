@@ -1,10 +1,13 @@
 target/
 .git/
 .github/
-website/
 docs/
 benchmark-results/
 skills/
+sdk/
+examples/
+.kilo/
+.kcm_snapshots/
 *.md
 *.yml
 *.yaml
@@ -16,5 +19,9 @@ skills/
 *.svg
 *.txt
 .gitignore
+.dockerignore
 Dockerfile
 docker-compose.yml
+Cargo.lock
+rust-toolchain.toml
+kilo.json
