@@ -1,7 +1,8 @@
-FROM rust:1.85 AS builder
+FROM rust:1.88 AS builder
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates/ crates/
+COPY scripts/kcm-cli/ scripts/kcm-cli/
 RUN cargo build --release --bin kcm-server
 
 FROM debian:bookworm-slim

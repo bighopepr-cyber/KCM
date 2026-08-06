@@ -42,25 +42,16 @@ sdk/
 # Examples
 examples/
 
-# Scripts
-scripts/
-*.sh
-*.py
+# Scripts (except kcm-cli which is needed for workspace resolution)
+scripts/validate-ssot.sh
+scripts/bench-regression.py
+scripts/README.md
 
 # Deployment configs (not needed in container)
 deployment/grafana/
 deployment/prometheus/
 deployment/terraform/
 deployment/helm/
-
-# CI/CD
-.github/
-
-# Rust toolchain (handled by Dockerfile)
-rust-toolchain.toml
-
-# Cargo lock (regenerated in container)
-Cargo.lock
 
 # Config files
 kilo.json
