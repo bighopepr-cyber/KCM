@@ -16,7 +16,7 @@ impl Dictionary {
         let mut reverse_map = AHashMap::with_capacity(256);
         reverse_map.insert(String::new(), 0);
         Dictionary {
-            entries: Vec::with_capacity(256),
+            entries: vec![String::new()],
             reverse_map,
         }
     }
@@ -25,7 +25,7 @@ impl Dictionary {
         let mut reverse_map = AHashMap::with_capacity(capacity);
         reverse_map.insert(String::new(), 0);
         Dictionary {
-            entries: Vec::with_capacity(capacity),
+            entries: vec![String::new()],
             reverse_map,
         }
     }
