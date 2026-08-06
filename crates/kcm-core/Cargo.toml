@@ -7,6 +7,7 @@ description = "Core types and data structures for KCM"
 [dependencies]
 parking_lot.workspace = true
 serde = { workspace = true, optional = true }
+ahash.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true

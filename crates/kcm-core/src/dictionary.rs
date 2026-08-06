@@ -1,5 +1,5 @@
+use ahash::AHashMap;
 use parking_lot::RwLock;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::types::KcmError;
@@ -8,18 +8,25 @@ pub type DictID = u32;
 
 pub struct Dictionary {
     entries: Vec<String>,
-    reverse_map: HashMap<String, DictID>,
+    reverse_map: AHashMap<String, DictID>,
 }
 
 impl Dictionary {
     pub fn new() -> Self {
+        let mut reverse_map = AHashMap::with_capacity(256);
+        reverse_map.insert(String::new(), 0);
         Dictionary {
-            entries: vec![String::new()],
-            reverse_map: {
-                let mut map = HashMap::new();
-                map.insert(String::new(), 0);
-                map
-            },
+            entries: Vec::with_capacity(256),
+            reverse_map,
+        }
+    }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        let mut reverse_map = AHashMap::with_capacity(capacity);
+        reverse_map.insert(String::new(), 0);
+        Dictionary {
+            entries: Vec::with_capacity(capacity),
+            reverse_map,
         }
     }
 
@@ -38,12 +45,37 @@ impl Dictionary {
         Ok(id)
     }
 
+    #[inline]
     pub fn get(&self, id: DictID) -> Option<&str> {
         self.entries.get(id as usize).map(|s| s.as_str())
     }
 
+    #[inline]
     pub fn lookup(&self, value: &str) -> Option<DictID> {
         self.reverse_map.get(value).copied()
+    }
+
+    pub fn lookup_batch(&self, values: &[&str], results: &mut [Option<DictID>]) {
+        debug_assert_eq!(values.len(), results.len());
+        let map = &self.reverse_map;
+        for (value, result) in values.iter().zip(results.iter_mut()) {
+            *result = map.get(*value).copied();
+        }
+    }
+
+    pub fn lookup_batch_into(&self, values: &[&str]) -> Vec<Option<DictID>> {
+        let mut results = Vec::with_capacity(values.len());
+        results.resize(values.len(), None);
+        self.lookup_batch(values, &mut results);
+        results
+    }
+
+    pub fn get_batch<'a>(&'a self, ids: &[DictID], results: &mut Vec<Option<&'a str>>) {
+        results.clear();
+        results.reserve(ids.len());
+        for &id in ids {
+            results.push(self.get(id));
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -56,6 +88,15 @@ impl Dictionary {
 
     pub fn entries(&self) -> &[String] {
         &self.entries
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.entries.capacity()
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.entries.reserve(additional);
+        self.reverse_map.reserve(additional);
     }
 }
 
@@ -72,6 +113,10 @@ impl SharedDictionary {
         SharedDictionary(Arc::new(RwLock::new(Dictionary::new())))
     }
 
+    pub fn with_capacity(capacity: usize) -> Self {
+        SharedDictionary(Arc::new(RwLock::new(Dictionary::with_capacity(capacity))))
+    }
+
     pub fn insert(&self, value: &str) -> Result<DictID, KcmError> {
         self.0.write().insert(value)
     }
@@ -82,6 +127,10 @@ impl SharedDictionary {
 
     pub fn lookup(&self, value: &str) -> Option<DictID> {
         self.0.read().lookup(value)
+    }
+
+    pub fn lookup_batch(&self, values: &[&str]) -> Vec<Option<DictID>> {
+        self.0.read().lookup_batch_into(values)
     }
 
     pub fn len(&self) -> usize {

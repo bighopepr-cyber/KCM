@@ -1,5 +1,5 @@
+use ahash::AHashMap;
 use parking_lot::RwLock;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -8,15 +8,15 @@ pub struct DictionaryCodec {
 }
 
 struct DictionaryCodecInner {
-    string_to_id: HashMap<String, u32>,
+    string_to_id: AHashMap<String, u32>,
     id_to_string: Vec<String>,
 }
 
 impl DictionaryCodec {
     pub fn new() -> Self {
         let mut inner = DictionaryCodecInner {
-            string_to_id: HashMap::new(),
-            id_to_string: Vec::new(),
+            string_to_id: AHashMap::with_capacity(256),
+            id_to_string: Vec::with_capacity(256),
         };
         inner.id_to_string.push(String::new());
         DictionaryCodec {

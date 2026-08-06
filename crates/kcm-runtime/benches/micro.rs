@@ -266,6 +266,56 @@ fn bench_dictionary_insert_existing(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_dictionary_batch_lookup(c: &mut Criterion) {
+    let mut group = c.benchmark_group("dictionary_batch_lookup");
+    configure_standard(&mut group);
+    for &size in DICTIONARY_SIZES {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let fixture = DictionaryFixture::new(size);
+            let keys: Vec<String> = (0..size).map(|i| format!("key_{}", i)).collect();
+            let key_refs: Vec<&str> = keys.iter().map(|s| s.as_str()).collect();
+            b.iter(|| {
+                black_box(fixture.dict.lookup_batch_into(&key_refs));
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_dictionary_with_capacity(c: &mut Criterion) {
+    let mut group = c.benchmark_group("dictionary_with_capacity");
+    configure_standard(&mut group);
+    for &size in DICTIONARY_SIZES {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            b.iter(|| {
+                let mut dict = Dictionary::with_capacity(size);
+                for i in 0..size {
+                    dict.insert(&format!("key_{}", i))
+                        .expect("Failed to insert key");
+                }
+                black_box(dict)
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_dictionary_get_by_id(c: &mut Criterion) {
+    let mut group = c.benchmark_group("dictionary_get_by_id");
+    configure_standard(&mut group);
+    for &size in DICTIONARY_SIZES {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let fixture = DictionaryFixture::new(size);
+            b.iter(|| {
+                for i in 0..size as u32 {
+                    black_box(fixture.dict.get(i));
+                }
+            });
+        });
+    }
+    group.finish();
+}
+
 // ============================================================================
 // DATABASE OPERATIONS
 // ============================================================================
@@ -1039,6 +1089,9 @@ criterion_group!(
     bench_dictionary_insert,
     bench_dictionary_lookup,
     bench_dictionary_insert_existing,
+    bench_dictionary_batch_lookup,
+    bench_dictionary_with_capacity,
+    bench_dictionary_get_by_id,
     bench_database_insert,
     bench_database_query,
     bench_database_query_filtered,

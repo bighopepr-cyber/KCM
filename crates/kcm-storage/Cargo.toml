@@ -12,6 +12,7 @@ zstd.workspace = true
 lz4.workspace = true
 blake3.workspace = true
 thiserror.workspace = true
+ahash.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
