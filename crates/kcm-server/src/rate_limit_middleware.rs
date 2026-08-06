@@ -1,7 +1,7 @@
 use actix_web::{
     body::EitherBody,
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    web, Error, HttpResponse,
+    web, Error, HttpMessage, HttpResponse,
 };
 use kcm_interface::middleware::rate_limit::RateLimiter;
 use std::future::{ready, Ready};
@@ -48,11 +48,7 @@ pub struct RateLimitGuardService<S> {
 
 fn extract_client_id(req: &ServiceRequest) -> String {
     // Check request extensions for user identity set by auth middleware
-    if let Some(user_id) = req
-        .extensions()
-        .get::<String>()
-        .filter(|s| !s.is_empty())
-    {
+    if let Some(user_id) = req.extensions().get::<String>().filter(|s| !s.is_empty()) {
         return user_id.clone();
     }
 

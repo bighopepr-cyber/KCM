@@ -69,14 +69,9 @@ impl CredentialStore {
     pub fn from_env() -> Self {
         let mut store = Self::new();
         if let Ok(json_str) = std::env::var("KCM_AUTH_TOKENS") {
-            if let Ok(map) =
-                serde_json::from_str::<HashMap<String, serde_json::Value>>(&json_str)
-            {
+            if let Ok(map) = serde_json::from_str::<HashMap<String, serde_json::Value>>(&json_str) {
                 for (token, value) in map {
-                    let user_id = value["user_id"]
-                        .as_str()
-                        .unwrap_or("unknown")
-                        .to_string();
+                    let user_id = value["user_id"].as_str().unwrap_or("unknown").to_string();
                     let roles: Vec<String> = value["roles"]
                         .as_array()
                         .map(|arr| {
@@ -87,10 +82,7 @@ impl CredentialStore {
                         .unwrap_or_default();
                     store.register(&token, &user_id, roles);
                 }
-                log::info!(
-                    "Loaded {} API token(s) from KCM_AUTH_TOKENS",
-                    store.len()
-                );
+                log::info!("Loaded {} API token(s) from KCM_AUTH_TOKENS", store.len());
             } else {
                 log::error!("Failed to parse KCM_AUTH_TOKENS: invalid JSON");
             }
@@ -161,10 +153,7 @@ impl AuthContext {
         let value: serde_json::Value =
             serde_json::from_str(&json_str).map_err(|_| AuthError::InvalidToken)?;
 
-        let user_id = value["user_id"]
-            .as_str()
-            .unwrap_or("unknown")
-            .to_string();
+        let user_id = value["user_id"].as_str().unwrap_or("unknown").to_string();
         let roles: Vec<String> = value["roles"]
             .as_array()
             .map(|arr| {

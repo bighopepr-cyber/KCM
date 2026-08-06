@@ -66,6 +66,37 @@ fn write_version(dir: &std::path::Path, version: u32) -> Result<()> {
     Ok(())
 }
 
+fn slugify_name(name: &str) -> String {
+    let mut slug = String::new();
+    for ch in name.to_lowercase().chars() {
+        if ch.is_alphanumeric() {
+            slug.push(ch);
+        } else {
+            slug.push('_');
+        }
+    }
+    while slug.contains("__") {
+        slug = slug.replace("__", "_");
+    }
+    slug.trim_matches('_').to_string()
+}
+
+fn create_migration_file(dir: &std::path::Path, name: &str) -> Result<PathBuf> {
+    ensure_migration_dir(dir)?;
+    let current_ver = read_version(dir);
+    let new_ver = current_ver + 1;
+    let filename = format!("{:03}_{}.sql", new_ver, slugify_name(name));
+    let filepath = dir.join(&filename);
+    std::fs::write(
+        &filepath,
+        format!(
+            "-- Migration v{}: {}\n-- Add SQL migration statements here.\n",
+            new_ver, name
+        ),
+    )?;
+    Ok(filepath)
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     ensure_migration_dir(&cli.dir)?;
@@ -146,17 +177,11 @@ fn main() -> Result<()> {
             Ok(())
         }
         Commands::Create { name } => {
-            let current = read_version(&cli.dir);
-            let new_ver = current + 1;
-            let filename = format!("{:03}_{}.sql", new_ver, name.replace(' ', "_"));
-            let filepath = cli.dir.join(&filename);
-            std::fs::write(
-                &filepath,
-                format!(
-                    "-- Migration v{}: {}\n-- TODO: Add migration SQL here\n",
-                    new_ver, name
-                ),
-            )?;
+            let filepath = create_migration_file(&cli.dir, name)?;
+            let filename = filepath
+                .file_name()
+                .and_then(|f| f.to_str())
+                .unwrap_or_default();
             println!("{}: Created {}", "OK".green(), filename);
             Ok(())
         }
@@ -206,5 +231,39 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_migration_dir() -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("kcm-migrate-test-{}", unique));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn create_migration_file_uses_versioned_name_and_creates_file() {
+        let dir = temp_migration_dir();
+        write_version(&dir, 1).unwrap();
+
+        let created = create_migration_file(&dir, "Add index").unwrap();
+
+        assert!(created.exists());
+        assert_eq!(
+            created.file_name().unwrap().to_string_lossy(),
+            "002_add_index.sql"
+        );
+        let contents = fs::read_to_string(&created).unwrap();
+        assert!(contents.contains("-- Migration v2: Add index"));
+        let _ = fs::remove_dir_all(&dir);
     }
 }

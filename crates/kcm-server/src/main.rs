@@ -5,7 +5,6 @@ mod rate_limit_middleware;
 use actix_web::{middleware as actix_mw, web, App, HttpResponse, HttpServer};
 use auth_middleware::{AuthConfig, AuthGuard};
 use cors_middleware::CorsMiddleware;
-use rate_limit_middleware::RateLimitGuard;
 use kcm_interface::middleware::rate_limit::RateLimiter;
 use kcm_interface::openapi::openapi_spec;
 use kcm_interface::rest_api::{
@@ -16,6 +15,7 @@ use kcm_runtime::database::KnowledgeDatabase;
 use kcm_runtime::health::HealthCheck;
 use kcm_runtime::metrics::Metrics;
 use kcm_security::audit::AuditLog;
+use rate_limit_middleware::RateLimitGuard;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -237,7 +237,10 @@ async fn main() -> std::io::Result<()> {
 
     let bind_addr = std::env::var("KCM_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
     log::info!("Starting KCM HTTP server on {}", bind_addr);
-    log::info!("Auth middleware: {}", if auth_enabled { "ENABLED" } else { "DISABLED" });
+    log::info!(
+        "Auth middleware: {}",
+        if auth_enabled { "ENABLED" } else { "DISABLED" }
+    );
     log::info!("OpenAPI spec: http://{}/openapi.json", bind_addr);
     log::info!("Prometheus:   http://{}/metrics", bind_addr);
 

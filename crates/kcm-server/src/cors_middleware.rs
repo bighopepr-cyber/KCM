@@ -62,6 +62,10 @@ pub struct CorsMiddlewareService<S> {
     allowed_origins: Vec<String>,
 }
 
+fn origin_is_allowed(origin: &str, allowed_origins: &[String]) -> bool {
+    allowed_origins.iter().any(|o| o.as_str() == origin)
+}
+
 impl<S, B> Service<ServiceRequest> for CorsMiddlewareService<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
@@ -95,7 +99,8 @@ where
             };
 
             // Check if origin is allowed
-            if !allowed_origins.is_empty() && !allowed_origins.iter().any(|o| o == origin) {
+            if !allowed_origins.is_empty() && !origin_is_allowed(origin.as_str(), &allowed_origins)
+            {
                 let response = HttpResponse::Forbidden()
                     .content_type("application/json")
                     .body(r#"{"error":"Origin not allowed","status":403}"#);
@@ -113,64 +118,69 @@ where
                         val,
                     ));
                 }
-                if let Ok(val) = HeaderValue::from_static(DEFAULT_METHODS) {
-                    response.insert_header((
-                        HeaderName::from_static("access-control-allow-methods"),
-                        val,
-                    ));
-                }
-                if let Ok(val) = HeaderValue::from_static(DEFAULT_HEADERS) {
-                    response.insert_header((
-                        HeaderName::from_static("access-control-allow-headers"),
-                        val,
-                    ));
-                }
-                if let Ok(val) = HeaderValue::from_static(DEFAULT_MAX_AGE) {
-                    response.insert_header((
-                        HeaderName::from_static("access-control-max-age"),
-                        val,
-                    ));
-                }
+                let methods = HeaderValue::from_static(DEFAULT_METHODS);
+                response.insert_header((
+                    HeaderName::from_static("access-control-allow-methods"),
+                    methods,
+                ));
+                let headers = HeaderValue::from_static(DEFAULT_HEADERS);
                 response.insert_header((
                     HeaderName::from_static("access-control-allow-headers"),
-                    "Content-Type, Authorization, X-Request-ID",
+                    headers,
                 ));
+                let max_age = HeaderValue::from_static(DEFAULT_MAX_AGE);
+                response
+                    .insert_header((HeaderName::from_static("access-control-max-age"), max_age));
 
                 return Ok(req.into_response(response).map_into_right_body());
             }
 
             // Non-preflight: add CORS headers to actual response
             let res = svc.call(req).await?;
-
-            let mut response = res.into_response();
-            let headers = response.headers_mut();
+            let (req, mut response) = res.into_parts();
 
             if let Ok(val) = HeaderValue::from_str(origin.as_str()) {
-                headers.insert(
-                    HeaderName::from_static("access-control-allow-origin"),
-                    val,
-                );
+                response
+                    .headers_mut()
+                    .insert(HeaderName::from_static("access-control-allow-origin"), val);
             }
-            if let Ok(val) = HeaderValue::from_static(DEFAULT_METHODS) {
-                headers.insert(
-                    HeaderName::from_static("access-control-allow-methods"),
-                    val,
-                );
-            }
-            if let Ok(val) = HeaderValue::from_static(DEFAULT_HEADERS) {
-                headers.insert(
-                    HeaderName::from_static("access-control-allow-headers"),
-                    val,
-                );
-            }
-            if let Ok(val) = HeaderValue::from_static(DEFAULT_MAX_AGE) {
-                headers.insert(
-                    HeaderName::from_static("access-control-max-age"),
-                    val,
-                );
-            }
+            let methods = HeaderValue::from_static(DEFAULT_METHODS);
+            response.headers_mut().insert(
+                HeaderName::from_static("access-control-allow-methods"),
+                methods,
+            );
+            let headers = HeaderValue::from_static(DEFAULT_HEADERS);
+            response.headers_mut().insert(
+                HeaderName::from_static("access-control-allow-headers"),
+                headers,
+            );
+            let max_age = HeaderValue::from_static(DEFAULT_MAX_AGE);
+            response
+                .headers_mut()
+                .insert(HeaderName::from_static("access-control-max-age"), max_age);
 
-            Ok(response.map_into_left_body())
+            Ok(ServiceResponse::new(req, response).map_into_left_body())
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::origin_is_allowed;
+
+    #[test]
+    fn allows_exact_origin_matches() {
+        assert!(origin_is_allowed(
+            "https://example.com",
+            &["https://example.com".to_string()]
+        ));
+    }
+
+    #[test]
+    fn rejects_non_matching_origins() {
+        assert!(!origin_is_allowed(
+            "https://example.com",
+            &["https://other.example".to_string()]
+        ));
     }
 }
