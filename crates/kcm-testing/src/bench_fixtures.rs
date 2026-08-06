@@ -435,14 +435,32 @@ pub fn deterministic_fact(index: usize, config: &DatasetConfig) -> Fact {
 }
 
 /// Canonical dataset sizes for benchmarking.
-/// These sizes provide scaling from 1K to 1M facts.
-pub const COLUMN_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
-pub const BITMAP_SIZES: &[usize] = &[10_000, 100_000, 1_000_000];
-pub const DICTIONARY_SIZES: &[usize] = &[1_000, 10_000, 100_000];
-pub const DATABASE_SIZES: &[usize] = &[100, 1_000, 10_000, 100_000];
-pub const INFERENCE_SIZES: &[usize] = &[1_000, 10_000, 100_000];
-pub const WAL_SIZES: &[usize] = &[1_000, 10_000, 100_000];
-pub const FILE_FORMAT_SIZES: &[usize] = &[1_000, 10_000, 100_000];
+/// These sizes provide scaling from 1K to 10M facts.
+pub const COLUMN_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000, 10_000_000];
+pub const BITMAP_SIZES: &[usize] = &[10_000, 100_000, 1_000_000, 10_000_000];
+pub const DICTIONARY_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+pub const DATABASE_SIZES: &[usize] = &[100, 1_000, 10_000, 100_000, 1_000_000];
+pub const INFERENCE_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+pub const WAL_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+pub const FILE_FORMAT_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+
+/// Extended sizes for enterprise-scale scalability testing.
+pub const SCALE_SIZES: &[usize] = &[10_000_000, 100_000_000, 1_000_000_000];
+
+/// Compression-specific sizes (byte counts).
+pub const COMPRESSION_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000, 10_000_000];
+
+/// Sharding route counts.
+pub const SHARDING_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+
+/// Transaction batch sizes.
+pub const TRANSACTION_SIZES: &[usize] = &[100, 1_000, 10_000, 100_000, 1_000_000];
+
+/// Index sizes for lookup benchmarks.
+pub const INDEX_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+
+/// Optimizer query plan sizes.
+pub const OPTIMIZER_SIZES: &[usize] = &[10, 50, 100, 500, 1_000];
 
 /// Pre-computed rule registry for reasoning benchmarks.
 pub struct RuleFixture {

@@ -1071,6 +1071,183 @@ fn bench_scalability_transaction(c: &mut Criterion) {
 }
 
 // ============================================================================
+// INDEX OPERATIONS
+// ============================================================================
+
+fn bench_index_zone_map_lookup(c: &mut Criterion) {
+    use kcm_storage::index::ZoneMap;
+    let mut group = c.benchmark_group("index_zone_map_lookup");
+    configure_standard(&mut group);
+    for &size in &[1_000, 10_000, 100_000, 1_000_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let col: Vec<i64> = (0..size as i64).collect();
+            let zm = ZoneMap::new(&col, 3).expect("Failed to create ZoneMap");
+            b.iter(|| {
+                black_box(zm.range_query(0, size as i64 / 2));
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_index_zone_map_build(c: &mut Criterion) {
+    use kcm_storage::index::ZoneMap;
+    let mut group = c.benchmark_group("index_zone_map_build");
+    configure_standard(&mut group);
+    for &size in &[1_000, 10_000, 100_000, 1_000_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let col: Vec<i64> = (0..size as i64).collect();
+            b.iter(|| {
+                black_box(ZoneMap::new(&col, 3).expect("Failed to create ZoneMap"));
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_index_bloom_filter(c: &mut Criterion) {
+    use kcm_storage::index::BloomFilter;
+    let mut group = c.benchmark_group("index_bloom_filter");
+    configure_standard(&mut group);
+    for &size in &[1_000, 10_000, 100_000, 1_000_000] {
+        group.bench_with_input(BenchmarkId::new("insert", size), &size, |b, &size| {
+            b.iter(|| {
+                let mut bf = BloomFilter::new(size);
+                for i in 0..size as u32 {
+                    bf.insert(i);
+                }
+                black_box(bf.estimated_memory_bytes());
+            });
+        });
+        group.bench_with_input(BenchmarkId::new("lookup_hit", size), &size, |b, &size| {
+            let mut bf = BloomFilter::new(size);
+            for i in 0..size as u32 {
+                bf.insert(i);
+            }
+            b.iter(|| {
+                for i in 0..size as u32 {
+                    black_box(bf.contains(i));
+                }
+            });
+        });
+    }
+    group.finish();
+}
+
+// ============================================================================
+// OPTIMIZER / QUERY PLANNER
+// ============================================================================
+
+fn bench_optimizer_pipeline(c: &mut Criterion) {
+    use kcm_optimizer::planner::{PlanNode, PlannerFilterPredicate};
+    use kcm_optimizer::rewriting::{FilterPushdownOptimizer, JoinOrderingOptimizer, OptimizerPipeline};
+    let mut group = c.benchmark_group("optimizer_pipeline");
+    configure_standard(&mut group);
+    for &size in &[10, 50, 100, 500] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let pipeline = OptimizerPipeline::new()
+                .with_rule(Box::new(FilterPushdownOptimizer))
+                .with_rule(Box::new(JoinOrderingOptimizer));
+            b.iter(|| {
+                let mut plan = PlanNode::Scan {
+                    context_filter: None,
+                    confidence_filter: None,
+                };
+                for i in 0..size {
+                    plan = PlanNode::Filter {
+                        child: Box::new(plan),
+                        predicate: PlannerFilterPredicate::EqualSubject(i as u32),
+                    };
+                }
+                black_box(pipeline.optimize(&plan));
+            });
+        });
+    }
+    group.finish();
+}
+
+// ============================================================================
+// RECOVERY / CRASH RESILIENCE
+// ============================================================================
+
+fn bench_recovery_wal_replay_large(c: &mut Criterion) {
+    use kcm_storage::file_format::DatabaseFile;
+    let mut group = c.benchmark_group("recovery_wal_replay_large");
+    configure_extended(&mut group);
+    for &size in &[100_000, 1_000_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            let tmp = tempfile::tempdir().expect("Failed to create temp dir");
+            let db_path = tmp.path().join("test.kcmdb");
+            {
+                let db = KnowledgeDatabase::new()
+                    .expect("Failed to create KB for recovery benchmark");
+                for i in 0..size {
+                    let fact = Fact::new(
+                        SubjectID((i % 1000) as u32),
+                        PredicateID((i % 10) as u8),
+                        ObjectID((i % 500) as u32),
+                        0.95,
+                    )
+                    .expect("Failed to create fact");
+                    db.insert(&fact).expect("Failed to insert fact");
+                }
+                DatabaseFile::save(&db.get_schema(), &db_path)
+                    .expect("Failed to save DB");
+            }
+            b.iter(|| {
+                black_box(
+                    DatabaseFile::load(&db_path)
+                        .expect("Recovery failed in benchmark"),
+                )
+            });
+        });
+    }
+    group.finish();
+}
+
+// ============================================================================
+// CACHE / MEMORY EFFICIENCY
+// ============================================================================
+
+fn bench_memory_allocation_pattern(c: &mut Criterion) {
+    let mut group = c.benchmark_group("memory_allocation_pattern");
+    configure_standard(&mut group);
+    for &size in &[1_000, 10_000, 100_000, 1_000_000] {
+        group.bench_with_input(BenchmarkId::from_parameter(size), &size, |b, &size| {
+            b.iter(|| {
+                let mut vec: Vec<u64> = Vec::with_capacity(size);
+                for i in 0..size as u64 {
+                    vec.push(i);
+                }
+                black_box(vec.len());
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_cache_line_utilization(c: &mut Criterion) {
+    let mut group = c.benchmark_group("cache_line_utilization");
+    configure_standard(&mut group);
+    for &stride in &[1, 4, 8, 16, 32, 64, 128, 256] {
+        let size = 1_000_000;
+        group.bench_with_input(BenchmarkId::new("stride", stride), &stride, |b, &stride| {
+            let data: Vec<u64> = (0..size as u64).collect();
+            b.iter(|| {
+                let mut sum: u64 = 0;
+                let mut i = 0;
+                while i < data.len() {
+                    sum = sum.wrapping_add(data[i]);
+                    i += stride;
+                }
+                black_box(sum);
+            });
+        });
+    }
+    group.finish();
+}
+
+// ============================================================================
 // INFERENCE FULL ENGINE
 // ============================================================================
 
@@ -1110,6 +1287,13 @@ criterion_group!(
     bench_memory_metrics,
     bench_transaction_insert,
     bench_transaction_commit_rollback,
+    bench_index_zone_map_lookup,
+    bench_index_zone_map_build,
+    bench_index_bloom_filter,
+    bench_optimizer_pipeline,
+    bench_recovery_wal_replay_large,
+    bench_memory_allocation_pattern,
+    bench_cache_line_utilization,
     bench_scalability_column_scan,
     bench_scalability_bitmap,
     bench_scalability_database_insert,
