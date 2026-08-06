@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
+
 use kcm_core::bitmap::Bitmap;
 use kcm_core::dictionary::Dictionary;
 use kcm_core::types::*;

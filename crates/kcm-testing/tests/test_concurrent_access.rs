@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;
 use std::sync::Arc;

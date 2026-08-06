@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
+
 use actix_web::{App, test, web};
 use kcm_interface::rest_api::ApiState;
 use kcm_runtime::database::KnowledgeDatabase;

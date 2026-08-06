@@ -403,6 +403,7 @@ fn read_f64(data: &[u8], offset: usize) -> f64 {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
     use super::*;
 

@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
+
 use kcm_core::types::*;
 use kcm_ml::confidence_learner::*;
 use kcm_ml::learned_index::*;

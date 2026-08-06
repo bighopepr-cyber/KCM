@@ -127,6 +127,7 @@ pub fn hash_blake3_hex(data: &[u8]) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
     use super::*;
 

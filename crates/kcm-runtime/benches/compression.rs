@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use kcm_storage::compress::{Compressor, Lz4Compressor, RleCompressor, ZstdCompressor};
 

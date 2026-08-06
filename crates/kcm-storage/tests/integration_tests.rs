@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_core::dictionary::SharedDictionary;
 use kcm_core::types::*;
 use kcm_storage::column::Schema;

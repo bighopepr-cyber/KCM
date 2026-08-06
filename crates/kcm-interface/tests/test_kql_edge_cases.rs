@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_interface::kql_parser::{KqlError, Lexer, Parser, Token};
 
 #[test]

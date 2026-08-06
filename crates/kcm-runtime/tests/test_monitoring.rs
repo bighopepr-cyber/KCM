@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_runtime::health::*;
 use kcm_runtime::metrics::*;
 use std::sync::Arc;

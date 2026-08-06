@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use kcm_core::types::*;
 use kcm_runtime::database::KnowledgeDatabase;

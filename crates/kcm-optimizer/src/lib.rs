@@ -13,6 +13,7 @@ pub use rewriting::{
 pub use statistics::{ColumnStatistics, Statistics};
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
     use super::*;
     use kcm_core::types::*;

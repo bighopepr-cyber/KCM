@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_compliance::data_classification::*;
 use kcm_compliance::gdpr::*;
 use kcm_core::types::{ContextID, EvidenceID, Fact, ObjectID, PredicateID, SubjectID};

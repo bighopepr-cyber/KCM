@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_core::types::*;
 use kcm_storage::column::Schema;
 use kcm_storage::compress::{Compressor, Lz4Compressor, ZstdCompressor};

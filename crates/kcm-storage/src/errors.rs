@@ -49,6 +49,7 @@ impl From<StorageError> for kcm_core::types::KcmError {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
     use super::*;
 

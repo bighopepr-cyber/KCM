@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
+
 use actix_web::{App, HttpResponse, test, web};
 use kcm_core::types::*;
 use kcm_interface::rest_api::*;

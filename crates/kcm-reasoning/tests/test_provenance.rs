@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_core::types::*;
 use kcm_reasoning::inference::InferenceEngine;
 use kcm_reasoning::rule::{Rule, RulePattern};

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_core::types::*;
 use kcm_storage::compress::{Compressor, Lz4Compressor, ZstdCompressor};
 use kcm_storage::wal::WriteAheadLog;

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_distributed::coordinator::{
     ParticipantTransport, TransactionCoordinator, TransactionStatus,
 };

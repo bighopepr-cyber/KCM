@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::panic)]
 use kcm_compute::algebra::*;
 use kcm_compute::simd::*;
 use kcm_core::types::*;
