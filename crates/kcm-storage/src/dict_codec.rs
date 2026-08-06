@@ -24,25 +24,103 @@ impl DictionaryCodec {
         }
     }
 
+    pub fn with_capacity(capacity: usize) -> Self {
+        let mut inner = DictionaryCodecInner {
+            string_to_id: AHashMap::with_capacity(capacity),
+            id_to_string: Vec::with_capacity(capacity),
+        };
+        inner.id_to_string.push(String::new());
+        DictionaryCodec {
+            inner: Arc::new(RwLock::new(inner)),
+        }
+    }
+
+    #[inline]
     pub fn encode(&self, value: &str) -> u32 {
+        {
+            let inner = self.inner.read();
+            if let Some(&id) = inner.string_to_id.get(value) {
+                return id;
+            }
+        }
         let mut inner = self.inner.write();
         if let Some(&id) = inner.string_to_id.get(value) {
             return id;
         }
         let id = inner.id_to_string.len() as u32;
-        inner.id_to_string.push(value.to_string());
-        inner.string_to_id.insert(value.to_string(), id);
+        let owned = value.to_string();
+        inner.id_to_string.push(owned.clone());
+        inner.string_to_id.insert(owned, id);
         id
     }
 
+    #[inline]
     pub fn decode(&self, id: u32) -> Option<String> {
         let inner = self.inner.read();
         inner.id_to_string.get(id as usize).cloned()
     }
 
+    #[inline]
+    pub fn decode_ref(&self, id: u32) -> Option<std::sync::Arc<str>> {
+        let inner = self.inner.read();
+        inner.id_to_string.get(id as usize).map(|s| {
+            let arc: std::sync::Arc<str> = std::sync::Arc::from(s.as_str());
+            arc
+        })
+    }
+
+    #[inline]
     pub fn lookup(&self, value: &str) -> Option<u32> {
         let inner = self.inner.read();
         inner.string_to_id.get(value).copied()
+    }
+
+    pub fn lookup_batch(&self, values: &[&str], results: &mut [Option<u32>]) {
+        debug_assert_eq!(values.len(), results.len());
+        let inner = self.inner.read();
+        for (value, result) in values.iter().zip(results.iter_mut()) {
+            *result = inner.string_to_id.get(*value).copied();
+        }
+    }
+
+    pub fn lookup_batch_into(&self, values: &[&str]) -> Vec<Option<u32>> {
+        let mut results = Vec::with_capacity(values.len());
+        results.resize(values.len(), None);
+        self.lookup_batch(values, &mut results);
+        results
+    }
+
+    pub fn encode_batch(&self, values: &[&str]) -> Vec<u32> {
+        let mut inner = self.inner.write();
+        let mut results = Vec::with_capacity(values.len());
+        for &v in values {
+            if let Some(&id) = inner.string_to_id.get(v) {
+                results.push(id);
+                continue;
+            }
+            let id = inner.id_to_string.len() as u32;
+            let owned = v.to_string();
+            inner.id_to_string.push(owned.clone());
+            inner.string_to_id.insert(owned, id);
+            results.push(id);
+        }
+        results
+    }
+
+    pub fn decode_batch(&self, ids: &[u32]) -> Vec<Option<String>> {
+        let inner = self.inner.read();
+        ids.iter()
+            .map(|&id| inner.id_to_string.get(id as usize).cloned())
+            .collect()
+    }
+
+    pub fn decode_batch_into(&self, ids: &[u32], results: &mut Vec<Option<String>>) {
+        let inner = self.inner.read();
+        results.clear();
+        results.reserve(ids.len());
+        for &id in ids {
+            results.push(inner.id_to_string.get(id as usize).cloned());
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -55,34 +133,12 @@ impl DictionaryCodec {
         inner.id_to_string.len() <= 1
     }
 
-    pub fn encode_batch(&self, values: &[&str]) -> Vec<u32> {
-        let mut inner = self.inner.write();
-        values
-            .iter()
-            .map(|v| {
-                if let Some(&id) = inner.string_to_id.get(*v) {
-                    return id;
-                }
-                let id = inner.id_to_string.len() as u32;
-                inner.id_to_string.push(v.to_string());
-                inner.string_to_id.insert(v.to_string(), id);
-                id
-            })
-            .collect()
-    }
-
-    pub fn decode_batch(&self, ids: &[u32]) -> Vec<Option<String>> {
-        let inner = self.inner.read();
-        ids.iter()
-            .map(|&id| inner.id_to_string.get(id as usize).cloned())
-            .collect()
-    }
-
     pub fn space_bytes(&self) -> usize {
         let inner = self.inner.read();
-        inner.id_to_string.iter().map(|s| s.len()).sum::<usize>()
-            + inner.string_to_id.capacity()
-                * (std::mem::size_of::<String>() + std::mem::size_of::<u32>())
+        let string_bytes: usize = inner.id_to_string.iter().map(|s| s.len()).sum();
+        let map_overhead = inner.string_to_id.capacity()
+            * (std::mem::size_of::<String>() + std::mem::size_of::<u32>());
+        string_bytes + map_overhead
     }
 
     pub fn clear(&self) {
@@ -90,6 +146,12 @@ impl DictionaryCodec {
         inner.string_to_id.clear();
         inner.id_to_string.clear();
         inner.id_to_string.push(String::new());
+    }
+
+    pub fn reserve(&self, additional: usize) {
+        let mut inner = self.inner.write();
+        inner.id_to_string.reserve(additional);
+        inner.string_to_id.reserve(additional);
     }
 }
 
@@ -151,6 +213,31 @@ mod tests {
     }
 
     #[test]
+    fn test_dictionary_codec_lookup_batch() {
+        let codec = DictionaryCodec::new();
+        codec.encode("x");
+        codec.encode("y");
+        codec.encode("z");
+
+        let results = codec.lookup_batch_into(&["x", "y", "z", "w"]);
+        assert_eq!(results, vec![Some(1), Some(2), Some(3), None]);
+    }
+
+    #[test]
+    fn test_dictionary_codec_decode_batch_into() {
+        let codec = DictionaryCodec::new();
+        codec.encode("a");
+        codec.encode("b");
+
+        let mut results = Vec::new();
+        codec.decode_batch_into(&[1, 2, 3], &mut results);
+        assert_eq!(
+            results,
+            vec![Some("a".to_string()), Some("b".to_string()), None]
+        );
+    }
+
+    #[test]
     fn test_dictionary_codec_size() {
         let codec = DictionaryCodec::new();
         assert!(codec.is_empty());
@@ -198,5 +285,13 @@ mod tests {
         codec.clear();
         assert_eq!(codec.len(), 1);
         assert!(codec.is_empty());
+    }
+
+    #[test]
+    fn test_dictionary_codec_with_capacity() {
+        let codec = DictionaryCodec::with_capacity(1024);
+        assert!(codec.is_empty());
+        codec.encode("test");
+        assert_eq!(codec.len(), 2);
     }
 }
