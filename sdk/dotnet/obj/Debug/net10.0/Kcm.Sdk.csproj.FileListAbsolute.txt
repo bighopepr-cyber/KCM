@@ -1,0 +1,12 @@
+/workspaces/KCM/sdk/dotnet/bin/Debug/net10.0/Kcm.Sdk.deps.json
+/workspaces/KCM/sdk/dotnet/bin/Debug/net10.0/Kcm.Sdk.dll
+/workspaces/KCM/sdk/dotnet/bin/Debug/net10.0/Kcm.Sdk.pdb
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.AssemblyInfoInputs.cache
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.AssemblyInfo.cs
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.csproj.CoreCompileInputs.cache
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.sourcelink.json
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.dll
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/refint/Kcm.Sdk.dll
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/Kcm.Sdk.pdb
+/workspaces/KCM/sdk/dotnet/obj/Debug/net10.0/ref/Kcm.Sdk.dll
