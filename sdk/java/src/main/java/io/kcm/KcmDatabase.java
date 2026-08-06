@@ -1,77 +1,121 @@
 package io.kcm;
 
-/**
- * KCM Knowledge Columnar Model - Java SDK
- *
- * JNI-based bindings to the KCM C FFI.
- *
- * Example usage:
- * <pre>
- * KcmDatabase db = new KcmDatabase();
- * db.insert(new Fact(1, (byte) 0, 2, 0.95));
- * List&lt;Fact&gt; facts = db.queryAll();
- * for (Fact f : facts) {
- *     System.out.println(f);
- * }
- * db.close();
- * </pre>
- */
-public class KcmDatabase {
-
-    static {
-        System.loadLibrary("kcm");
-    }
-
+public class KcmDatabase implements AutoCloseable {
     private long nativeHandle;
 
-    public KcmDatabase() {
-        this.nativeHandle = nativeNew();
+    public KcmDatabase() throws KcmException {
+        long[] handleOut = new long[1];
+        int err = KcmNative.nativeDatabaseNew(handleOut);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+        this.nativeHandle = handleOut[0];
     }
 
+    KcmDatabase(long nativeHandle) {
+        this.nativeHandle = nativeHandle;
+    }
+
+    public void insert(Fact fact) throws KcmException {
+        checkOpen();
+        int err = KcmNative.nativeDatabaseInsert(nativeHandle,
+                fact.subject, fact.predicate, fact.object, fact.confidence,
+                fact.evidence, fact.timestamp, fact.context, fact.version,
+                fact.priority, fact.owner);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+    }
+
+    public void update(long rowId, Fact fact) throws KcmException {
+        checkOpen();
+        int err = KcmNative.nativeDatabaseUpdate(nativeHandle, rowId,
+                fact.subject, fact.predicate, fact.object, fact.confidence,
+                fact.evidence, fact.timestamp, fact.context, fact.version,
+                fact.priority, fact.owner);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+    }
+
+    public void delete(long rowId) throws KcmException {
+        checkOpen();
+        int err = KcmNative.nativeDatabaseDelete(nativeHandle, rowId);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+    }
+
+    public long factCount() {
+        checkOpen();
+        return KcmNative.nativeDatabaseFactCount(nativeHandle);
+    }
+
+    public long activeFactCount() {
+        checkOpen();
+        return KcmNative.nativeDatabaseActiveCount(nativeHandle);
+    }
+
+    public KcmQuery query(String kql) throws KcmException {
+        checkOpen();
+        long queryHandle = KcmNative.nativeDatabaseQuery(nativeHandle, kql);
+        if (queryHandle == 0) {
+            throw new KcmException(KcmError.IO, "Query returned null handle");
+        }
+        return new KcmQuery(queryHandle);
+    }
+
+    public KcmTransaction beginTransaction() throws KcmException {
+        checkOpen();
+        long txnHandle = KcmNative.nativeDatabaseBeginTransaction(nativeHandle);
+        if (txnHandle == 0) {
+            throw new KcmException(KcmError.IO, "Transaction returned null handle");
+        }
+        return new KcmTransaction(txnHandle);
+    }
+
+    public void save(String path) throws KcmException {
+        checkOpen();
+        int err = KcmNative.nativeDatabaseSave(nativeHandle, path);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+    }
+
+    public void load(String path) throws KcmException {
+        checkOpen();
+        int err = KcmNative.nativeDatabaseLoad(nativeHandle, path);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+    }
+
+    public void verify(String path) throws KcmException {
+        int err = KcmNative.nativeDatabaseVerify(path);
+        if (err != KcmError.OK.getCode()) {
+            throw new KcmException(KcmError.fromCode(err));
+        }
+    }
+
+    public boolean isOpen() {
+        return nativeHandle != 0;
+    }
+
+    @Override
     public void close() {
         if (nativeHandle != 0) {
-            nativeFree(nativeHandle);
+            KcmNative.nativeDatabaseFree(nativeHandle);
             nativeHandle = 0;
         }
     }
 
-    public void insert(Fact fact) {
-        checkHandle();
-        nativeInsert(nativeHandle, fact.subject, fact.predicate, fact.object, fact.confidence);
+    long getNativeHandle() {
+        return nativeHandle;
     }
 
-    public void delete(long rowId) {
-        checkHandle();
-        nativeDelete(nativeHandle, rowId);
-    }
-
-    public long factCount() {
-        checkHandle();
-        return nativeFactCount(nativeHandle);
-    }
-
-    public long activeFactCount() {
-        checkHandle();
-        return nativeActiveCount(nativeHandle);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
-
-    private void checkHandle() {
+    private void checkOpen() {
         if (nativeHandle == 0) {
             throw new IllegalStateException("Database is closed");
         }
     }
-
-    // Native methods
-    private static native long nativeNew();
-    private static native void nativeFree(long handle);
-    private static native void nativeInsert(long handle, int subject, int predicate, int object, double confidence);
-    private static native void nativeDelete(long handle, long rowId);
-    private static native long nativeFactCount(long handle);
-    private static native long nativeActiveCount(long handle);
 }

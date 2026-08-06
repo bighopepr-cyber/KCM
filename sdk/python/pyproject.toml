@@ -1,35 +1,45 @@
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
-build-backend = "maturin"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "kcm"
 version = "0.1.0"
-description = "KCM Knowledge Columnar Model - Python SDK"
+description = "KCM Knowledge Columnar Model - Python SDK (reference implementation)"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.7"
+requires-python = ">=3.10"
+authors = [
+    {name = "KCM Team"},
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Database",
     "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
 
 [project.urls]
 Homepage = "https://github.com/kcm-project/KCM"
 Documentation = "https://kcm.dev/docs"
 Repository = "https://github.com/kcm-project/KCM"
 
-[tool.maturin]
-features = ["python"]
-python-source = "src"
-module-name = "kcm._kcm"
+[tool.hatch.build.targets.wheel]
+packages = ["src/kcm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

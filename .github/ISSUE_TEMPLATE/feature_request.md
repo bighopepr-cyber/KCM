@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new feature for KCM
+about: Suggest a new feature for KCM or KCM SDKs
 title: "[FEATURE] "
 labels: enhancement
 assignees: ''
@@ -10,13 +10,86 @@ assignees: ''
 
 <!-- A clear and concise description of the feature -->
 
+## Component
+
+- [ ] KCM Core Engine
+- [ ] KCM SDK — Rust
+- [ ] KCM SDK — Python
+- [ ] KCM SDK — JavaScript
+- [ ] KCM SDK — TypeScript
+- [ ] KCM SDK — Go
+- [ ] KCM SDK — Java
+- [ ] KCM SDK — .NET
+- [ ] KCM SDK — C
+- [ ] KCM SDK — C++
+- [ ] KCM CLI
+- [ ] KCM Server
+- [ ] Multi-SDK (specify which): 
+- [ ] Other: 
+
 ## Use Case
 
 <!-- What problem does this feature solve? Why is it needed? -->
 
-## Proposed Solution
+## Proposed API
 
-<!-- How do you think this should be implemented? -->
+<!-- Show the proposed API surface for each affected SDK -->
+
+### Python
+```python
+import kcm
+
+# Proposed API usage
+```
+
+### JavaScript/TypeScript
+```javascript
+const { Database } = require('@kcm/js');
+
+// Proposed API usage
+```
+
+### Go
+```go
+import "github.com/kcm/go-sdk"
+
+// Proposed API usage
+```
+
+### Java
+```java
+import io.kcm.sdk.KcmDatabase;
+
+// Proposed API usage
+```
+
+### .NET
+```csharp
+using Kcm.Sdk;
+
+// Proposed API usage
+```
+
+### Rust
+```rust
+use kcm_core::*;
+
+// Proposed API usage
+```
+
+### C
+```c
+#include <kcm.h>
+
+// Proposed API usage
+```
+
+### C++
+```cpp
+#include <kcm/kcm.hpp>
+
+// Proposed API usage
+```
 
 ## Alternatives Considered
 

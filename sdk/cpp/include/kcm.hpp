@@ -147,6 +147,10 @@ public:
         return Query(q);
     }
 
+    std::vector<Fact> queryAll() {
+        return query("SELECT * FROM facts").collect();
+    }
+
     Transaction begin_transaction() {
         return Transaction(KCM_DatabaseBeginTransaction(db_));
     }

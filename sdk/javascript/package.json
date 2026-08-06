@@ -1,22 +1,38 @@
 {
   "name": "@kcm/js",
   "version": "0.1.0",
-  "description": "KCM Knowledge Columnar Model - JavaScript SDK",
+  "description": "KCM Knowledge Columnar Model - JavaScript/TypeScript SDK (reference implementation)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
-    "test": "jest",
+    "test": "jest --config jest.config.js",
+    "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "kcm",
     "knowledge-graph",
     "columnar-storage",
-    "reasoning-engine"
+    "reasoning-engine",
+    "knowledge-base"
   ],
   "author": "KCM Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kcm/kcm.git",
+    "directory": "sdk/javascript"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/node": "^20.0.0",

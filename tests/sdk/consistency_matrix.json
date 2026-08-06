@@ -1,0 +1,270 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Cross-language SDK test matrix mapping SSOT requirements to test cases",
+  "ssot_source": "KCM_API_SPEC.md",
+  "last_updated": "2026-08-06",
+  "sdks": [
+    {"name": "rust", "package": "kcm-core", "status": "stable", "api_style": "direct"},
+    {"name": "python", "package": "kcm", "status": "planned", "api_style": "kcm.Database()"},
+    {"name": "javascript", "package": "@kcm/js", "status": "planned", "api_style": "new kcm.Database()"},
+    {"name": "typescript", "package": "@kcm/ts", "status": "planned", "api_style": "new kcm.Database()"},
+    {"name": "go", "package": "github.com/kcm/go-sdk", "status": "planned", "api_style": "kcm.NewDatabase()"},
+    {"name": "java", "package": "io.kcm:sdk", "status": "planned", "api_style": "new KcmDatabase()"},
+    {"name": "dotnet", "package": "Kcm.Sdk", "status": "planned", "api_style": "new KcmDatabase()"},
+    {"name": "c", "package": "kcm-interface", "status": "stable", "api_style": "KCM_DatabaseNew()"},
+    {"name": "cpp", "package": "libkcm", "status": "planned", "api_style": "kcm::Database()"}
+  ],
+  "ffi_functions": [
+    {"name": "KCM_DatabaseNew", "spec_section": "2.2", "ffi_index": 1},
+    {"name": "KCM_DatabaseFree", "spec_section": "2.2", "ffi_index": 2},
+    {"name": "KCM_DatabaseInsert", "spec_section": "2.2", "ffi_index": 3},
+    {"name": "KCM_DatabaseUpdate", "spec_section": "2.2", "ffi_index": 4},
+    {"name": "KCM_DatabaseDelete", "spec_section": "2.2", "ffi_index": 5},
+    {"name": "KCM_DatabaseFactCount", "spec_section": "2.2", "ffi_index": 6},
+    {"name": "KCM_DatabaseActiveCount", "spec_section": "2.2", "ffi_index": 7},
+    {"name": "KCM_DatabaseQuery", "spec_section": "2.2", "ffi_index": 8},
+    {"name": "KCM_QueryNext", "spec_section": "2.2", "ffi_index": 9},
+    {"name": "KCM_QueryFree", "spec_section": "2.2", "ffi_index": 10},
+    {"name": "KCM_DatabaseBeginTransaction", "spec_section": "2.2", "ffi_index": 11},
+    {"name": "KCM_TransactionFree", "spec_section": "2.2", "ffi_index": 12},
+    {"name": "KCM_DatabaseSave", "spec_section": "2.2", "ffi_index": 13},
+    {"name": "KCM_DatabaseLoad", "spec_section": "2.2", "ffi_index": 14},
+    {"name": "KCM_DatabaseVerify", "spec_section": "2.2", "ffi_index": 15},
+    {"name": "KCM_TransactionCommit", "spec_section": "2.2", "ffi_index": 16},
+    {"name": "KCM_TransactionRollback", "spec_section": "2.2", "ffi_index": 17},
+    {"name": "KCM_ErrorMessage", "spec_section": "2.2", "ffi_index": 18}
+  ],
+  "fact_fields": [
+    {"name": "subject", "type": "uint32", "spec_section": "2.1"},
+    {"name": "predicate", "type": "uint8", "spec_section": "2.1"},
+    {"name": "object", "type": "uint32", "spec_section": "2.1"},
+    {"name": "confidence", "type": "double", "spec_section": "2.1"},
+    {"name": "evidence", "type": "uint8", "spec_section": "2.1"},
+    {"name": "timestamp", "type": "int64", "spec_section": "2.1"},
+    {"name": "context", "type": "uint8", "spec_section": "2.1"},
+    {"name": "version", "type": "int32", "spec_section": "2.1"},
+    {"name": "priority", "type": "int8", "spec_section": "2.1"},
+    {"name": "owner", "type": "uint16", "spec_section": "2.1"}
+  ],
+  "error_codes": [
+    {"name": "KCM_OK", "value": 0, "http_status": 200, "grpc_status": "OK"},
+    {"name": "KCM_ERR_NOT_FOUND", "value": 1, "http_status": 404, "grpc_status": "NOT_FOUND"},
+    {"name": "KCM_ERR_OUT_OF_MEMORY", "value": 2, "http_status": 507, "grpc_status": "RESOURCE_EXHAUSTED"},
+    {"name": "KCM_ERR_INVALID_ARGUMENT", "value": 3, "http_status": 400, "grpc_status": "INVALID_ARGUMENT"},
+    {"name": "KCM_ERR_IO", "value": 4, "http_status": 500, "grpc_status": "INTERNAL"},
+    {"name": "KCM_ERR_CORRUPTED", "value": 5, "http_status": 500, "grpc_status": "DATA_LOSS"},
+    {"name": "KCM_ERR_CONFLICT", "value": 6, "http_status": 409, "grpc_status": "ALREADY_EXISTS"},
+    {"name": "KCM_ERR_TRANSACTION_ABORTED", "value": 7, "http_status": 409, "grpc_status": "ABORTED"}
+  ],
+  "test_cases": [
+    {
+      "id": "TC-001",
+      "name": "insert_fact",
+      "description": "Insert a single fact with all fields",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #3",
+      "category": "unit",
+      "operations": [
+        {"action": "insert", "fact": {"subject": 1, "predicate": 2, "object": 3, "confidence": 0.95, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "verify_count", "expected": 1}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-002",
+      "name": "query_all_facts",
+      "description": "Query and retrieve all inserted facts",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #8-9",
+      "category": "unit",
+      "operations": [
+        {"action": "insert", "fact": {"subject": 10, "predicate": 20, "object": 30, "confidence": 0.8, "evidence": 2, "context": 2, "priority": 1, "owner": 2}},
+        {"action": "query_all", "expected_count": 1, "validate_fields": true}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-003",
+      "name": "delete_fact",
+      "description": "Delete a fact and verify removal",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #5",
+      "category": "unit",
+      "operations": [
+        {"action": "insert", "fact": {"subject": 5, "predicate": 5, "object": 5, "confidence": 1.0, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "get_count", "expected": 1},
+        {"action": "delete", "row_id": 1},
+        {"action": "get_count", "expected": 0}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-004",
+      "name": "update_fact",
+      "description": "Update an existing fact and verify changes",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #4",
+      "category": "unit",
+      "operations": [
+        {"action": "insert", "fact": {"subject": 1, "predicate": 1, "object": 1, "confidence": 0.5, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "update", "row_id": 1, "fact": {"confidence": 0.99}},
+        {"action": "verify_fact", "row_id": 1, "expected": {"confidence": 0.99}}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-005",
+      "name": "transaction_commit",
+      "description": "Begin transaction, insert fact, commit",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #11,16",
+      "category": "integration",
+      "operations": [
+        {"action": "begin_transaction"},
+        {"action": "insert_in_txn", "fact": {"subject": 99, "predicate": 99, "object": 99, "confidence": 0.7, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "commit_transaction"},
+        {"action": "get_count", "expected": 1}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-006",
+      "name": "transaction_rollback",
+      "description": "Begin transaction, insert fact, rollback — fact should not persist",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #11,17",
+      "category": "integration",
+      "operations": [
+        {"action": "begin_transaction"},
+        {"action": "insert_in_txn", "fact": {"subject": 88, "predicate": 88, "object": 88, "confidence": 0.6, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "rollback_transaction"},
+        {"action": "get_count", "expected": 0}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-007",
+      "name": "save_load_database",
+      "description": "Save database to file, load it back, verify data persists",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #13-14",
+      "category": "integration",
+      "operations": [
+        {"action": "insert", "fact": {"subject": 77, "predicate": 77, "object": 77, "confidence": 0.9, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "save", "path": "/tmp/kcm_test_save.db"},
+        {"action": "load", "path": "/tmp/kcm_test_save.db"},
+        {"action": "get_count", "expected": 1}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-008",
+      "name": "error_not_found",
+      "description": "Attempt to get/delete non-existent fact returns NOT_FOUND",
+      "ssot_ref": "KCM_API_SPEC.md §7",
+      "category": "unit",
+      "operations": [
+        {"action": "get_fact", "row_id": 99999, "expected_error": "NOT_FOUND"},
+        {"action": "delete", "row_id": 99999, "expected_error": "NOT_FOUND"}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-009",
+      "name": "multiple_inserts",
+      "description": "Insert multiple facts and verify count",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #3,6",
+      "category": "unit",
+      "operations": [
+        {"action": "insert", "fact": {"subject": 1, "predicate": 1, "object": 1, "confidence": 0.5, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "insert", "fact": {"subject": 2, "predicate": 2, "object": 2, "confidence": 0.6, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "insert", "fact": {"subject": 3, "predicate": 3, "object": 3, "confidence": 0.7, "evidence": 1, "context": 1, "priority": 0, "owner": 1}},
+        {"action": "get_count", "expected": 3}
+      ],
+      "required_sdks": ["rust", "python", "javascript", "typescript", "go", "java", "dotnet", "c", "cpp"],
+      "results": {}
+    },
+    {
+      "id": "TC-010",
+      "name": "error_messages",
+      "description": "Verify KCM_ErrorMessage returns correct strings",
+      "ssot_ref": "KCM_API_SPEC.md §2.2 #18",
+      "category": "unit",
+      "operations": [
+        {"action": "check_error_message", "error_code": 0, "expected": "KCM_OK"},
+        {"action": "check_error_message", "error_code": 1, "expected": "KCM_ERR_NOT_FOUND"},
+        {"action": "check_error_message", "error_code": 3, "expected": "KCM_ERR_INVALID_ARGUMENT"}
+      ],
+      "required_sdks": ["rust", "c"],
+      "results": {}
+    }
+  ],
+  "rest_api_tests": [
+    {
+      "id": "REST-001",
+      "name": "health_check",
+      "method": "GET",
+      "path": "/health",
+      "expected_status": 200,
+      "expected_body": {"status": "healthy"}
+    },
+    {
+      "id": "REST-002",
+      "name": "insert_fact",
+      "method": "POST",
+      "path": "/facts",
+      "body": {"subject": 1, "predicate": 2, "object": 3, "confidence": 0.95, "evidence": 1, "context": 1, "priority": 0, "owner": 1},
+      "expected_status": 200,
+      "validate": {"row_id": ">=0", "success": true}
+    },
+    {
+      "id": "REST-003",
+      "name": "list_facts",
+      "method": "GET",
+      "path": "/facts",
+      "expected_status": 200,
+      "validate": {"count": ">=0"}
+    },
+    {
+      "id": "REST-004",
+      "name": "get_fact_not_found",
+      "method": "GET",
+      "path": "/facts/99999",
+      "expected_status": 404
+    },
+    {
+      "id": "REST-005",
+      "name": "update_fact",
+      "method": "PUT",
+      "path": "/facts/1",
+      "body": {"confidence": 0.99},
+      "expected_status": 200,
+      "validate": {"success": true}
+    },
+    {
+      "id": "REST-006",
+      "name": "delete_fact",
+      "method": "DELETE",
+      "path": "/facts/1",
+      "expected_status": 200,
+      "validate": {"success": true}
+    },
+    {
+      "id": "REST-007",
+      "name": "get_stats",
+      "method": "GET",
+      "path": "/stats",
+      "expected_status": 200,
+      "validate": {"total_facts": ">=0"}
+    },
+    {
+      "id": "REST-008",
+      "name": "get_metrics",
+      "method": "GET",
+      "path": "/metrics",
+      "expected_status": 200,
+      "content_type": "text/plain"
+    }
+  ]
+}

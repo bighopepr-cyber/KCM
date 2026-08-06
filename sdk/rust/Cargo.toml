@@ -1,0 +1,18 @@
+[package]
+name = "kcm-sdk"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Official SDK for the KCM Knowledge Columnar Model"
+repository = "https://github.com/bighopepr-cyber/KCM"
+
+[dependencies]
+kcm-core = { path = "../../crates/kcm-core" }
+kcm-storage = { path = "../../crates/kcm-storage" }
+kcm-runtime = { path = "../../crates/kcm-runtime" }
+
+[dev-dependencies]
+tempfile = "3"
+
+[[example]]
+name = "basic"

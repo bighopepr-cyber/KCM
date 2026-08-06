@@ -19,9 +19,9 @@
 - [ ] Security fix
 - [ ] CI/CD improvement
 
-## Affected Crates
+## Affected Components
 
-<!-- List all crates modified by this PR -->
+### Core Crates
 - [ ] kcm-core
 - [ ] kcm-storage
 - [ ] kcm-compute
@@ -35,7 +35,22 @@
 - [ ] kcm-compliance
 - [ ] kcm-testing
 - [ ] kcm-server
+
+### SDKs
+- [ ] sdk/rust
+- [ ] sdk/python
+- [ ] sdk/javascript
+- [ ] sdk/typescript
+- [ ] sdk/go
+- [ ] sdk/java
+- [ ] sdk/dotnet
+- [ ] sdk/c
+- [ ] sdk/cpp
+
+### Infrastructure
 - [ ] scripts/kcm-cli
+- [ ] CI/CD pipelines
+- [ ] Documentation
 - [ ] Other: 
 
 ## Related Issues
@@ -46,22 +61,46 @@
 
 <!-- Describe the tests you ran and how to reproduce them -->
 
+### Core Engine
 - [ ] All existing tests pass (`cargo test --workspace`)
 - [ ] New tests added for new functionality
 - [ ] `cargo clippy --workspace -- -D warnings` passes
 - [ ] `cargo fmt --all -- --check` passes
 - [ ] SSOT validation passes (`bash scripts/validate-ssot.sh`)
 
+### SDKs (if applicable)
+- [ ] SDK builds successfully
+- [ ] SDK tests pass
+- [ ] SDK linter passes
+- [ ] SDK API validation passes (`bash scripts/validate-sdk-api.sh`)
+- [ ] Examples updated (if API changed)
+
 ## Checklist
 
+### Code Quality
 - [ ] No `unwrap()` in production code
 - [ ] No `panic!()` in production code
 - [ ] No TODO/FIXME/HACK in production code
+- [ ] All public APIs return `Result<T, KcmError>` (Rust)
+- [ ] All public APIs have error handling (non-Rust SDKs)
 - [ ] Documentation updated (if applicable)
 - [ ] No new dependencies added (or justified in comments)
 - [ ] Breaking change documented in PR description
+
+### SDK-Specific (if applicable)
+- [ ] API matches cross-SDK surface (`sdk/README.md`)
+- [ ] Examples compile and run
+- [ ] README updated with new API
+- [ ] Type stubs updated (TypeScript)
+- [ ] Docstrings added (Python)
+- [ ] Javadoc added (Java)
+- [ ] XML doc comments added (.NET)
+
+### Security & Performance
 - [ ] Security impact assessed (if applicable)
 - [ ] Performance impact assessed (if applicable)
+- [ ] No secrets or credentials committed
+- [ ] Dependency audit passes
 
 ## Security Impact
 

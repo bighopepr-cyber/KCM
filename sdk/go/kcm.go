@@ -1,6 +1,6 @@
 // Package kcm provides Go bindings for the KCM Knowledge Columnar Model.
 //
-// This SDK wraps the C FFI interface using CGo.
+// This SDK wraps the C FFI interface (18 functions) using CGo.
 //
 // Usage:
 //
@@ -20,9 +20,14 @@
 //	    log.Fatal(err)
 //	}
 //
-//	facts := db.QueryAll()
-//	for _, f := range facts {
-//	    fmt.Printf("Subject: %d, Object: %d, Confidence: %.2f\n", f.Subject, f.Object, f.Confidence)
+//	qr := db.Query("*")
+//	defer qr.Close()
+//	for {
+//	    fact, ok := qr.Next()
+//	    if !ok {
+//	        break
+//	    }
+//	    fmt.Printf("Subject: %d, Object: %d, Confidence: %.2f\n", fact.Subject, fact.Object, fact.Confidence)
 //	}
 package kcm
 
@@ -33,7 +38,7 @@ package kcm
 */
 import "C"
 import (
-	"errors"
+	"runtime"
 	"unsafe"
 )
 
@@ -41,21 +46,21 @@ import (
 type Error int
 
 const (
-	OK                       Error = Error(C.KCM_OK)
-	ErrNotFound              Error = Error(C.KCM_ERR_NOT_FOUND)
-	ErrOutOfMemory           Error = Error(C.KCM_ERR_OUT_OF_MEMORY)
-	ErrInvalidArgument       Error = Error(C.KCM_ERR_INVALID_ARGUMENT)
-	ErrIO                    Error = Error(C.KCM_ERR_IO)
-	ErrCorrupted             Error = Error(C.KCM_ERR_CORRUPTED)
-	ErrConflict              Error = Error(C.KCM_ERR_CONFLICT)
-	ErrTransactionAborted    Error = Error(C.KCM_ERR_TRANSACTION_ABORTED)
+	OK                    Error = Error(C.KCM_OK)
+	ErrNotFound           Error = Error(C.KCM_ERR_NOT_FOUND)
+	ErrOutOfMemory        Error = Error(C.KCM_ERR_OUT_OF_MEMORY)
+	ErrInvalidArgument    Error = Error(C.KCM_ERR_INVALID_ARGUMENT)
+	ErrIO                 Error = Error(C.KCM_ERR_IO)
+	ErrCorrupted          Error = Error(C.KCM_ERR_CORRUPTED)
+	ErrConflict           Error = Error(C.KCM_ERR_CONFLICT)
+	ErrTransactionAborted Error = Error(C.KCM_ERR_TRANSACTION_ABORTED)
 )
 
 func (e Error) Error() string {
 	return C.GoString(C.KCM_ErrorMessage(C.KCM_Error(e)))
 }
 
-// Fact represents a knowledge fact.
+// Fact represents a knowledge fact with 10 attributes.
 type Fact struct {
 	Subject    uint32
 	Predicate  uint8
@@ -69,7 +74,7 @@ type Fact struct {
 	Owner      uint16
 }
 
-func (f Fact) toC() C.KCM_Fact {
+func factToC(f Fact) C.KCM_Fact {
 	return C.KCM_Fact{
 		subject:    C.uint32_t(f.Subject),
 		predicate:  C.uint8_t(f.Predicate),
@@ -108,7 +113,8 @@ func checkErr(rc C.KCM_Error) error {
 
 // Database wraps a KCM database handle.
 type Database struct {
-	db *C.KCM_Database
+	db           *C.KCM_Database
+	transactions []*Transaction
 }
 
 // NewDatabase creates a new in-memory database.
@@ -118,12 +124,22 @@ func NewDatabase() (*Database, error) {
 	if err := checkErr(rc); err != nil {
 		return nil, err
 	}
-	return &Database{db: db}, nil
+	d := &Database{db: db}
+	runtime.SetFinalizer(d, (*Database).finalize)
+	return d, nil
 }
 
-// Close frees the database resources.
+func (d *Database) finalize() {
+	d.Close()
+}
+
+// Close frees the database resources and all owned transactions.
 func (d *Database) Close() {
 	if d.db != nil {
+		for _, txn := range d.transactions {
+			txn.Free()
+		}
+		d.transactions = nil
 		C.KCM_DatabaseFree(d.db)
 		d.db = nil
 	}
@@ -131,13 +147,13 @@ func (d *Database) Close() {
 
 // Insert adds a fact to the database.
 func (d *Database) Insert(f Fact) error {
-	cf := f.toC()
+	cf := factToC(f)
 	return checkErr(C.KCM_DatabaseInsert(d.db, &cf))
 }
 
 // Update modifies an existing fact by row ID.
 func (d *Database) Update(rowID uint64, f Fact) error {
-	cf := f.toC()
+	cf := factToC(f)
 	return checkErr(C.KCM_DatabaseUpdate(d.db, C.uint64_t(rowID), &cf))
 }
 
@@ -146,7 +162,7 @@ func (d *Database) Delete(rowID uint64) error {
 	return checkErr(C.KCM_DatabaseDelete(d.db, C.uint64_t(rowID)))
 }
 
-// FactCount returns the total number of facts.
+// FactCount returns the total number of facts (including deleted).
 func (d *Database) FactCount() uint64 {
 	return uint64(C.KCM_DatabaseFactCount(d.db))
 }
@@ -156,18 +172,28 @@ func (d *Database) ActiveFactCount() uint64 {
 	return uint64(C.KCM_DatabaseActiveCount(d.db))
 }
 
-// QueryAll returns all active facts.
+// Query executes a KQL query string and returns a QueryResult iterator.
+// The caller must call Close() on the returned QueryResult when done.
+func (d *Database) Query(kql string) *QueryResult {
+	ckql := C.CString(kql)
+	defer C.free(unsafe.Pointer(ckql))
+	q := C.KCM_DatabaseQuery(d.db, ckql)
+	return &QueryResult{query: q}
+}
+
+// QueryAll is a convenience method that queries for all facts using "*".
+// Returns all active facts as a slice.
 func (d *Database) QueryAll() ([]Fact, error) {
-	q := C.KCM_DatabaseQuery(d.db, C.CString("*"))
-	defer C.KCM_QueryFree(q)
+	qr := d.Query("*")
+	defer qr.Close()
 
 	var facts []Fact
 	for {
-		cf := C.KCM_QueryNext(q)
-		if cf == nil {
+		fact, ok := qr.Next()
+		if !ok {
 			break
 		}
-		facts = append(facts, factFromC(*cf))
+		facts = append(facts, *fact)
 	}
 	return facts, nil
 }
@@ -175,7 +201,10 @@ func (d *Database) QueryAll() ([]Fact, error) {
 // BeginTransaction starts a new transaction.
 func (d *Database) BeginTransaction() *Transaction {
 	txn := C.KCM_DatabaseBeginTransaction(d.db)
-	return &Transaction{txn: txn}
+	t := &Transaction{txn: txn, db: d}
+	runtime.SetFinalizer(t, (*Transaction).finalize)
+	d.transactions = append(d.transactions, t)
+	return t
 }
 
 // Save writes the database to a file.
@@ -185,7 +214,7 @@ func (d *Database) Save(path string) error {
 	return checkErr(C.KCM_DatabaseSave(d.db, cpath))
 }
 
-// Load reads the database from a file.
+// Load reads the database from a file into an existing database handle.
 func (d *Database) Load(path string) error {
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
@@ -199,15 +228,47 @@ func Verify(path string) error {
 	return checkErr(C.KCM_DatabaseVerify(cpath))
 }
 
+// QueryResult holds an iterator over query results.
+type QueryResult struct {
+	query *C.KCM_Query
+}
+
+// Next returns the next fact from the query result.
+// Returns (nil, false) when no more results are available.
+func (qr *QueryResult) Next() (*Fact, bool) {
+	if qr.query == nil {
+		return nil, false
+	}
+	cf := C.KCM_QueryNext(qr.query)
+	if cf == nil {
+		return nil, false
+	}
+	f := factFromC(*cf)
+	return &f, true
+}
+
+// Close frees the query result handle.
+func (qr *QueryResult) Close() {
+	if qr.query != nil {
+		C.KCM_QueryFree(qr.query)
+		qr.query = nil
+	}
+}
+
 // Transaction wraps a KCM transaction handle.
 type Transaction struct {
 	txn *C.KCM_Transaction
+	db  *Database
 }
 
-// Commit finalizes the transaction.
+func (t *Transaction) finalize() {
+	t.Free()
+}
+
+// Commit finalizes the transaction, applying all changes.
 func (t *Transaction) Commit() error {
 	if t.txn == nil {
-		return errors.New("nil transaction")
+		return ErrTransactionAborted
 	}
 	err := checkErr(C.KCM_TransactionCommit(t.txn))
 	t.txn = nil
@@ -225,6 +286,7 @@ func (t *Transaction) Rollback() error {
 }
 
 // Free releases the transaction resources.
+// Safe to call multiple times. Also called automatically by the garbage collector.
 func (t *Transaction) Free() {
 	if t.txn != nil {
 		C.KCM_TransactionFree(t.txn)
