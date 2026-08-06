@@ -1,0 +1,76 @@
+{
+  "dashboard": {
+    "title": "KCM Compliance Dashboard (SOC2, ISO 27001)",
+    "uid": "kcm-compliance",
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Audit Events (24h)",
+        "type": "stat",
+        "targets": [{ "expr": "sum(increase(kcm_audit_events_total[24h]))" }],
+        "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "value": 0, "color": "green" }] } } }
+      },
+      {
+        "title": "Permission Denials (24h)",
+        "type": "stat",
+        "targets": [{ "expr": "sum(increase(kcm_permission_denied_total[24h]))" }],
+        "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 10, "color": "yellow" }, { "value": 50, "color": "red" }] } } }
+      },
+      {
+        "title": "Encryption Operations (24h)",
+        "type": "stat",
+        "targets": [{ "expr": "sum(increase(kcm_encryption_operations_total[24h]))" }]
+      },
+      {
+        "title": "Key Rotations (30d)",
+        "type": "stat",
+        "targets": [{ "expr": "sum(increase(kcm_key_rotations_total[30d]))" }]
+      },
+      {
+        "title": "Failed Login Attempts (24h)",
+        "type": "timeseries",
+        "targets": [{ "expr": "sum(rate(kcm_auth_failures_total[1h]))" }],
+        "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 5, "color": "yellow" }, { "value": 20, "color": "red" }] } } }
+      },
+      {
+        "title": "Data Classification Distribution",
+        "type": "piechart",
+        "targets": [
+          { "expr": "kcm_data_classification_public", "legendFormat": "Public" },
+          { "expr": "kcm_data_classification_internal", "legendFormat": "Internal" },
+          { "expr": "kcm_data_classification_confidential", "legendFormat": "Confidential" },
+          { "expr": "kcm_data_classification_restricted", "legendFormat": "Restricted" }
+        ]
+      },
+      {
+        "title": "GDPR Consent Status",
+        "type": "piechart",
+        "targets": [
+          { "expr": "kcm_gdpr_consent_granted", "legendFormat": "Granted" },
+          { "expr": "kcm_gdpr_consent_withdrawn", "legendFormat": "Withdrawn" },
+          { "expr": "kcm_gdpr_consent_pending", "legendFormat": "Pending" }
+        ]
+      },
+      {
+        "title": "WAL Integrity Checks (24h)",
+        "type": "stat",
+        "targets": [{ "expr": "sum(increase(kcm_wal_verify_total[24h]))" }]
+      },
+      {
+        "title": "Backup Status",
+        "type": "stat",
+        "targets": [{ "expr": "kcm_backup_last_success_timestamp" }],
+        "fieldConfig": { "defaults": { "unit": "dateTimeFromNow" } }
+      },
+      {
+        "title": "Audit Log Integrity",
+        "type": "stat",
+        "targets": [{ "expr": "kcm_audit_log_integrity_valid" }],
+        "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "FAILED", "color": "red" }, "1": { "text": "VALID", "color": "green" } } }] } }
+      }
+    ],
+    "time": { "from": "now-24h", "to": "now" },
+    "refresh": "30s"
+  },
+  "overwrite": true
+}

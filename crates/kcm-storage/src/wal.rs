@@ -7,22 +7,11 @@ use std::sync::Mutex;
 
 const WAL_BUFFER_SIZE: usize = 65536;
 
-pub const WAL_INSERT_SIZE: usize = 38;
-pub const WAL_DELETE_SIZE: usize = 13;
+pub const WAL_INSERT_SIZE: usize = 66;
+pub const WAL_DELETE_SIZE: usize = 41;
 
-fn crc32(data: &[u8]) -> u32 {
-    let mut crc: u32 = 0xFFFF_FFFF;
-    for &byte in data {
-        crc ^= byte as u32;
-        for _ in 0..8 {
-            if crc & 1 != 0 {
-                crc = (crc >> 1) ^ 0xEDB8_8320;
-            } else {
-                crc >>= 1;
-            }
-        }
-    }
-    crc ^ 0xFFFF_FFFF
+fn blake3_hash(data: &[u8]) -> [u8; 32] {
+    blake3::hash(data).into()
 }
 
 #[derive(Debug, Clone)]
@@ -109,8 +98,8 @@ impl WriteAheadLog {
         buffer.extend_from_slice(&fact.version.to_le_bytes());
         buffer.extend_from_slice(&fact.priority.to_le_bytes());
         buffer.extend_from_slice(&fact.owner.to_le_bytes());
-        let checksum = crc32(&buffer[data_start..]);
-        buffer.extend_from_slice(&checksum.to_le_bytes());
+        let checksum = blake3_hash(&buffer[data_start..]);
+        buffer.extend_from_slice(&checksum);
         if buffer.len() >= self.buffer_threshold {
             drop(buffer);
             self.flush_buffer()?;
@@ -123,8 +112,8 @@ impl WriteAheadLog {
         buffer.extend_from_slice(&2u8.to_le_bytes());
         let data_start = buffer.len();
         buffer.extend_from_slice(&row_id.to_le_bytes());
-        let checksum = crc32(&buffer[data_start..]);
-        buffer.extend_from_slice(&checksum.to_le_bytes());
+        let checksum = blake3_hash(&buffer[data_start..]);
+        buffer.extend_from_slice(&checksum);
         if buffer.len() >= self.buffer_threshold {
             drop(buffer);
             self.flush_buffer()?;
@@ -163,11 +152,11 @@ impl WriteAheadLog {
             offset += 1;
             match op_type {
                 1 => {
-                    if offset + 37 > all_data.len() {
+                    if offset + 65 > all_data.len() {
                         return Err(KcmError::Corrupted(format!(
                             "Truncated WAL insert entry at offset {}: need {} bytes, have {}",
                             offset - 1,
-                            38,
+                            WAL_INSERT_SIZE,
                             all_data.len() - (offset - 1)
                         )));
                     }
@@ -191,15 +180,16 @@ impl WriteAheadLog {
                     let owner = read_u16(&all_data, offset);
                     offset += 2;
 
-                    let expected_checksum = read_u32(&all_data, offset);
-                    offset += 4;
-                    let actual_checksum = crc32(&all_data[data_start..offset - 4]);
-                    if expected_checksum != actual_checksum {
+                    let mut expected_hash = [0u8; 32];
+                    expected_hash.copy_from_slice(&all_data[offset..offset + 32]);
+                    offset += 32;
+                    let actual_hash = blake3_hash(&all_data[data_start..offset - 32]);
+                    if expected_hash != actual_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "WAL insert checksum mismatch at offset {}: expected {:#010x}, got {:#010x}",
+                            "WAL insert checksum mismatch at offset {}: expected {:?}, got {:?}",
                             data_start - 1,
-                            expected_checksum,
-                            actual_checksum
+                            expected_hash,
+                            actual_hash
                         )));
                     }
 
@@ -217,11 +207,11 @@ impl WriteAheadLog {
                     count += 1;
                 }
                 2 => {
-                    if offset + 12 > all_data.len() {
+                    if offset + 40 > all_data.len() {
                         return Err(KcmError::Corrupted(format!(
                             "Truncated WAL delete entry at offset {}: need {} bytes, have {}",
                             offset - 1,
-                            13,
+                            WAL_DELETE_SIZE,
                             all_data.len() - (offset - 1)
                         )));
                     }
@@ -229,15 +219,16 @@ impl WriteAheadLog {
                     let row_id = read_u64(&all_data, offset);
                     offset += 8;
 
-                    let expected_checksum = read_u32(&all_data, offset);
-                    offset += 4;
-                    let actual_checksum = crc32(&all_data[data_start..offset - 4]);
-                    if expected_checksum != actual_checksum {
+                    let mut expected_hash = [0u8; 32];
+                    expected_hash.copy_from_slice(&all_data[offset..offset + 32]);
+                    offset += 32;
+                    let actual_hash = blake3_hash(&all_data[data_start..offset - 32]);
+                    if expected_hash != actual_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "WAL delete checksum mismatch at offset {}: expected {:#010x}, got {:#010x}",
+                            "WAL delete checksum mismatch at offset {}: expected {:?}, got {:?}",
                             data_start - 1,
-                            expected_checksum,
-                            actual_checksum
+                            expected_hash,
+                            actual_hash
                         )));
                     }
 
@@ -269,7 +260,7 @@ impl WriteAheadLog {
 
             match op_type {
                 1 => {
-                    if offset + 37 > data.len() {
+                    if offset + 65 > data.len() {
                         return Err(KcmError::Corrupted(format!(
                             "Truncated INSERT entry at offset {}",
                             offset - 1
@@ -277,24 +268,20 @@ impl WriteAheadLog {
                     }
                     let data_start = offset;
                     offset += 33;
-                    let stored_crc = u32::from_le_bytes([
-                        data[offset],
-                        data[offset + 1],
-                        data[offset + 2],
-                        data[offset + 3],
-                    ]);
-                    offset += 4;
-                    let computed_crc = crc32(&data[data_start..data_start + 33]);
-                    if stored_crc != computed_crc {
+                    let mut stored_hash = [0u8; 32];
+                    stored_hash.copy_from_slice(&data[offset..offset + 32]);
+                    offset += 32;
+                    let computed_hash = blake3_hash(&data[data_start..data_start + 33]);
+                    if stored_hash != computed_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "CRC32 mismatch at INSERT entry {}: stored={:#x}, computed={:#x}",
-                            entry_count, stored_crc, computed_crc
+                            "BLAKE3 mismatch at INSERT entry {}: stored={:?}, computed={:?}",
+                            entry_count, stored_hash, computed_hash
                         )));
                     }
                     entry_count += 1;
                 }
                 2 => {
-                    if offset + 12 > data.len() {
+                    if offset + 40 > data.len() {
                         return Err(KcmError::Corrupted(format!(
                             "Truncated DELETE entry at offset {}",
                             offset - 1
@@ -302,18 +289,14 @@ impl WriteAheadLog {
                     }
                     let data_start = offset;
                     offset += 8;
-                    let stored_crc = u32::from_le_bytes([
-                        data[offset],
-                        data[offset + 1],
-                        data[offset + 2],
-                        data[offset + 3],
-                    ]);
-                    offset += 4;
-                    let computed_crc = crc32(&data[data_start..data_start + 8]);
-                    if stored_crc != computed_crc {
+                    let mut stored_hash = [0u8; 32];
+                    stored_hash.copy_from_slice(&data[offset..offset + 32]);
+                    offset += 32;
+                    let computed_hash = blake3_hash(&data[data_start..data_start + 8]);
+                    if stored_hash != computed_hash {
                         return Err(KcmError::Corrupted(format!(
-                            "CRC32 mismatch at DELETE entry {}: stored={:#x}, computed={:#x}",
-                            entry_count, stored_crc, computed_crc
+                            "BLAKE3 mismatch at DELETE entry {}: stored={:?}, computed={:?}",
+                            entry_count, stored_hash, computed_hash
                         )));
                     }
                     entry_count += 1;
@@ -424,8 +407,8 @@ mod tests {
         buffer.extend_from_slice(&fact.version.to_le_bytes());
         buffer.extend_from_slice(&fact.priority.to_le_bytes());
         buffer.extend_from_slice(&fact.owner.to_le_bytes());
-        let checksum = crc32(&buffer);
-        buffer.extend_from_slice(&checksum.to_le_bytes());
+        let checksum = blake3_hash(&buffer);
+        buffer.extend_from_slice(&checksum);
         assert_eq!(buffer.len(), WAL_INSERT_SIZE);
     }
 }

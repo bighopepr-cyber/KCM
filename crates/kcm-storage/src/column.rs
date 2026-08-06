@@ -199,6 +199,9 @@ fn decode_gorilla_f64(data: &[u8], count: usize) -> Result<Vec<f64>, KcmError> {
 }
 
 fn encode_identity<T: Copy>(values: &[T]) -> Vec<u8> {
+    // SAFETY: T is Copy, so transmuting &[T] to &[u8] is safe for encoding purposes.
+    // The resulting byte slice is only used for serialization and will be decoded
+    // using the same type T.
     let byte_slice = unsafe {
         std::slice::from_raw_parts(values.as_ptr() as *const u8, std::mem::size_of_val(values))
     };
@@ -215,6 +218,14 @@ fn decode_to_slice<T: Copy>(data: &[u8], count: usize) -> Result<Vec<T>, KcmErro
             data.len()
         )));
     }
+    
+    if count > MAX_COLUMN_SIZE {
+        return Err(KcmError::InvalidArgument(format!(
+            "Column size {} exceeds maximum {}",
+            count, MAX_COLUMN_SIZE
+        )));
+    }
+    
     let mut values = Vec::with_capacity(count);
     let type_size = std::mem::size_of::<T>();
     for i in 0..count {
@@ -222,10 +233,14 @@ fn decode_to_slice<T: Copy>(data: &[u8], count: usize) -> Result<Vec<T>, KcmErro
         let mut buf = [0u8; 8];
         let copy_len = type_size.min(8);
         buf[..copy_len].copy_from_slice(&data[offset..offset + copy_len]);
+        // SAFETY: T is Copy and we've validated that data has enough bytes.
+        // The buffer is zero-initialized and only the relevant bytes are copied.
         values.push(unsafe { std::ptr::read(buf.as_ptr() as *const T) });
     }
     Ok(values)
 }
+
+pub const MAX_COLUMN_SIZE: usize = 100_000_000;
 
 #[derive(Clone)]
 pub struct Column<T: Copy> {
@@ -322,6 +337,9 @@ impl<T: Copy> Column<T> {
                 raw_len, expected
             )));
         }
+        // SAFETY: We've verified that decompressed data has enough bytes for the expected
+        // number of elements. The source and destination are non-overlapping because
+        // values is a newly allocated Vec and self.data is a DenseVec.
         unsafe {
             std::ptr::copy_nonoverlapping(values.as_ptr() as *const u8, ptr as *mut u8, expected);
         }
@@ -336,9 +354,11 @@ fn encode_column<T: Copy>(values: &[T], encoding: ColumnEncoding) -> Result<Vec<
         ColumnEncoding::Delta => {
             let type_name = std::any::type_name::<T>();
             if type_name == "i64" {
+                // SAFETY: We've verified the type is i64 via type_name check.
                 let typed = unsafe { &*(values as *const [T] as *const [i64]) };
                 Ok(encode_delta_i64(typed))
             } else if type_name == "i32" {
+                // SAFETY: We've verified the type is i32 via type_name check.
                 let typed = unsafe { &*(values as *const [T] as *const [i32]) };
                 Ok(encode_delta_i32(typed))
             } else {
@@ -348,6 +368,7 @@ fn encode_column<T: Copy>(values: &[T], encoding: ColumnEncoding) -> Result<Vec<
         ColumnEncoding::Gorilla => {
             let type_name = std::any::type_name::<T>();
             if type_name == "f64" {
+                // SAFETY: We've verified the type is f64 via type_name check.
                 let typed = unsafe { &*(values as *const [T] as *const [f64]) };
                 Ok(encode_gorilla_f64(typed))
             } else {
@@ -358,6 +379,7 @@ fn encode_column<T: Copy>(values: &[T], encoding: ColumnEncoding) -> Result<Vec<
         ColumnEncoding::Rle => {
             let type_name = std::any::type_name::<T>();
             if type_name == "u8" || type_name == "i8" {
+                // SAFETY: We've verified the type is u8 or i8 via type_name check.
                 let typed = unsafe { &*(values as *const [T] as *const [u8]) };
                 Ok(encode_identity(typed))
             } else {
@@ -378,10 +400,14 @@ fn decode_column<T: Copy>(
             if type_name == "i64" {
                 let decoded = decode_delta_i64(data, count)?;
                 let ptr = decoded.as_ptr() as *const T;
+                // SAFETY: We've verified the type is i64 via type_name check, and the decoded
+                // vector contains exactly count elements of the correct type.
                 Ok(unsafe { std::slice::from_raw_parts(ptr, count) }.to_vec())
             } else if type_name == "i32" {
                 let decoded = decode_delta_i32(data, count)?;
                 let ptr = decoded.as_ptr() as *const T;
+                // SAFETY: We've verified the type is i32 via type_name check, and the decoded
+                // vector contains exactly count elements of the correct type.
                 Ok(unsafe { std::slice::from_raw_parts(ptr, count) }.to_vec())
             } else {
                 decode_to_slice::<T>(data, count)
@@ -392,6 +418,8 @@ fn decode_column<T: Copy>(
             if type_name == "f64" {
                 let decoded = decode_gorilla_f64(data, count)?;
                 let ptr = decoded.as_ptr() as *const T;
+                // SAFETY: We've verified the type is f64 via type_name check, and the decoded
+                // vector contains exactly count elements of the correct type.
                 Ok(unsafe { std::slice::from_raw_parts(ptr, count) }.to_vec())
             } else {
                 decode_to_slice::<T>(data, count)

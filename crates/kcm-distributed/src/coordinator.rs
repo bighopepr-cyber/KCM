@@ -1,4 +1,5 @@
 use kcm_core::types::KcmError;
+use kcm_security::audit::{AuditLog, AuditEventType};
 use parking_lot::Mutex;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
@@ -78,6 +79,7 @@ pub struct TransactionCoordinator {
     transactions: Arc<Mutex<HashMap<String, DistributedTransaction>>>,
     next_id: std::sync::atomic::AtomicU64,
     transport: Arc<dyn ParticipantTransport>,
+    audit_log: Option<Arc<AuditLog>>,
 }
 
 impl TransactionCoordinator {
@@ -86,6 +88,7 @@ impl TransactionCoordinator {
             transactions: Arc::new(Mutex::new(HashMap::new())),
             next_id: std::sync::atomic::AtomicU64::new(1),
             transport: Arc::new(LocalTransport),
+            audit_log: None,
         }
     }
 
@@ -94,6 +97,26 @@ impl TransactionCoordinator {
             transactions: Arc::new(Mutex::new(HashMap::new())),
             next_id: std::sync::atomic::AtomicU64::new(1),
             transport,
+            audit_log: None,
+        }
+    }
+
+    pub fn with_audit_log(transport: Arc<dyn ParticipantTransport>, audit_log: Arc<AuditLog>) -> Self {
+        TransactionCoordinator {
+            transactions: Arc::new(Mutex::new(HashMap::new())),
+            next_id: std::sync::atomic::AtomicU64::new(1),
+            transport,
+            audit_log: Some(audit_log),
+        }
+    }
+
+    fn log_audit(&self, event_type: AuditEventType, user_id: &str, context: &str, details: &str) {
+        if let Some(ref log) = self.audit_log {
+            let _ = log.log_access_check(user_id, context, true);
+            let event = kcm_security::audit::AuditEvent::new(event_type, user_id, context, details);
+            if let Ok(evt) = event {
+                log.log(evt);
+            }
         }
     }
 
@@ -137,6 +160,12 @@ impl TransactionCoordinator {
         }
 
         txn.status = TransactionStatus::Committed;
+        self.log_audit(
+            AuditEventType::AccessControlCheck,
+            "system",
+            &format!("txn={}", txn_id),
+            &format!("2PC committed with {} participants", txn.participants.len()),
+        );
         Ok(())
     }
 

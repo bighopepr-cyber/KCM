@@ -13,6 +13,9 @@ use parking_lot::Mutex;
 use std::os::raw::c_char;
 use std::sync::Arc;
 
+pub const MAX_PATH_LENGTH: usize = 4096;
+pub const MAX_FACTS_PER_QUERY: usize = 1_000_000;
+
 pub struct KCM_Database {
     inner: Arc<Mutex<KnowledgeDatabase>>,
 }
@@ -21,6 +24,7 @@ use kcm_runtime::transaction::Transaction;
 
 pub struct KCM_Transaction {
     inner: Option<Transaction>,
+    committed: bool,
 }
 
 pub struct KCM_Query {
@@ -43,6 +47,12 @@ pub struct KCM_Fact {
     pub owner: u16,
 }
 
+impl KCM_Fact {
+    pub fn is_valid(&self) -> bool {
+        self.confidence >= 0.0 && self.confidence <= 1.0
+    }
+}
+
 impl From<&Fact> for KCM_Fact {
     fn from(fact: &Fact) -> Self {
         KCM_Fact {
@@ -60,9 +70,18 @@ impl From<&Fact> for KCM_Fact {
     }
 }
 
-impl From<&KCM_Fact> for Fact {
-    fn from(kcm_fact: &KCM_Fact) -> Self {
-        Fact {
+impl TryFrom<&KCM_Fact> for Fact {
+    type Error = KcmError;
+
+    fn try_from(kcm_fact: &KCM_Fact) -> Result<Self, Self::Error> {
+        if !kcm_fact.is_valid() {
+            return Err(KcmError::InvalidArgument(format!(
+                "Invalid confidence value: {} (must be between 0.0 and 1.0)",
+                kcm_fact.confidence
+            )));
+        }
+
+        Ok(Fact {
             subject: SubjectID(kcm_fact.subject),
             predicate: PredicateID(kcm_fact.predicate),
             object: ObjectID(kcm_fact.object),
@@ -73,7 +92,7 @@ impl From<&KCM_Fact> for Fact {
             version: kcm_fact.version,
             priority: kcm_fact.priority,
             owner: kcm_fact.owner,
-        }
+        })
     }
 }
 
@@ -109,7 +128,7 @@ impl From<kcm_core::types::KcmError> for KCM_Error {
 /// # Safety
 /// - `db_out` must be a valid pointer to a `*mut KCM_Database` slot.
 /// - Caller must free the returned pointer with `KCM_DatabaseFree`.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseNew(db_out: *mut *mut KCM_Database) -> KCM_Error {
     if db_out.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
@@ -132,7 +151,7 @@ pub unsafe extern "C" fn KCM_DatabaseNew(db_out: *mut *mut KCM_Database) -> KCM_
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `db` must not be used after this call (use-after-free).
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseFree(db: *mut KCM_Database) {
     if !db.is_null() {
         unsafe {
@@ -146,7 +165,8 @@ pub unsafe extern "C" fn KCM_DatabaseFree(db: *mut KCM_Database) {
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `fact` must be a valid pointer to a `KCM_Fact`.
-#[unsafe(no_mangle)]
+/// - `fact` must have valid confidence value (0.0 to 1.0).
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseInsert(
     db: *mut KCM_Database,
     fact: *const KCM_Fact,
@@ -157,9 +177,16 @@ pub unsafe extern "C" fn KCM_DatabaseInsert(
     unsafe {
         let db = &*db;
         let fact_ref = &*fact;
-        let kcm_fact = Fact::from(fact_ref);
-        match db.inner.lock().insert(&kcm_fact) {
-            Ok(_) => KCM_Error::KCM_OK,
+        
+        if !fact_ref.is_valid() {
+            return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+        }
+        
+        match Fact::try_from(fact_ref) {
+            Ok(kcm_fact) => match db.inner.lock().insert(&kcm_fact) {
+                Ok(_) => KCM_Error::KCM_OK,
+                Err(e) => e.into(),
+            },
             Err(e) => e.into(),
         }
     }
@@ -170,7 +197,8 @@ pub unsafe extern "C" fn KCM_DatabaseInsert(
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `fact` must be a valid pointer to a `KCM_Fact`.
-#[unsafe(no_mangle)]
+/// - `fact` must have valid confidence value (0.0 to 1.0).
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseUpdate(
     db: *mut KCM_Database,
     row_id: u64,
@@ -182,9 +210,16 @@ pub unsafe extern "C" fn KCM_DatabaseUpdate(
     unsafe {
         let db = &*db;
         let fact_ref = &*fact;
-        let kcm_fact = Fact::from(fact_ref);
-        match db.inner.lock().update(RowID(row_id), &kcm_fact) {
-            Ok(_) => KCM_Error::KCM_OK,
+        
+        if !fact_ref.is_valid() {
+            return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+        }
+        
+        match Fact::try_from(fact_ref) {
+            Ok(kcm_fact) => match db.inner.lock().update(RowID(row_id), &kcm_fact) {
+                Ok(_) => KCM_Error::KCM_OK,
+                Err(e) => e.into(),
+            },
             Err(e) => e.into(),
         }
     }
@@ -194,7 +229,7 @@ pub unsafe extern "C" fn KCM_DatabaseUpdate(
 ///
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseDelete(db: *mut KCM_Database, row_id: u64) -> KCM_Error {
     if db.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
@@ -212,7 +247,7 @@ pub unsafe extern "C" fn KCM_DatabaseDelete(db: *mut KCM_Database, row_id: u64) 
 ///
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseFactCount(db: *mut KCM_Database) -> u64 {
     if db.is_null() {
         return 0;
@@ -224,7 +259,7 @@ pub unsafe extern "C" fn KCM_DatabaseFactCount(db: *mut KCM_Database) -> u64 {
 ///
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseActiveCount(db: *mut KCM_Database) -> u64 {
     if db.is_null() {
         return 0;
@@ -238,7 +273,8 @@ pub unsafe extern "C" fn KCM_DatabaseActiveCount(db: *mut KCM_Database) -> u64 {
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `query_out` must be a valid pointer to a `*mut KCM_Query` slot.
 /// - Caller must free the returned query with `KCM_QueryFree`.
-#[unsafe(no_mangle)]
+/// - Results are limited to MAX_FACTS_PER_QUERY facts.
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseQuery(
     db: *mut KCM_Database,
     query_out: *mut *mut KCM_Query,
@@ -251,8 +287,9 @@ pub unsafe extern "C" fn KCM_DatabaseQuery(
         let kb = db.inner.lock();
         match kb.query().execute() {
             Ok(facts) => {
+                let limited_facts: Vec<Fact> = facts.into_iter().take(MAX_FACTS_PER_QUERY).collect();
                 *query_out = Box::into_raw(Box::new(KCM_Query {
-                    inner: facts,
+                    inner: limited_facts,
                     position: 0,
                 }));
                 KCM_Error::KCM_OK
@@ -268,7 +305,7 @@ pub unsafe extern "C" fn KCM_DatabaseQuery(
 /// - `query` must be a valid pointer previously returned by `KCM_DatabaseQuery`.
 /// - `fact_out` must be a valid pointer to a `KCM_Fact` slot.
 /// - `has_next` must be a valid pointer to a `bool` slot.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_QueryNext(
     query: *mut KCM_Query,
     fact_out: *mut KCM_Fact,
@@ -297,7 +334,7 @@ pub unsafe extern "C" fn KCM_QueryNext(
 /// # Safety
 /// - `query` must be a valid pointer previously returned by `KCM_DatabaseQuery`.
 /// - `query` must not be used after this call.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_QueryFree(query: *mut KCM_Query) {
     if !query.is_null() {
         unsafe {
@@ -312,7 +349,7 @@ pub unsafe extern "C" fn KCM_QueryFree(query: *mut KCM_Query) {
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `txn_out` must be a valid pointer to a `*mut KCM_Transaction` slot.
 /// - Caller must free the returned transaction with `KCM_TransactionFree`.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseBeginTransaction(
     db: *mut KCM_Database,
     txn_out: *mut *mut KCM_Transaction,
@@ -323,7 +360,10 @@ pub unsafe extern "C" fn KCM_DatabaseBeginTransaction(
     unsafe {
         let db_ref = &*db;
         let txn = db_ref.inner.lock().begin_transaction();
-        *txn_out = Box::into_raw(Box::new(KCM_Transaction { inner: Some(txn) }));
+        *txn_out = Box::into_raw(Box::new(KCM_Transaction {
+            inner: Some(txn),
+            committed: false,
+        }));
         KCM_Error::KCM_OK
     }
 }
@@ -333,7 +373,7 @@ pub unsafe extern "C" fn KCM_DatabaseBeginTransaction(
 /// # Safety
 /// - `txn` must be a valid pointer previously returned by `KCM_DatabaseBeginTransaction`.
 /// - `txn` must not be used after this call.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
     if !txn.is_null() {
         unsafe {
@@ -347,7 +387,8 @@ pub unsafe extern "C" fn KCM_TransactionFree(txn: *mut KCM_Transaction) {
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `path` must be a valid null-terminated C string.
-#[unsafe(no_mangle)]
+/// - Path must not exceed MAX_PATH_LENGTH characters.
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseSave(
     db: *mut KCM_Database,
     path: *const std::os::raw::c_char,
@@ -362,6 +403,11 @@ pub unsafe extern "C" fn KCM_DatabaseSave(
             Ok(s) => s,
             Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
         };
+        
+        if path_str.len() > MAX_PATH_LENGTH {
+            return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+        }
+        
         let db_guard = db_ref.inner.lock();
         let schema = db_guard.get_schema();
         match kcm_storage::file_format::DatabaseFile::save(&schema, path_str) {
@@ -376,7 +422,8 @@ pub unsafe extern "C" fn KCM_DatabaseSave(
 /// # Safety
 /// - `db` must be a valid pointer previously returned by `KCM_DatabaseNew`.
 /// - `path` must be a valid null-terminated C string.
-#[unsafe(no_mangle)]
+/// - Path must not exceed MAX_PATH_LENGTH characters.
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseLoad(
     db: *mut KCM_Database,
     path: *const std::os::raw::c_char,
@@ -391,6 +438,11 @@ pub unsafe extern "C" fn KCM_DatabaseLoad(
             Ok(s) => s,
             Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
         };
+        
+        if path_str.len() > MAX_PATH_LENGTH {
+            return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+        }
+        
         match kcm_storage::file_format::DatabaseFile::load(path_str) {
             Ok(schema) => {
                 let new_db = match KnowledgeDatabase::new() {
@@ -421,9 +473,10 @@ pub unsafe extern "C" fn KCM_DatabaseLoad(
 ///
 /// # Safety
 /// - `path` must be a valid null-terminated C string.
+/// - Path must not exceed MAX_PATH_LENGTH characters.
 ///
 /// Returns KCM_OK if file is valid, KCM_ERR_CORRUPTED if not.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_DatabaseVerify(path: *const std::os::raw::c_char) -> KCM_Error {
     if path.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
@@ -434,6 +487,11 @@ pub unsafe extern "C" fn KCM_DatabaseVerify(path: *const std::os::raw::c_char) -
             Ok(s) => s,
             Err(_) => return KCM_Error::KCM_ERR_INVALID_ARGUMENT,
         };
+        
+        if path_str.len() > MAX_PATH_LENGTH {
+            return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
+        }
+        
         match kcm_storage::file_format::DatabaseFile::verify(path_str) {
             Ok(true) => KCM_Error::KCM_OK,
             Ok(false) => KCM_Error::KCM_ERR_CORRUPTED,
@@ -448,7 +506,8 @@ pub unsafe extern "C" fn KCM_DatabaseVerify(path: *const std::os::raw::c_char) -
 /// - `txn` must be a valid pointer previously returned by `KCM_DatabaseBeginTransaction`.
 /// - `txn` must not be used after this call (it is consumed).
 /// - `db` must be the same database pointer used to begin the transaction.
-#[unsafe(no_mangle)]
+/// - Calling commit on an already committed transaction returns KCM_ERR_TRANSACTION_ABORTED.
+#[no_mangle]
 pub unsafe extern "C" fn KCM_TransactionCommit(
     txn: *mut KCM_Transaction,
     db: *mut KCM_Database,
@@ -458,6 +517,11 @@ pub unsafe extern "C" fn KCM_TransactionCommit(
     }
     unsafe {
         let txn_ref = &mut *txn;
+        
+        if txn_ref.committed {
+            return KCM_Error::KCM_ERR_TRANSACTION_ABORTED;
+        }
+        
         if let Some(inner_txn) = txn_ref.inner.take() {
             let db_guard = (*db).inner.lock();
             let mut schema = db_guard.get_schema_mut();
@@ -467,7 +531,10 @@ pub unsafe extern "C" fn KCM_TransactionCommit(
             drop(schema);
             drop(db_guard);
             match inner_txn.commit() {
-                Ok(()) => KCM_Error::KCM_OK,
+                Ok(()) => {
+                    txn_ref.committed = true;
+                    KCM_Error::KCM_OK
+                }
                 Err(e) => e.into(),
             }
         } else {
@@ -481,13 +548,19 @@ pub unsafe extern "C" fn KCM_TransactionCommit(
 /// # Safety
 /// - `txn` must be a valid pointer previously returned by `KCM_DatabaseBeginTransaction`.
 /// - `txn` must not be used after this call (it is consumed).
-#[unsafe(no_mangle)]
+/// - Calling rollback on an already committed transaction returns KCM_ERR_TRANSACTION_ABORTED.
+#[no_mangle]
 pub unsafe extern "C" fn KCM_TransactionRollback(txn: *mut KCM_Transaction) -> KCM_Error {
     if txn.is_null() {
         return KCM_Error::KCM_ERR_INVALID_ARGUMENT;
     }
     unsafe {
         let txn_ref = &mut *txn;
+        
+        if txn_ref.committed {
+            return KCM_Error::KCM_ERR_TRANSACTION_ABORTED;
+        }
+        
         if let Some(inner_txn) = txn_ref.inner.take() {
             match inner_txn.rollback() {
                 Ok(()) => KCM_Error::KCM_OK,
@@ -505,7 +578,7 @@ pub unsafe extern "C" fn KCM_TransactionRollback(txn: *mut KCM_Transaction) -> K
 /// - Returns a pointer to a static null-terminated string.
 /// - The string is valid for the lifetime of the program.
 /// - Caller must not free or modify the returned pointer.
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub unsafe extern "C" fn KCM_ErrorMessage(err: KCM_Error) -> *const c_char {
     match err {
         KCM_Error::KCM_OK => c"OK".as_ptr(),

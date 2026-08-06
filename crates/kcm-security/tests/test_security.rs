@@ -8,12 +8,12 @@ use kcm_security::rbac::*;
 #[test]
 fn test_rbac_create_user_and_role() {
     let acl = ACLManager::new();
-    acl.create_user("alice");
-    acl.create_role("admin");
-    acl.add_permission_to_role("admin", Permission::Read);
-    acl.add_permission_to_role("admin", Permission::Write);
-    acl.add_permission_to_role("admin", Permission::Admin);
-    acl.assign_role("alice", "admin");
+    acl.create_user("alice").unwrap();
+    acl.create_role("admin").unwrap();
+    acl.add_permission_to_role("admin", Permission::Read).unwrap();
+    acl.add_permission_to_role("admin", Permission::Write).unwrap();
+    acl.add_permission_to_role("admin", Permission::Admin).unwrap();
+    acl.assign_role("alice", "admin").unwrap();
     assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(acl.check_permission("alice", ContextID(1), Permission::Write));
     assert!(!acl.check_permission("alice", ContextID(1), Permission::Delete));
@@ -22,8 +22,8 @@ fn test_rbac_create_user_and_role() {
 #[test]
 fn test_rbac_context_permission() {
     let acl = ACLManager::new();
-    acl.create_user("bob");
-    acl.grant_context_permission("bob", ContextID(5), Permission::Read);
+    acl.create_user("bob").unwrap();
+    acl.grant_context_permission("bob", ContextID(5), Permission::Read).unwrap();
     assert!(acl.check_permission("bob", ContextID(5), Permission::Read));
     assert!(!acl.check_permission("bob", ContextID(3), Permission::Read));
     assert!(!acl.check_permission("bob", ContextID(5), Permission::Write));
@@ -37,10 +37,10 @@ fn test_rbac_nonexistent_user() {
 
 #[test]
 fn test_encryption_key_from_password() {
-    let key1 = EncryptionKey::from_password("hello", &[42u8; 32]);
-    let key2 = EncryptionKey::from_password("hello", &[42u8; 32]);
+    let key1 = EncryptionKey::from_password("securepassword123", &[42u8; 32]).unwrap();
+    let key2 = EncryptionKey::from_password("securepassword123", &[42u8; 32]).unwrap();
     assert_eq!(key1.as_bytes(), key2.as_bytes());
-    let key3 = EncryptionKey::from_password("world", &[42u8; 32]);
+    let key3 = EncryptionKey::from_password("differentpassword", &[42u8; 32]).unwrap();
     assert_ne!(key1.as_bytes(), key3.as_bytes());
 }
 
@@ -75,9 +75,8 @@ fn test_encrypt_decrypt_wrong_key() {
 #[test]
 fn test_encrypt_decrypt_empty() {
     let key = EncryptionKey::random().unwrap();
-    let encrypted = EncryptedStorage::encrypt(b"", &key).unwrap();
-    let decrypted = EncryptedStorage::decrypt(&encrypted, &key).unwrap();
-    assert!(decrypted.is_empty());
+    let result = EncryptedStorage::encrypt(b"", &key);
+    assert!(result.is_err());
 }
 
 #[test]
@@ -161,7 +160,7 @@ fn test_random_keys_unique() {
 fn test_audit_log_capacity_overflow() {
     let log = AuditLog::new();
     for i in 0..150_000 {
-        log.log_query("stress_user", &format!("query_{}", i));
+        log.log_query("stress_user", &format!("query_{}", i)).unwrap();
     }
     assert!(log.event_count() <= 100_000);
     let events = log.get_events();
@@ -172,13 +171,13 @@ fn test_audit_log_capacity_overflow() {
 #[test]
 fn test_rbac_multi_role() {
     let acl = ACLManager::new();
-    acl.create_user("manager");
-    acl.create_role("reader");
-    acl.create_role("writer");
-    acl.add_permission_to_role("reader", Permission::Read);
-    acl.add_permission_to_role("writer", Permission::Write);
-    acl.assign_role("manager", "reader");
-    acl.assign_role("manager", "writer");
+    acl.create_user("manager").unwrap();
+    acl.create_role("reader").unwrap();
+    acl.create_role("writer").unwrap();
+    acl.add_permission_to_role("reader", Permission::Read).unwrap();
+    acl.add_permission_to_role("writer", Permission::Write).unwrap();
+    acl.assign_role("manager", "reader").unwrap();
+    acl.assign_role("manager", "writer").unwrap();
 
     assert!(acl.check_permission("manager", ContextID(1), Permission::Read));
     assert!(acl.check_permission("manager", ContextID(1), Permission::Write));
@@ -224,17 +223,17 @@ fn test_gdpr_concurrent_access() {
 #[test]
 fn test_rbac_role_revocation() {
     let acl = ACLManager::new();
-    acl.create_user("alice");
-    acl.create_role("admin");
-    acl.add_permission_to_role("admin", Permission::Read);
-    acl.add_permission_to_role("admin", Permission::Write);
-    acl.assign_role("alice", "admin");
+    acl.create_user("alice").unwrap();
+    acl.create_role("admin").unwrap();
+    acl.add_permission_to_role("admin", Permission::Read).unwrap();
+    acl.add_permission_to_role("admin", Permission::Write).unwrap();
+    acl.assign_role("alice", "admin").unwrap();
 
     assert!(acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(acl.check_permission("alice", ContextID(1), Permission::Write));
 
     // Remove role
-    acl.remove_role("alice", "admin");
+    acl.remove_role("alice", "admin").unwrap();
     assert!(!acl.check_permission("alice", ContextID(1), Permission::Read));
     assert!(!acl.check_permission("alice", ContextID(1), Permission::Write));
 }
@@ -242,25 +241,25 @@ fn test_rbac_role_revocation() {
 #[test]
 fn test_audit_verify_integrity_empty() {
     let log = AuditLog::new();
-    assert!(log.verify_integrity());
+    assert!(log.verify_integrity().unwrap());
 }
 
 #[test]
 fn test_audit_verify_integrity_sequential() {
     let log = AuditLog::new();
-    log.log_query("alice", "SELECT * FROM facts");
-    log.log_insert("bob", 42);
-    log.log_delete("alice", 42);
+    log.log_query("alice", "SELECT * FROM facts").unwrap();
+    log.log_insert("bob", 42).unwrap();
+    log.log_delete("alice", 42).unwrap();
     assert_eq!(log.event_count(), 3);
-    assert!(log.verify_integrity());
+    assert!(log.verify_integrity().unwrap());
 }
 
 #[test]
 fn test_audit_verify_integrity_overflow() {
     let log = AuditLog::new();
     for i in 0..100_000 {
-        log.log_query(&format!("user_{}", i % 10), &format!("query_{}", i));
+        log.log_query(&format!("user_{}", i % 10), &format!("query_{}", i)).unwrap();
     }
     assert_eq!(log.event_count(), 100_000);
-    assert!(log.verify_integrity());
+    assert!(log.verify_integrity().unwrap());
 }

@@ -1,5 +1,10 @@
 use kcm_core::types::KcmError;
 
+pub const MAX_COMPRESSION_LEVEL: i32 = 22;
+pub const MIN_COMPRESSION_LEVEL: i32 = 1;
+pub const MAX_DECOMPRESSED_SIZE: usize = 256 * 1024 * 1024;
+pub const MAX_INPUT_SIZE: usize = 128 * 1024 * 1024;
+
 pub trait Compressor {
     fn compress(&self, data: &[u8]) -> Result<Vec<u8>, KcmError>;
     fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError>;
@@ -10,8 +15,14 @@ pub struct ZstdCompressor {
 }
 
 impl ZstdCompressor {
-    pub fn new(level: i32) -> Self {
-        ZstdCompressor { level }
+    pub fn new(level: i32) -> Result<Self, KcmError> {
+        if !(MIN_COMPRESSION_LEVEL..=MAX_COMPRESSION_LEVEL).contains(&level) {
+            return Err(KcmError::InvalidArgument(format!(
+                "Zstd compression level must be between {} and {}",
+                MIN_COMPRESSION_LEVEL, MAX_COMPRESSION_LEVEL
+            )));
+        }
+        Ok(ZstdCompressor { level })
     }
 
     pub fn default_level() -> Self {
@@ -21,10 +32,24 @@ impl ZstdCompressor {
 
 impl Compressor for ZstdCompressor {
     fn compress(&self, data: &[u8]) -> Result<Vec<u8>, KcmError> {
+        if data.len() > MAX_INPUT_SIZE {
+            return Err(KcmError::InvalidArgument(format!(
+                "Input size {} exceeds maximum {}",
+                data.len(),
+                MAX_INPUT_SIZE
+            )));
+        }
         zstd::encode_all(data, self.level).map_err(|e| KcmError::Io(e.to_string()))
     }
 
-    fn decompress(&self, data: &[u8], _expected_size: usize) -> Result<Vec<u8>, KcmError> {
+    fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError> {
+        if expected_size > MAX_DECOMPRESSED_SIZE {
+            return Err(KcmError::InvalidArgument(format!(
+                "Expected decompressed size {} exceeds maximum {}",
+                expected_size,
+                MAX_DECOMPRESSED_SIZE
+            )));
+        }
         zstd::decode_all(data).map_err(|e| KcmError::Io(e.to_string()))
     }
 }
@@ -39,11 +64,25 @@ impl Lz4Compressor {
 
 impl Compressor for Lz4Compressor {
     fn compress(&self, data: &[u8]) -> Result<Vec<u8>, KcmError> {
+        if data.len() > MAX_INPUT_SIZE {
+            return Err(KcmError::InvalidArgument(format!(
+                "Input size {} exceeds maximum {}",
+                data.len(),
+                MAX_INPUT_SIZE
+            )));
+        }
         lz4::block::compress(data, Some(lz4::block::CompressionMode::FAST(1)), false)
             .map_err(|e| KcmError::Io(e.to_string()))
     }
 
     fn decompress(&self, data: &[u8], expected_size: usize) -> Result<Vec<u8>, KcmError> {
+        if expected_size > MAX_DECOMPRESSED_SIZE {
+            return Err(KcmError::InvalidArgument(format!(
+                "Expected decompressed size {} exceeds maximum {}",
+                expected_size,
+                MAX_DECOMPRESSED_SIZE
+            )));
+        }
         if expected_size > i32::MAX as usize {
             return Err(KcmError::Corrupted(format!(
                 "LZ4 decompress size {} exceeds i32::MAX",
@@ -103,6 +142,14 @@ impl Compressor for RleCompressor {
             return Ok(Vec::new());
         }
 
+        if expected_size > MAX_DECOMPRESSED_SIZE {
+            return Err(KcmError::InvalidArgument(format!(
+                "Expected decompressed size {} exceeds maximum {}",
+                expected_size,
+                MAX_DECOMPRESSED_SIZE
+            )));
+        }
+
         let mut result = Vec::with_capacity(expected_size);
         let mut i = 0;
         while result.len() < expected_size && i + 5 <= data.len() {
@@ -138,6 +185,13 @@ mod tests {
         let compressed = compressor.compress(data).unwrap();
         let decompressed = compressor.decompress(&compressed, data.len()).unwrap();
         assert_eq!(data.to_vec(), decompressed);
+    }
+
+    #[test]
+    fn test_zstd_compression_level_validation() {
+        assert!(ZstdCompressor::new(0).is_err());
+        assert!(ZstdCompressor::new(23).is_err());
+        assert!(ZstdCompressor::new(3).is_ok());
     }
 
     #[test]
@@ -181,7 +235,7 @@ mod tests {
 
     #[test]
     fn test_zstd_repetitive_data() {
-        let compressor = ZstdCompressor::new(10);
+        let compressor = ZstdCompressor::new(10).unwrap();
         let data: Vec<u8> = vec![42u8; 10000];
         let compressed = compressor.compress(&data).unwrap();
         assert!(compressed.len() < data.len());

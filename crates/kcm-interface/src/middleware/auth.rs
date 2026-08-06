@@ -1,12 +1,4 @@
-/// Permission levels for RBAC.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Permission {
-    Reader = 0,
-    Writer = 1,
-    Delete = 2,
-    Execute = 3,
-    Admin = 4,
-}
+pub use kcm_security::rbac::Permission;
 
 /// Auth context for a request.
 pub struct AuthContext {
@@ -19,7 +11,7 @@ impl AuthContext {
     pub fn anonymous() -> Self {
         AuthContext {
             user_id: "anonymous".to_string(),
-            permission: Permission::Reader,
+            permission: Permission::Read,
             roles: vec!["reader".to_string()],
         }
     }
@@ -33,6 +25,6 @@ impl AuthContext {
     }
 
     pub fn has_permission(&self, required: Permission) -> bool {
-        self.permission >= required
+        self.permission.level() >= required.level()
     }
 }

@@ -111,7 +111,7 @@ pub fn handle_insert(
         Ok(row_id) => {
             state.metrics.record_insert(true);
             if let Some(ref log) = state.audit_log {
-                log.log_insert("api", row_id.0);
+                let _ = log.log_insert("api", row_id.0);
             }
             ApiResponse::created(&format!(r#"{{"row_id":{},"status":"created"}}"#, row_id.0))
         }
@@ -171,7 +171,7 @@ pub fn handle_query(
         Ok(results) => {
             state.metrics.record_query(0, true);
             if let Some(ref log) = state.audit_log {
-                log.log_query("api", "query");
+                let _ = log.log_query("api", "query");
             }
             let facts: Vec<String> = results
                 .iter()
@@ -233,7 +233,7 @@ pub fn handle_delete(state: &ApiState, row_id: u64) -> ApiResponse {
     match state.db.delete(RowID(row_id)) {
         Ok(()) => {
             if let Some(ref log) = state.audit_log {
-                log.log_delete("api", row_id);
+                let _ = log.log_delete("api", row_id);
             }
             ApiResponse::ok(&format!(r#"{{"row_id":{},"status":"deleted"}}"#, row_id))
         }

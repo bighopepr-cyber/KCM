@@ -86,8 +86,8 @@ fn test_compression_ratio_zstd_vs_lz4() {
 #[test]
 fn test_zstd_level_comparison() {
     let data: Vec<u8> = (0..10_000).map(|i| (i % 256) as u8).collect();
-    let low = ZstdCompressor::new(1).compress(&data).unwrap();
-    let high = ZstdCompressor::new(10).compress(&data).unwrap();
+    let low = ZstdCompressor::new(1).unwrap().compress(&data).unwrap();
+    let high = ZstdCompressor::new(10).unwrap().compress(&data).unwrap();
     assert!(
         high.len() <= low.len(),
         "Higher compression level should produce smaller output"

@@ -254,6 +254,77 @@ pub enum KcmError {
     TransactionAborted,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[repr(u16)]
+pub enum ErrorCode {
+    NotFound = 1001,
+    OutOfMemory = 1002,
+    InvalidArgument = 1003,
+    Io = 1004,
+    Corrupted = 1005,
+    Conflict = 1006,
+    TransactionAborted = 1007,
+}
+
+impl ErrorCode {
+    pub fn name(&self) -> &'static str {
+        match self {
+            ErrorCode::NotFound => "NOT_FOUND",
+            ErrorCode::OutOfMemory => "OUT_OF_MEMORY",
+            ErrorCode::InvalidArgument => "INVALID_ARGUMENT",
+            ErrorCode::Io => "IO_ERROR",
+            ErrorCode::Corrupted => "CORRUPTED",
+            ErrorCode::Conflict => "CONFLICT",
+            ErrorCode::TransactionAborted => "TRANSACTION_ABORTED",
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            ErrorCode::NotFound => "The requested resource was not found",
+            ErrorCode::OutOfMemory => "Insufficient memory to complete the operation",
+            ErrorCode::InvalidArgument => "One or more arguments are invalid",
+            ErrorCode::Io => "An I/O error occurred",
+            ErrorCode::Corrupted => "Data corruption detected",
+            ErrorCode::Conflict => "A conflict occurred with concurrent operations",
+            ErrorCode::TransactionAborted => "The transaction was aborted",
+        }
+    }
+}
+
+impl KcmError {
+    pub fn error_code(&self) -> ErrorCode {
+        match self {
+            KcmError::NotFound(_) => ErrorCode::NotFound,
+            KcmError::OutOfMemory => ErrorCode::OutOfMemory,
+            KcmError::InvalidArgument(_) => ErrorCode::InvalidArgument,
+            KcmError::Io(_) => ErrorCode::Io,
+            KcmError::Corrupted(_) => ErrorCode::Corrupted,
+            KcmError::Conflict(_) => ErrorCode::Conflict,
+            KcmError::TransactionAborted => ErrorCode::TransactionAborted,
+        }
+    }
+
+    pub fn to_json(&self) -> String {
+        let code = self.error_code();
+        let msg = match self {
+            KcmError::NotFound(m) => m.clone(),
+            KcmError::OutOfMemory => code.description().to_string(),
+            KcmError::InvalidArgument(m) => m.clone(),
+            KcmError::Io(m) => m.clone(),
+            KcmError::Corrupted(m) => m.clone(),
+            KcmError::Conflict(m) => m.clone(),
+            KcmError::TransactionAborted => code.description().to_string(),
+        };
+        format!(
+            r#"{{"code":{},"error":"{}","message":"{}"}}"#,
+            code as u16,
+            code.name(),
+            msg.replace('\\', "\\\\").replace('"', "\\\"")
+        )
+    }
+}
+
 impl fmt::Display for KcmError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

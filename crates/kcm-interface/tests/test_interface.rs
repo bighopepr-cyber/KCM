@@ -170,7 +170,7 @@ fn test_kcm_fact_conversion() {
         owner: 0,
     };
 
-    let fact = Fact::from(&kcm_fact);
+    let fact = Fact::try_from(&kcm_fact).unwrap();
     assert_eq!(fact.subject, SubjectID(42));
     assert_eq!(fact.predicate, PredicateID(7));
     assert_eq!(fact.object, ObjectID(99));
@@ -185,7 +185,7 @@ fn test_kcm_roundtrip_conversion() {
     let original = Fact::new(SubjectID(10), PredicateID(5), ObjectID(20), 0.85).unwrap();
 
     let kcm_fact = KCM_Fact::from(&original);
-    let converted = Fact::from(&kcm_fact);
+    let converted = Fact::try_from(&kcm_fact).unwrap();
 
     assert_eq!(original.subject, converted.subject);
     assert_eq!(original.predicate, converted.predicate);
