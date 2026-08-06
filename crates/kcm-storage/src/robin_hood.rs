@@ -9,7 +9,6 @@ struct Bucket<K, V> {
     value: V,
     hash: u64,
     probe_distance: u32,
-    occupied: bool,
 }
 
 pub struct RobinHoodMap<K, V> {
@@ -87,30 +86,32 @@ where
                         value: current_value,
                         hash: current_hash,
                         probe_distance: probe_dist,
-                        occupied: true,
                     });
                     self.len += 1;
                     return;
                 }
                 Some(existing) => {
                     if existing.hash == current_hash && existing.key == current_key {
-                        self.entries[index].as_mut().unwrap().value = current_value;
+                        if let Some(bucket) = self.entries[index].as_mut() {
+                            bucket.value = current_value;
+                        }
                         return;
                     }
 
                     if probe_dist > existing.probe_distance {
-                        let old = self.entries[index].take().unwrap();
-                        self.entries[index] = Some(Bucket {
-                            key: current_key,
-                            value: current_value,
-                            hash: current_hash,
-                            probe_distance: probe_dist,
-                            occupied: true,
-                        });
-                        current_key = old.key;
-                        current_value = old.value;
-                        current_hash = old.hash;
-                        probe_dist = old.probe_distance;
+                        let old = self.entries[index].take();
+                        if let Some(old_bucket) = old {
+                            self.entries[index] = Some(Bucket {
+                                key: current_key,
+                                value: current_value,
+                                hash: current_hash,
+                                probe_distance: probe_dist,
+                            });
+                            current_key = old_bucket.key;
+                            current_value = old_bucket.value;
+                            current_hash = old_bucket.hash;
+                            probe_dist = old_bucket.probe_distance;
+                        }
                     }
                 }
             }
@@ -137,7 +138,6 @@ where
                         value,
                         hash,
                         probe_distance: current_dist,
-                        occupied: true,
                     });
                     self.len += 1;
                     return None;
@@ -145,7 +145,9 @@ where
                 Some(bucket) => {
                     if bucket.hash == hash && bucket.key == key {
                         let old_value = bucket.value.clone();
-                        self.entries[idx].as_mut().unwrap().value = value;
+                        if let Some(b) = self.entries[idx].as_mut() {
+                            b.value = value;
+                        }
                         return Some(old_value);
                     }
                 }
@@ -159,25 +161,7 @@ where
     #[inline]
     pub fn get(&self, key: &K) -> Option<&V> {
         let hash = self.hash_key(key);
-        let mut index = self.bucket_index(hash);
-        let mut probe_dist = 0u32;
-
-        loop {
-            match &self.entries[index] {
-                None => return None,
-                Some(bucket) => {
-                    if probe_dist > bucket.probe_distance {
-                        return None;
-                    }
-                    if bucket.hash == hash && bucket.key == *key {
-                        return Some(&bucket.value);
-                    }
-                }
-            }
-
-            index = (index + 1) & self.mask;
-            probe_dist += 1;
-        }
+        self.get_with_hash(key, hash)
     }
 
     #[inline]

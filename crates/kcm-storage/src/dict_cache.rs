@@ -82,6 +82,8 @@ impl DictionaryCache {
                         let hash = self.compute_hash(prefetch_key);
                         let idx = (hash as usize) % self.string_to_id.capacity();
                         let ptr = &self.string_to_id as *const _ as *const u8;
+                        // SAFETY: ptr points to valid memory within self.string_to_id.
+                        // _mm_prefetch is a hint and does not modify memory.
                         unsafe {
                             std::arch::x86_64::_mm_prefetch(
                                 ptr.add(idx * std::mem::size_of::<usize>()),
@@ -110,6 +112,7 @@ impl DictionaryCache {
         let len = values.len();
 
         if len >= 4 && is_x86_feature_detected!("avx2") {
+            // SAFETY: AVX2 is detected via is_x86_feature_detected! before calling.
             unsafe {
                 self.lookup_batch_avx2(values, results);
             }
@@ -124,6 +127,7 @@ impl DictionaryCache {
         self.lookup_batch_prefetch(values, results);
     }
 
+    /// SAFETY: Caller must ensure AVX2 is available (via is_x86_feature_detected!).
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
     unsafe fn lookup_batch_avx2(&self, values: &[&str], results: &mut [Option<u32>]) {
@@ -131,19 +135,6 @@ impl DictionaryCache {
         let mut i = 0;
 
         while i + 4 <= len {
-            let hash0 = self.compute_hash(values[i]);
-            let hash1 = self.compute_hash(values[i + 1]);
-            let hash2 = self.compute_hash(values[i + 2]);
-            let hash3 = self.compute_hash(values[i + 3]);
-
-            let cap = self.string_to_id.capacity();
-            let idx0 = (hash0 as usize) % cap;
-            let idx1 = (hash1 as usize) % cap;
-            let idx2 = (hash2 as usize) % cap;
-            let idx3 = (hash3 as usize) % cap;
-
-            let _ = (hash0, hash1, hash2, hash3, idx0, idx1, idx2, idx3);
-
             results[i] = self.string_to_id.get(values[i]).copied();
             results[i + 1] = self.string_to_id.get(values[i + 1]).copied();
             results[i + 2] = self.string_to_id.get(values[i + 2]).copied();
@@ -291,10 +282,9 @@ mod tests {
 
     #[test]
     fn test_lookup_with_hash() {
-        let cache = DictionaryCache::new();
-        let mut cache_mut = cache;
-        cache_mut.encode("test");
-        let hash = cache_mut.compute_hash("test");
-        assert_eq!(cache_mut.lookup_with_hash("test", hash), Some(1));
+        let mut cache = DictionaryCache::new();
+        cache.encode("test");
+        let hash = cache.compute_hash("test");
+        assert_eq!(cache.lookup_with_hash("test", hash), Some(1));
     }
 }
