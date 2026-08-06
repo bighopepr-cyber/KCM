@@ -42,7 +42,7 @@ jobs:
         run: cargo fmt --all -- --check
       
       - name: Clippy
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
       
       - name: Build
         run: cargo build --workspace
@@ -174,21 +174,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [quality, test]
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image
         run: docker build -t kcm:test -f deployment/Dockerfile .
-      - name: Tag Docker image
-        if: github.ref == 'refs/heads/main'
-        run: |
-          VERSION=$(date +%Y%m%d)-$(echo ${{ github.sha }} | cut -c1-7)
-          docker tag kcm:test kcm/kcm-server:${VERSION}
-          docker tag kcm:test kcm/kcm-server:latest
-          echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
       - name: Test Docker image
         run: |
           docker run -d --name kcm-test -p 8080:8080 kcm:test
@@ -204,29 +193,36 @@ jobs:
           docker logs kcm-test
           docker stop kcm-test
           exit 1
-      - name: Install cosign
-        if: github.ref == 'refs/heads/main'
-        uses: sigstore/cosign-installer@v3
-      - name: Sign Docker image with SigStore
-        if: github.ref == 'refs/heads/main'
-        run: |
-          docker tag kcm:test kcm/kcm-server:${{ github.sha }}
-          docker tag kcm:test kcm/kcm-server:latest
-          cosign sign --yes kcm/kcm-server:${{ github.sha }} || echo "SigStore signing skipped (no keyless identity)"
-      - name: Generate SBOM
-        if: github.ref == 'refs/heads/main'
-        run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            anchore/syft:latest \
-            kcm:test -o cyclonedx-json=sbom-cyclonedx.json
-      - name: Upload SBOM
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+
+  cargo-audit:
+    name: Cargo Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
         with:
-          name: sbom
-          path: sbom-cyclonedx.json
-          retention-days: 90
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-audit-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-audit-
+      - uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  cargo-deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check all
+          arguments: --all-features
 
   performance-regression:
     name: Performance Regression Check
@@ -248,6 +244,7 @@ jobs:
       - name: Run benchmarks
         run: cargo bench --workspace 2>&1 | tee benchmark-results/current.txt
       - name: Check for regressions
+        if: hashFiles('benchmark-results/baseline.json') != ''
         run: python3 scripts/bench-regression.py benchmark-results/baseline.json benchmark-results/ || echo "Regression check completed (non-blocking)"
 
   ssot-validation:
@@ -257,3 +254,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: bash scripts/validate-ssot.sh
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [quality, test, stress, benchmark, cli-tools, docker, cargo-audit, cargo-deny, performance-regression, ssot-validation]
+    steps:
+      - run: echo "All quality gates passed — ready for review"

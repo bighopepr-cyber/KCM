@@ -189,8 +189,9 @@ jobs:
             target/
           key: ${{ runner.os }}-audit-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-audit-
-      - run: cargo install cargo-audit --locked
-      - run: cargo audit
+      - uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   cargo-deny:
     name: Cargo Deny
@@ -201,6 +202,7 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check all
+          arguments: --all-features
 
   quality-gate:
     name: Quality Gate
