@@ -79,6 +79,13 @@ impl<T: Copy> DenseVec<T> {
         Ok(())
     }
 
+    pub fn get(&self, index: usize) -> Option<T> {
+        if index >= self.len {
+            return None;
+        }
+        Some(self.as_slice()[index])
+    }
+
     pub fn len(&self) -> usize {
         self.len
     }
@@ -121,12 +128,26 @@ impl<T: Copy> Index<usize> for DenseVec<T> {
     type Output = T;
 
     fn index(&self, idx: usize) -> &Self::Output {
+        if idx >= self.len {
+            eprintln!(
+                "DenseVec index out of bounds: index {idx} >= len {}",
+                self.len
+            );
+            std::process::abort();
+        }
         &self.as_slice()[idx]
     }
 }
 
 impl<T: Copy> IndexMut<usize> for DenseVec<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        if idx >= self.len {
+            eprintln!(
+                "DenseVec index out of bounds: index {idx} >= len {}",
+                self.len
+            );
+            std::process::abort();
+        }
         &mut self.as_mut_slice()[idx]
     }
 }
@@ -163,5 +184,28 @@ impl<T: Copy> Clone for DenseVec<T> {
             alignment: self.alignment,
             _phantom: PhantomData,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dense_vec_get_returns_none_for_out_of_bounds_index() {
+        let mut vec = DenseVec::new(2).unwrap();
+        vec.push(1).unwrap();
+
+        assert_eq!(vec.get(0), Some(1));
+        assert_eq!(vec.get(1), None);
+    }
+
+    #[test]
+    fn dense_vec_index_out_of_bounds_is_detected_by_get() {
+        let mut vec = DenseVec::new(2).unwrap();
+        vec.push(1).unwrap();
+
+        assert_eq!(vec.get(0), Some(1));
+        assert_eq!(vec.get(1), None);
     }
 }

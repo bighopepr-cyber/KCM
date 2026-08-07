@@ -67,8 +67,13 @@ fn write_version(dir: &std::path::Path, version: u32) -> Result<()> {
 }
 
 fn slugify_name(name: &str) -> String {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return "migration".to_string();
+    }
+
     let mut slug = String::new();
-    for ch in name.to_lowercase().chars() {
+    for ch in trimmed.to_lowercase().chars() {
         if ch.is_alphanumeric() {
             slug.push(ch);
         } else {
@@ -83,10 +88,18 @@ fn slugify_name(name: &str) -> String {
 
 fn create_migration_file(dir: &std::path::Path, name: &str) -> Result<PathBuf> {
     ensure_migration_dir(dir)?;
-    let current_ver = read_version(dir);
-    let new_ver = current_ver + 1;
-    let filename = format!("{:03}_{}.sql", new_ver, slugify_name(name));
-    let filepath = dir.join(&filename);
+
+    let mut new_ver = read_version(dir) + 1;
+    let slug = slugify_name(name);
+    let mut filename = format!("{:03}_{}.sql", new_ver, slug);
+    let mut filepath = dir.join(&filename);
+
+    while filepath.exists() {
+        new_ver += 1;
+        filename = format!("{:03}_{}.sql", new_ver, slug);
+        filepath = dir.join(&filename);
+    }
+
     std::fs::write(
         &filepath,
         format!(
@@ -264,6 +277,31 @@ mod tests {
         );
         let contents = fs::read_to_string(&created).unwrap();
         assert!(contents.contains("-- Migration v2: Add index"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn slugify_name_replaces_non_alphanumeric_characters() {
+        let slug = slugify_name("Add Index #1");
+        assert_eq!(slug, "add_index_1");
+    }
+
+    #[test]
+    fn create_migration_file_uses_next_available_version_when_file_exists() {
+        let dir = temp_migration_dir();
+        write_version(&dir, 1).unwrap();
+
+        let first = create_migration_file(&dir, "Add index").unwrap();
+        let second = create_migration_file(&dir, "Add index").unwrap();
+
+        assert_eq!(
+            first.file_name().unwrap().to_string_lossy(),
+            "002_add_index.sql"
+        );
+        assert_eq!(
+            second.file_name().unwrap().to_string_lossy(),
+            "003_add_index.sql"
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 }

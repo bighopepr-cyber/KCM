@@ -58,6 +58,10 @@ impl Bitmap {
         (self.words[word_idx] & (1u64 << bit_idx)) != 0
     }
 
+    pub fn has_any(&self) -> bool {
+        self.words.iter().any(|word| *word != 0)
+    }
+
     pub fn set_all(&mut self) {
         self.words.fill(u64::MAX);
         // Mask off excess bits in the last word to maintain the invariant
@@ -241,6 +245,14 @@ mod tests {
         assert!(!bitmap.set(10));
         assert!(!bitmap.set(100));
         assert!(!bitmap.clear(10));
+    }
+
+    #[test]
+    fn test_bitmap_has_any() {
+        let mut bitmap = Bitmap::new(10);
+        assert!(!bitmap.has_any());
+        bitmap.set(3);
+        assert!(bitmap.has_any());
     }
 
     #[test]
