@@ -136,24 +136,48 @@ fn main() -> Result<()> {
 
             if let Some(facts) = json.as_array() {
                 for fact in facts {
-                    let s = fact["subject"]
-                        .as_u64()
-                        .unwrap_or(fact.get("s").and_then(|v| v.as_u64()).unwrap_or(0))
-                        as u32;
-                    let p = fact["predicate"]
-                        .as_u64()
-                        .unwrap_or(fact.get("p").and_then(|v| v.as_u64()).unwrap_or(0))
-                        as u8;
-                    let o = fact["object"]
-                        .as_u64()
-                        .unwrap_or(fact.get("o").and_then(|v| v.as_u64()).unwrap_or(0))
-                        as u32;
-                    let c = fact["confidence"]
-                        .as_f64()
-                        .unwrap_or(fact.get("c").and_then(|v| v.as_f64()).unwrap_or(0.5));
+                    let get_u64 = |key: &str| {
+                        fact.get(key)
+                            .and_then(|v| v.as_u64())
+                            .or_else(|| match key {
+                                "subject" => fact.get("s").and_then(|v| v.as_u64()),
+                                "predicate" => fact.get("p").and_then(|v| v.as_u64()),
+                                "object" => fact.get("o").and_then(|v| v.as_u64()),
+                                _ => None,
+                            })
+                    };
+
+                    let get_f64 = |key: &str, fallback: f64| {
+                        fact.get(key)
+                            .and_then(|v| v.as_f64())
+                            .or_else(|| {
+                                if key == "confidence" {
+                                    fact.get("c").and_then(|v| v.as_f64())
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap_or(fallback)
+                    };
+
+                    let s = get_u64("subject").unwrap_or(0) as u32;
+                    let p = get_u64("predicate").unwrap_or(0) as u8;
+                    let o = get_u64("object").unwrap_or(0) as u32;
+                    let c = get_f64("confidence", 0.5);
+
+                    if s == 0 && p == 0 && o == 0 {
+                        log::warn!(
+                            "Skipping JSON fact with missing subject/predicate/object: {}",
+                            fact
+                        );
+                        continue;
+                    }
+
                     if let Ok(f) = Fact::new(SubjectID(s), PredicateID(p), ObjectID(o), c) {
                         let _ = db.insert(&f);
                         count += 1;
+                    } else {
+                        log::warn!("Invalid fact skipped: {}", fact);
                     }
                 }
             }
